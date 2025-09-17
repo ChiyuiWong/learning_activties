@@ -1,0 +1,1 @@
+# GenAI Module - Ting's responsibility
