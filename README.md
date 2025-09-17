@@ -294,7 +294,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ## Support & Communication
 
 - **Issues**: Use GitHub issues for bug reports and feature requests
-- **Team Communication**: [Add your preferred communication channel]
+- **Team Communication**: WhatsApp Group
 - **Documentation**: Keep this README updated with changes
 
 ## License
