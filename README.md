@@ -18,7 +18,7 @@ This is a Learning Management System (LMS) developed by Group 10 for COMP5241. T
 ### Backend
 - **Python 3.11**
 - **Flask** - Web framework
-- **MongoDB** - Database
+- **MongoDB (mongodb-community@8.2)** - Database
 - **MongoEngine** - ODM (Object Document Mapper)
 - **Flask-JWT-Extended** - Authentication
 - **Flask-CORS** - Cross-origin resource sharing
@@ -73,7 +73,7 @@ COMP5241_G10/
 
 ### Prerequisites
 - Python 3.11 or higher
-- MongoDB (local installation or cloud service)
+- MongoDB mongodb-community@8.2 (local installation or cloud service)
 - Git
 
 ### 1. Clone the Repository
