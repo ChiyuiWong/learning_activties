@@ -78,7 +78,7 @@ COMP5241_G10/
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/SunnyChanPolyU/COMP5241_G10.git
 cd COMP5241_G10
 ```
 
