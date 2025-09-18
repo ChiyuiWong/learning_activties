@@ -30,7 +30,7 @@ def login():
     # Simple mock authentication for testing
     # In a real application, you would validate against your database
     mock_users = {
-        'teacher1': {'password': 'password123', 'role': 'teacher'},
+        'teacher1': {'password': '123', 'role': 'teacher'},
         'teacher2': {'password': 'password123', 'role': 'teacher'},
         'student1': {'password': 'password123', 'role': 'student'},
         'student2': {'password': 'password123', 'role': 'student'}
