@@ -21,8 +21,8 @@ def create_app(config_class=Config):
                 
     app.config.from_object(config_class)
     
-    # Initialize extensions
-    CORS(app)
+    # Initialize extensions with explicit CORS settings
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
     jwt = JWTManager(app)
     
     # Initialize database

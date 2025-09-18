@@ -43,17 +43,36 @@ class APIClient {
         
         try {
             showLoading(true);
+            console.log(`Making API request to: ${url}`);
             const response = await fetch(url, config);
-            const data = await response.json();
+            
+            // Try to parse JSON response, but handle non-JSON responses gracefully
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                console.error('Failed to parse JSON response:', parseError);
+                data = { error: 'Invalid response format' };
+            }
             
             if (!response.ok) {
+                console.error('API request failed:', data);
                 throw new Error(data.message || 'API request failed');
             }
             
             return data;
         } catch (error) {
             console.error('API Error:', error);
-            showAlert(error.message, 'danger');
+            
+            // Network-level errors (like connection refused, timeout, etc.)
+            if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
+                console.error('Network connection issue - server might be down or unreachable');
+                showAlert('Failed to connect to the server. Please check if the backend is running.', 'danger');
+            } else {
+                // Other API errors
+                showAlert(error.message || 'An unknown error occurred', 'danger');
+            }
+            
             throw error;
         } finally {
             showLoading(false);
@@ -272,6 +291,56 @@ window.CoursesAPI = CoursesAPI;
 window.ActivitiesAPI = ActivitiesAPI;
 window.AdminAPI = AdminAPI;
 window.HealthAPI = HealthAPI;
+
+// Utility functions for API interactions
+// Show or hide loading indicator
+function showLoading(isLoading) {
+    const loadingElement = document.getElementById('apiLoadingIndicator');
+    if (!loadingElement) {
+        // Create loading indicator if it doesn't exist
+        const newLoader = document.createElement('div');
+        newLoader.id = 'apiLoadingIndicator';
+        newLoader.className = 'position-fixed top-0 end-0 p-3';
+        newLoader.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        `;
+        newLoader.style.display = isLoading ? 'block' : 'none';
+        document.body.appendChild(newLoader);
+    } else {
+        loadingElement.style.display = isLoading ? 'block' : 'none';
+    }
+}
+
+// Show alert message
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.error('Alert container not found!');
+        console.log('Alert:', message, 'Type:', type);
+        return;
+    }
+    
+    const alertId = 'alert-' + Date.now();
+    const alertHTML = `
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    alertContainer.innerHTML += alertHTML;
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+            const bsAlert = new bootstrap.Alert(alertElement);
+            bsAlert ? bsAlert.close() : alertElement.remove();
+        }
+    }, 5000);
+}
 
 // Auto-test API connection on page load
 document.addEventListener('DOMContentLoaded', async function() {
