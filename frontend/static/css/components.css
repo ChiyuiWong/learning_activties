@@ -286,3 +286,108 @@ Joyce's responsibility for UI design
         padding: 0.5rem;
     }
 }
+
+/* Learning Activities Components (Charlie's module) */
+.activity-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.create-option-card {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.create-option-card:hover {
+    transform: translateY(-2px);
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+}
+
+.word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    padding: 20px;
+}
+
+.word-item {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 3px;
+    background: linear-gradient(45deg, #007bff, #6f42c1);
+    color: white;
+    border-radius: 15px;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+}
+
+.word-item:hover {
+    transform: scale(1.1);
+}
+
+.question-container {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.activity-stats {
+    font-size: 0.85rem;
+}
+
+.activity-view {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Quiz Interface Styles */
+.quiz-timer {
+    font-size: 1rem;
+    padding: 8px 12px;
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Game Styles */
+.game-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+}
+
+/* Responsive Design for Learning Activities */
+@media (max-width: 768px) {
+    .activity-icon {
+        font-size: 2rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+}
