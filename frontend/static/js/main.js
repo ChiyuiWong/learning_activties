@@ -23,12 +23,32 @@ function initializeApp() {
     
     // Check if user is logged in
     const token = localStorage.getItem('authToken');
-    if (token) {
-        // Validate token and get user info
-        validateToken(token);
+    const userInfo = localStorage.getItem('userInfo');
+    
+    if (token && userInfo) {
+        try {
+            app.currentUser = JSON.parse(userInfo);
+            console.log('User logged in:', app.currentUser);
+            
+            // Update UI with user info
+            updateUserInterface();
+            
+            // Initialize learning activities with user role
+            if (typeof learningActivities !== 'undefined') {
+                setTimeout(() => {
+                    learningActivities.setUserRole(app.currentUser.role);
+                }, 500);
+            }
+            
+        } catch (error) {
+            console.error('Error parsing user info:', error);
+            redirectToLogin();
+            return;
+        }
     } else {
-        // Show login modal
-        showLoginModal();
+        // Redirect to login page
+        redirectToLogin();
+        return;
     }
     
     // Initialize modules
@@ -37,6 +57,31 @@ function initializeApp() {
     initializeCourses();
     initializeActivities();
     initializeAdmin();
+}
+
+function updateUserInterface() {
+    // Update user name in navbar
+    const userNameEl = document.getElementById('user-name');
+    if (userNameEl && app.currentUser) {
+        userNameEl.textContent = app.currentUser.username;
+    }
+    
+    // Show/hide teacher-specific features
+    const teacherElements = document.querySelectorAll('[data-role="teacher"]');
+    teacherElements.forEach(el => {
+        if (app.currentUser && app.currentUser.role === 'teacher') {
+            el.style.display = '';
+        } else {
+            el.style.display = 'none';
+        }
+    });
+}
+
+function redirectToLogin() {
+    // Only redirect if not already on login page
+    if (!window.location.pathname.includes('login.html')) {
+        window.location.href = '/login.html';
+    }
 }
 
 // Bind event listeners
@@ -216,14 +261,21 @@ function handleLogin(e) {
 
 function handleLogout(e) {
     e.preventDefault();
-    console.log('Handling logout... (Sunny to implement)');
+    console.log('Logging out user...');
     
     // Clear local storage
     localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userInfo');
     
-    // Show login modal
-    showLoginModal();
+    // Clear current user
+    app.currentUser = null;
+    
+    // Show success message and redirect
+    showNotification('Logged out successfully!', 'success');
+    
+    setTimeout(() => {
+        window.location.href = '/login.html';
+    }, 1000);
 }
 
 function handleGenAIGeneration(e) {

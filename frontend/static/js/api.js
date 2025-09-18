@@ -187,32 +187,93 @@ const CoursesAPI = {
 };
 
 // Learning Activities API endpoints (Charlie's module)
-const ActivitiesAPI = {
-    // Activity management
-    getActivities: async (courseId = null) => {
-        const endpoint = courseId ? `/learning/activities?course_id=${courseId}` : '/learning/activities';
+const LearningActivitiesAPI = {
+    // Quiz endpoints
+    getQuizzes: async (courseId) => {
+        const endpoint = courseId ? `/learning/quizzes/?course_id=${courseId}` : '/learning/quizzes/';
         return api.get(endpoint);
     },
     
-    getActivity: async (activityId) => {
-        return api.get(`/learning/activities/${activityId}`);
+    getQuiz: async (quizId) => {
+        return api.get(`/learning/quizzes/${quizId}`);
     },
     
-    createActivity: async (activityData) => {
-        return api.post('/learning/activities', activityData);
+    createQuiz: async (quizData) => {
+        return api.post('/learning/quizzes/', quizData);
     },
     
-    updateActivity: async (activityId, activityData) => {
-        return api.put(`/learning/activities/${activityId}`, activityData);
+    startQuizAttempt: async (quizId) => {
+        return api.post(`/learning/quizzes/${quizId}/attempt`);
     },
     
-    // Submissions
-    submitActivity: async (activityId, submissionData) => {
-        return api.post(`/learning/activities/${activityId}/submit`, submissionData);
+    submitQuiz: async (quizId, answers) => {
+        return api.post(`/learning/quizzes/${quizId}/submit`, answers);
     },
     
-    getSubmissions: async (activityId) => {
-        return api.get(`/learning/activities/${activityId}/submissions`);
+    // Word Cloud endpoints
+    getWordClouds: async (courseId) => {
+        const endpoint = courseId ? `/learning/wordclouds/?course_id=${courseId}` : '/learning/wordclouds/';
+        return api.get(endpoint);
+    },
+    
+    getWordCloud: async (wordcloudId) => {
+        return api.get(`/learning/wordclouds/${wordcloudId}`);
+    },
+    
+    createWordCloud: async (wordcloudData) => {
+        return api.post('/learning/wordclouds/', wordcloudData);
+    },
+    
+    submitWord: async (wordcloudId, wordData) => {
+        return api.post(`/learning/wordclouds/${wordcloudId}/submit`, wordData);
+    },
+    
+    getWordCloudResults: async (wordcloudId) => {
+        return api.get(`/learning/wordclouds/${wordcloudId}/results`);
+    },
+    
+    // Short Answer endpoints
+    getShortAnswers: async (courseId) => {
+        const endpoint = courseId ? `/learning/shortanswers/?course_id=${courseId}` : '/learning/shortanswers/';
+        return api.get(endpoint);
+    },
+    
+    getShortAnswer: async (questionId) => {
+        return api.get(`/learning/shortanswers/${questionId}`);
+    },
+    
+    createShortAnswer: async (questionData) => {
+        return api.post('/learning/shortanswers/', questionData);
+    },
+    
+    submitAnswer: async (questionId, answerData) => {
+        return api.post(`/learning/shortanswers/${questionId}/submit`, answerData);
+    },
+    
+    provideFeedback: async (questionId, studentId, feedbackData) => {
+        return api.post(`/learning/shortanswers/${questionId}/feedback/${studentId}`, feedbackData);
+    },
+    
+    // Mini Game endpoints
+    getMiniGames: async (courseId) => {
+        const endpoint = courseId ? `/learning/minigames/?course_id=${courseId}` : '/learning/minigames/';
+        return api.get(endpoint);
+    },
+    
+    getMiniGame: async (gameId) => {
+        return api.get(`/learning/minigames/${gameId}`);
+    },
+    
+    createMiniGame: async (gameData) => {
+        return api.post('/learning/minigames/', gameData);
+    },
+    
+    submitGameScore: async (gameId, scoreData) => {
+        return api.post(`/learning/minigames/${gameId}/score`, scoreData);
+    },
+    
+    getGameLeaderboard: async (gameId) => {
+        return api.get(`/learning/minigames/${gameId}/leaderboard`);
     },
     
     // Health check
