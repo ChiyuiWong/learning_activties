@@ -6,11 +6,19 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from app.config.database import init_db
 from app.config.config import Config
+import os
 
 
 def create_app(config_class=Config):
     """Create and configure Flask application"""
-    app = Flask(__name__)
+    # Get frontend directory path
+    frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend')
+    
+    # Initialize Flask app with static files from frontend directory
+    app = Flask(__name__,
+                static_folder=os.path.join(frontend_dir, 'static'),
+                static_url_path='/static')
+                
     app.config.from_object(config_class)
     
     # Initialize extensions
@@ -37,5 +45,20 @@ def create_app(config_class=Config):
     @app.route('/api/health')
     def health_check():
         return {'status': 'healthy', 'message': 'COMP5241 Group 10 API is running'}
+    
+    # Serve frontend HTML files
+    from flask import send_from_directory
+    
+    @app.route('/')
+    def index():
+        return send_from_directory(frontend_dir, 'index.html')
+    
+    @app.route('/polls')
+    def polls():
+        return send_from_directory(frontend_dir, 'polls.html')
+        
+    @app.route('/login-test')
+    def login_test():
+        return send_from_directory(frontend_dir, 'login_test.html')
     
     return app

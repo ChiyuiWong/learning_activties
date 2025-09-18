@@ -20,13 +20,45 @@ def security_health():
 
 @security_bp.route('/login', methods=['POST'])
 def login():
-    """User login endpoint - placeholder for Sunny's implementation"""
+    """User login endpoint with simple mock authentication for testing"""
     data = request.get_json()
+    username = data.get('username', '')
+    password = data.get('password', '')
     
-    # TODO: Implement authentication logic here
+    print(f"Login attempt: username={username}")
+    
+    # Simple mock authentication for testing
+    # In a real application, you would validate against your database
+    mock_users = {
+        'teacher1': {'password': 'password123', 'role': 'teacher'},
+        'teacher2': {'password': 'password123', 'role': 'teacher'},
+        'student1': {'password': 'password123', 'role': 'student'},
+        'student2': {'password': 'password123', 'role': 'student'}
+    }
+    
+    if not username or not password:
+        print("Missing username or password")
+        return jsonify({'error': 'Username and password are required'}), 400
+        
+    if username not in mock_users:
+        print(f"Username not found: {username}")
+        return jsonify({'error': 'Invalid username or password'}), 401
+        
+    if mock_users[username]['password'] != password:
+        print(f"Invalid password for user: {username}")
+        return jsonify({'error': 'Invalid username or password'}), 401
+    
+    # Create access token with user info
+    token_data = {
+        'username': username,
+        'role': mock_users[username]['role']
+    }
+    access_token = create_access_token(identity=username, additional_claims=token_data)
+    
     return jsonify({
-        'message': 'Login endpoint - to be implemented by Sunny',
-        'received_data': {'username': data.get('username', 'N/A')}
+        'access_token': access_token,
+        'username': username,
+        'role': mock_users[username]['role']
     }), 200
 
 
