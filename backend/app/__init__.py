@@ -53,6 +53,10 @@ def create_app(config_class=Config):
     def index():
         return send_from_directory(frontend_dir, 'index.html')
     
+    @app.route('/login.html')
+    def login():
+        return send_from_directory(frontend_dir, 'login.html')
+    
     @app.route('/polls')
     def polls():
         return send_from_directory(frontend_dir, 'polls.html')

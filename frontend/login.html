@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COMP5241 G10 - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+        
+        .demo-users {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .demo-user-btn {
+            margin: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card login-card">
+                    <div class="card-header login-header text-center py-4">
+                        <h3 class="mb-0">🎓 COMP5241 Group 10</h3>
+                        <p class="mb-0">Learning Management System</p>
+                    </div>
+                    <div class="card-body p-5">
+                        <form id="login-form">
+                            <div class="mb-4">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control form-control-lg" id="username" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control form-control-lg" id="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">
+                                Login
+                            </button>
+                        </form>
+                        
+                        <!-- Demo Users Section -->
+                        <div class="demo-users">
+                            <h6 class="mb-3">Demo Users (Click to login quickly):</h6>
+                            
+                            <div class="mb-2">
+                                <strong>👨‍🏫 Teachers:</strong><br>
+                                <button type="button" class="btn btn-outline-primary btn-sm demo-user-btn" 
+                                        onclick="quickLogin('teacher1', 'password123', 'teacher')">
+                                    Prof. Smith
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm demo-user-btn" 
+                                        onclick="quickLogin('teacher2', 'password123', 'teacher')">
+                                    Dr. Johnson
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <strong>👨‍🎓 Students:</strong><br>
+                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
+                                        onclick="quickLogin('student1', 'password123', 'student')">
+                                    Alice Wang
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
+                                        onclick="quickLogin('student2', 'password123', 'student')">
+                                    Bob Chen
+                                </button>
+                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
+                                        onclick="quickLogin('student3', 'password123', 'student')">
+                                    Charlie Li
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <small class="text-muted">
+                                Demo system for COMP5241 Group 10 project<br>
+                                Features: Learning Activities, AI Assistant, Course Management
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alert container -->
+    <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API configuration
+        const API_BASE_URL = 'http://localhost:5000/api';
+        
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const alertContainer = document.getElementById('alert-container');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.innerHTML += alertHTML;
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const alertElement = document.getElementById(alertId);
+                if (alertElement) {
+                    const bsAlert = new bootstrap.Alert(alertElement);
+                    bsAlert ? bsAlert.close() : alertElement.remove();
+                }
+            }, 5000);
+        }
+        
+        // Quick login function
+        function quickLogin(username, password, role) {
+            document.getElementById('username').value = username;
+            document.getElementById('password').value = password;
+            
+            // Auto-submit form
+            setTimeout(() => {
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }, 100);
+        }
+        
+        // Handle login form submission
+        document.getElementById('login-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            if (!username || !password) {
+                showNotification('Please enter both username and password', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/security/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store token
+                    localStorage.setItem('authToken', data.access_token);
+                    localStorage.setItem('userInfo', JSON.stringify({
+                        username: username,
+                        role: data.role || 'student'
+                    }));
+                    
+                    showNotification('Login successful! Redirecting...', 'success');
+                    
+                    // Redirect to main application
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                    
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.message || 'Login failed', 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                
+                // For demo purposes, allow fake login if server is not available
+                if (error.message.includes('fetch')) {
+                    showNotification('Server not available. Using demo mode...', 'warning');
+                    
+                    // Fake successful login
+                    localStorage.setItem('authToken', 'demo-token-' + Date.now());
+                    localStorage.setItem('userInfo', JSON.stringify({
+                        username: username,
+                        role: username.includes('teacher') ? 'teacher' : 'student'
+                    }));
+                    
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                } else {
+                    showNotification('Network error. Please try again.', 'danger');
+                }
+            }
+        });
+        
+        // Check if already logged in
+        document.addEventListener('DOMContentLoaded', function() {
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                showNotification('You are already logged in. Redirecting...', 'info');
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -3,6 +3,10 @@ COMP5241 Group 10 - Application Configuration
 """
 import os
 from datetime import timedelta
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 class Config:
     """Base configuration"""
