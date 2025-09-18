@@ -5,43 +5,60 @@ API endpoints for mini-game functionality
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from mongoengine.errors import NotUniqueError, ValidationError, DoesNotExist
+from mongoengine import Q
 from .activities import MiniGame, MiniGameScore
 from datetime import datetime
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # Define a separate blueprint for mini-game endpoints
 minigames_bp = Blueprint('minigames', __name__, url_prefix='/minigames')
 
-# Create a mini-game (teacher only)
+# Create a mini-game (teacher only) - enhanced
 @minigames_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_minigame():
-    user_id = get_jwt_identity()
-    data = request.get_json()
-    
-    # Validate required fields
-    if not data.get('title') or not data.get('game_type') or not data.get('course_id'):
-        return jsonify({'error': 'Missing required fields (title, game_type, or course_id)'}), 400
-    
-    # Validate game_type
-    valid_game_types = ['matching', 'sorting', 'sequence', 'memory', 'custom']
-    if data.get('game_type') not in valid_game_types:
-        return jsonify({'error': f'Invalid game_type. Must be one of: {", ".join(valid_game_types)}'}), 400
-    
     try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        
+        # Validate required fields
+        if not data or not data.get('title') or not data.get('game_type') or not data.get('course_id'):
+            return jsonify({'error': 'Missing required fields (title, game_type, or course_id)'}), 400
+        
+        # Validate game_type
+        valid_game_types = ['matching', 'sorting', 'sequence', 'memory', 'custom']
+        if data.get('game_type') not in valid_game_types:
+            return jsonify({'error': f'Invalid game_type. Must be one of: {", ".join(valid_game_types)}'}), 400
+        
+        # Create and save mini-game
         minigame = MiniGame(
-            title=data['title'],
+            title=str(data['title']).strip(),
             game_type=data['game_type'],
-            description=data.get('description', ''),
-            instructions=data.get('instructions', ''),
+            description=str(data.get('description', '')).strip(),
+            instructions=str(data.get('instructions', '')).strip(),
             game_config=data.get('game_config', {}),
+            max_score=data.get('max_score', 100),
             created_by=user_id,
-            course_id=data['course_id'],
+            course_id=str(data['course_id']).strip(),
             expires_at=datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None
         )
         minigame.save()
-        return jsonify({'message': 'Mini-game created successfully', 'minigame_id': str(minigame.id)}), 201
+        
+        logger.info(f"Mini-game created successfully by user {user_id}: {minigame.id}")
+        return jsonify({
+            'message': 'Mini-game created successfully', 
+            'minigame_id': str(minigame.id)
+        }), 201
+        
+    except ValidationError as e:
+        logger.error(f"Mini-game validation error: {str(e)}")
+        return jsonify({'error': 'Validation error', 'details': str(e)}), 400
     except Exception as e:
-        return jsonify({'error': str(e)}), 400
+        logger.error(f"Mini-game creation error: {str(e)}")
+        return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
 # List mini-games (optionally filter by course or game type)
 @minigames_bp.route('/', methods=['GET'])

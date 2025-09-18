@@ -22,16 +22,16 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-dashboard">Dashboard</a>
+                        <a class="nav-link" href="#" data-section="dashboard">Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-courses">Courses</a>
+                        <a class="nav-link" href="#" data-section="courses">Courses</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-activities">Activities</a>
+                        <a class="nav-link" href="#" data-section="activities">Activities</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" id="nav-genai">AI Assistant</a>
+                        <a class="nav-link" href="#" data-section="genai">AI Assistant</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
@@ -125,12 +125,158 @@
 
                     <!-- Learning Activities Section (Charlie's responsibility) -->
                     <div id="activities-section" class="content-section d-none">
-                        <h2>Learning Activities</h2>
-                        <div class="mb-3">
-                            <button class="btn btn-primary" id="create-activity-btn">Create New Activity</button>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h2>🎓 Learning Activities</h2>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary active" data-activity-view="overview">Overview</button>
+                                <button type="button" class="btn btn-outline-primary" data-activity-view="my-activities">My Activities</button>
+                                <button type="button" class="btn btn-outline-primary" data-activity-view="create" data-role="teacher">Create New</button>
+                            </div>
                         </div>
-                        <div id="activities-list">
-                            <p>Loading activities... (To be implemented by Charlie)</p>
+
+                        <!-- Activities Overview -->
+                        <div id="activities-overview" class="activity-view">
+                            <div class="row g-4">
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card activity-card quiz-card h-100 border-primary">
+                                        <div class="card-body text-center">
+                                            <div class="activity-icon mb-3">📝</div>
+                                            <h5 class="card-title">Quizzes</h5>
+                                            <p class="card-text">Interactive multiple-choice and fill-in-the-blank quizzes</p>
+                                            <div class="activity-stats mb-3">
+                                                <small class="text-muted" id="quiz-count">Loading...</small>
+                                            </div>
+                                            <button class="btn btn-primary" data-activity-type="quiz">View Quizzes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card activity-card wordcloud-card h-100 border-success">
+                                        <div class="card-body text-center">
+                                            <div class="activity-icon mb-3">☁️</div>
+                                            <h5 class="card-title">Word Clouds</h5>
+                                            <p class="card-text">Collaborative word collection with real-time visualization</p>
+                                            <div class="activity-stats mb-3">
+                                                <small class="text-muted" id="wordcloud-count">Loading...</small>
+                                            </div>
+                                            <button class="btn btn-success" data-activity-type="wordcloud">View Word Clouds</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card activity-card shortanswer-card h-100 border-info">
+                                        <div class="card-body text-center">
+                                            <div class="activity-icon mb-3">📄</div>
+                                            <h5 class="card-title">Short Answers</h5>
+                                            <p class="card-text">Essay-style questions with teacher feedback</p>
+                                            <div class="activity-stats mb-3">
+                                                <small class="text-muted" id="shortanswer-count">Loading...</small>
+                                            </div>
+                                            <button class="btn btn-info" data-activity-type="shortanswer">View Questions</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-3 col-md-6">
+                                    <div class="card activity-card minigame-card h-100 border-warning">
+                                        <div class="card-body text-center">
+                                            <div class="activity-icon mb-3">🎮</div>
+                                            <h5 class="card-title">Mini Games</h5>
+                                            <p class="card-text">Educational games with leaderboards and scoring</p>
+                                            <div class="activity-stats mb-3">
+                                                <small class="text-muted" id="minigame-count">Loading...</small>
+                                            </div>
+                                            <button class="btn btn-warning" data-activity-type="minigame">View Games</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- My Activities View -->
+                        <div id="my-activities" class="activity-view d-none">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">My Learning Activities</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div id="my-activities-content">
+                                                <div class="text-center">
+                                                    <div class="spinner-border" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                    <p class="mt-2">Loading your activities...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Create New Activity View -->
+                        <div id="create-activity" class="activity-view d-none">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Create New Learning Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <div class="card create-option-card" data-create-type="quiz">
+                                                <div class="card-body text-center">
+                                                    <div class="activity-icon mb-2">📝</div>
+                                                    <h6>Create Quiz</h6>
+                                                    <p class="small text-muted">Multiple choice, true/false, or multiple select questions</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card create-option-card" data-create-type="wordcloud">
+                                                <div class="card-body text-center">
+                                                    <div class="activity-icon mb-2">☁️</div>
+                                                    <h6>Create Word Cloud</h6>
+                                                    <p class="small text-muted">Collect words from students on a specific topic</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card create-option-card" data-create-type="shortanswer">
+                                                <div class="card-body text-center">
+                                                    <div class="activity-icon mb-2">📄</div>
+                                                    <h6>Create Short Answer</h6>
+                                                    <p class="small text-muted">Essay-style questions with personalized feedback</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="card create-option-card" data-create-type="minigame">
+                                                <div class="card-body text-center">
+                                                    <div class="activity-icon mb-2">🎮</div>
+                                                    <h6>Create Mini Game</h6>
+                                                    <p class="small text-muted">Interactive games with scoring and competition</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity Details View -->
+                        <div id="activity-details" class="activity-view d-none">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <button class="btn btn-outline-secondary" id="back-to-activities">
+                                    ← Back to Activities
+                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-outline-primary" id="refresh-activity">Refresh</button>
+                                </div>
+                            </div>
+                            <div id="activity-details-content">
+                                <!-- Dynamic content will be loaded here -->
+                            </div>
                         </div>
                     </div>
 
@@ -211,5 +357,6 @@
     <script src="static/js/main.js"></script>
     <script src="static/js/api.js"></script>
     <script src="static/js/auth.js"></script>
+    <script src="static/js/learning-activities.js"></script>
 </body>
 </html>
