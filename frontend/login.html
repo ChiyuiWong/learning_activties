@@ -175,7 +175,7 @@
                     const data = await response.json();
                     
                     // Store token
-                    localStorage.setItem('authToken', data.access_token);
+
                     localStorage.setItem('userInfo', JSON.stringify({
                         username: username,
                         role: data.role || 'student'
@@ -201,7 +201,7 @@
                     showNotification('Server not available. Using demo mode...', 'warning');
                     
                     // Fake successful login
-                    localStorage.setItem('authToken', 'demo-token-' + Date.now());
+
                     localStorage.setItem('userInfo', JSON.stringify({
                         username: username,
                         role: username.includes('teacher') ? 'teacher' : 'student'

@@ -14,7 +14,7 @@ class APIClient {
     setToken(token) {
         this.token = token;
         if (token) {
-            localStorage.setItem('authToken', token);
+
         } else {
             localStorage.removeItem('authToken');
         }
