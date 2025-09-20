@@ -19,7 +19,7 @@ def admin_health():
 
 
 @admin_bp.route('/users', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_all_users():
     """Get all users - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()
@@ -32,7 +32,7 @@ def get_all_users():
 
 
 @admin_bp.route('/users/<user_id>', methods=['PUT'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def update_user(user_id):
     """Update user - placeholder for Sunny's implementation"""
     data = request.get_json()
@@ -48,7 +48,7 @@ def update_user(user_id):
 
 
 @admin_bp.route('/users/<user_id>/activate', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def activate_user(user_id):
     """Activate/deactivate user - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()
@@ -62,7 +62,7 @@ def activate_user(user_id):
 
 
 @admin_bp.route('/system/stats', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_system_stats():
     """Get system statistics - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()
@@ -75,7 +75,7 @@ def get_system_stats():
 
 
 @admin_bp.route('/audit-logs', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_audit_logs():
     """Get audit logs - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()

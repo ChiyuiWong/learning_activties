@@ -19,7 +19,7 @@ def courses_health():
 
 
 @courses_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_courses():
     """Get courses - placeholder for Keith's implementation"""
     current_user = get_jwt_identity()
@@ -32,7 +32,7 @@ def get_courses():
 
 
 @courses_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_course():
     """Create course - placeholder for Keith's implementation"""
     data = request.get_json()
@@ -47,7 +47,7 @@ def create_course():
 
 
 @courses_bp.route('/<course_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_course(course_id):
     """Get specific course - placeholder for Keith's implementation"""
     current_user = get_jwt_identity()
@@ -61,7 +61,7 @@ def get_course(course_id):
 
 
 @courses_bp.route('/<course_id>/enroll', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def enroll_in_course(course_id):
     """Enroll in course - placeholder for Keith's implementation"""
     current_user = get_jwt_identity()
@@ -75,7 +75,7 @@ def enroll_in_course(course_id):
 
 
 @courses_bp.route('/<course_id>/students', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_course_students(course_id):
     """Get students enrolled in course - placeholder for Keith's implementation"""
     current_user = get_jwt_identity()
