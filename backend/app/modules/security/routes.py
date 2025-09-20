@@ -44,11 +44,20 @@ def login():
     }
     access_token = create_access_token(identity=username, additional_claims=token_data)
     
-    return jsonify({
-        'access_token': access_token,
+    response = jsonify({
         'username': username,
         'role': role
-    }), 200
+    })
+    # Set access_token in cookie with secure settings
+    response.set_cookie(
+        'access_token',
+        access_token,
+        httponly=True,
+        samesite='Strict',
+        secure=True,
+        max_age=None  # Session cookie, expires when browser closes
+    )
+    return response, 200
 
 
 @security_bp.route('/register', methods=['POST'])

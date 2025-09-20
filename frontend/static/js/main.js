@@ -22,31 +22,23 @@ function initializeApp() {
     console.log('Initializing COMP5241 LMS Application...');
     
     // Check if user is logged in
-    const token = localStorage.getItem('authToken');
     const userInfo = localStorage.getItem('userInfo');
-    
-    if (token && userInfo) {
+    if (userInfo) {
         try {
             app.currentUser = JSON.parse(userInfo);
             console.log('User logged in:', app.currentUser);
-            
-            // Update UI with user info
             updateUserInterface();
-            
-            // Initialize learning activities with user role
             if (typeof learningActivities !== 'undefined') {
                 setTimeout(() => {
                     learningActivities.setUserRole(app.currentUser.role);
                 }, 500);
             }
-            
         } catch (error) {
             console.error('Error parsing user info:', error);
             redirectToLogin();
             return;
         }
     } else {
-        // Redirect to login page
         redirectToLogin();
         return;
     }
