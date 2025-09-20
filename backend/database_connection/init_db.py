@@ -17,11 +17,8 @@ def init_database():
         client = pymongo.MongoClient(mongodb_uri)
         
         # Get database name from URI or use default
-        db_name = mongodb_uri.split('/')[-1] if '/' in mongodb_uri else 'comp5241_g10'
+        db_name = 'comp5241_g10'
         db = client[db_name]
-        
-        print(f"Connected to MongoDB: {mongodb_uri}")
-        print(f"Database: {db_name}")
         
         # Create collections and indexes
         create_collections_and_indexes(db)
@@ -29,7 +26,7 @@ def init_database():
         # Insert sample data (optional)
         insert_sample_data(db)
         
-        print("Database initialization completed successfully!")
+        print("Database initialization completed successfully.")
         
     except Exception as e:
         print(f"Error initializing database: {e}")
@@ -124,7 +121,3 @@ def insert_sample_data(db):
     db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
     
     print("Inserted sample data")
-
-
-if __name__ == "__main__":
-    init_database()

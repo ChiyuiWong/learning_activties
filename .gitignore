@@ -61,7 +61,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Database backups
-database/backups/
+backend/database_connection/backups/
 
 # Temporary files
 *.tmp
