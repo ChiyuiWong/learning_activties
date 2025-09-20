@@ -24,6 +24,7 @@ def create_app(config_class=Config):
     
     # Initialize extensions with explicit CORS settings
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
     jwt = JWTManager(app)
     
     # Initialize database

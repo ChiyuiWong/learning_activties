@@ -7,7 +7,7 @@ Joyce's responsibility for UI functionality
 const app = {
     currentUser: null,
     currentSection: 'dashboard',
-    apiBaseUrl: 'http://localhost:5000/api'
+    apiBaseUrl: '/api'
 };
 
 // DOM Ready
