@@ -48,7 +48,7 @@ def validate_shortanswer_data(data):
 
 # Create a short answer question (teacher only)
 @shortanswers_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_shortanswer():
     try:
         user_id = get_jwt_identity()
@@ -86,7 +86,7 @@ def create_shortanswer():
 
 # List short answer questions (optionally filter by course)
 @shortanswers_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_shortanswers():
     course_id = request.args.get('course_id')
     query = ShortAnswerQuestion.objects(is_active=True)
@@ -129,7 +129,7 @@ def list_shortanswers():
 
 # Get a specific short answer question
 @shortanswers_bp.route('/<question_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_shortanswer(question_id):
     try:
         question = ShortAnswerQuestion.objects.get(id=question_id)
@@ -183,7 +183,7 @@ def get_shortanswer(question_id):
 
 # Enhanced answer submission with better validation
 @shortanswers_bp.route('/<question_id>/submit', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def submit_answer(question_id):
     try:
         user_id = get_jwt_identity()
@@ -252,7 +252,7 @@ def submit_answer(question_id):
 
 # Enhanced feedback system with batch grading
 @shortanswers_bp.route('/<question_id>/feedback/<student_id>', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def provide_feedback(question_id, student_id):
     try:
         user_id = get_jwt_identity()
@@ -309,7 +309,7 @@ def provide_feedback(question_id, student_id):
 
 # Batch grading endpoint
 @shortanswers_bp.route('/<question_id>/batch-grade', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def batch_grade(question_id):
     try:
         user_id = get_jwt_identity()
@@ -392,7 +392,7 @@ def batch_grade(question_id):
 
 # Get grading statistics for teachers
 @shortanswers_bp.route('/<question_id>/stats', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_grading_stats(question_id):
     try:
         user_id = get_jwt_identity()
@@ -451,7 +451,7 @@ def get_grading_stats(question_id):
 
 # Close/deactivate a short answer question (teacher only)
 @shortanswers_bp.route('/<question_id>/close', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def close_shortanswer(question_id):
     user_id = get_jwt_identity()
     

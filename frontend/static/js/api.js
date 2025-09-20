@@ -5,7 +5,7 @@ Shared API utilities for all team members
 
 // API Client class
 class APIClient {
-    constructor(baseUrl = 'http://localhost:5000/api') {
+    constructor(baseUrl = '/api') {
         this.baseUrl = baseUrl;
         this.token = localStorage.getItem('authToken');
     }
@@ -14,7 +14,7 @@ class APIClient {
     setToken(token) {
         this.token = token;
         if (token) {
-            localStorage.setItem('authToken', token);
+
         } else {
             localStorage.removeItem('authToken');
         }
