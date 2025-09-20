@@ -2,7 +2,7 @@
 COMP5241 Group 10 - Security Module Routes
 Responsible: Sunny
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response, render_template
 from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 
 from app.modules.security.services import SecurityService
@@ -23,7 +23,7 @@ def security_health():
 @security_bp.route('/login', methods=['POST'])
 def login():
     """User login endpoint with simple mock authentication for testing"""
-    data = request.get_json()
+    data = request.form
     username = data.get('username', '')
     password = data.get('password', '')
     
@@ -44,17 +44,14 @@ def login():
     }
     access_token = create_access_token(identity=username, additional_claims=token_data)
     
-    response = jsonify({
-        'username': username,
-        'role': role
-    })
+    response = Response(render_template('/sec_handshake.html', username=username, role=role))
     # Set access_token in cookie with secure settings
     response.set_cookie(
         'access_token',
         access_token,
         httponly=True,
         samesite='Strict',
-        secure=True,
+        # secure=True, # TODO: Set to this to true after real deployment
         max_age=None  # Session cookie, expires when browser closes
     )
     return response, 200

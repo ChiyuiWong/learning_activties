@@ -17,8 +17,9 @@ def create_app(config_class=Config):
     # Initialize Flask app with static files from frontend directory
     app = Flask(__name__,
                 static_folder=os.path.join(frontend_dir, 'static'),
-                static_url_path='/static')
-                
+                static_url_path='/static',
+                template_folder=os.path.abspath("templates"))
+    print(os.path.abspath("templates"))
     app.config.from_object(config_class)
     
     # Initialize extensions with explicit CORS settings
