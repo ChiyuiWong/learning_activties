@@ -3,7 +3,7 @@ COMP5241 Group 10 - Security Module Routes
 Responsible: Sunny
 """
 from flask import Blueprint, request, jsonify, Response, render_template
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies, get_jwt
 
 from app.modules.security.services import SecurityService
 
@@ -46,14 +46,7 @@ def login():
     
     response = Response(render_template('/sec_handshake.html', username=username, role=role))
     # Set access_token in cookie with secure settings
-    response.set_cookie(
-        'access_token',
-        access_token,
-        httponly=True,
-        samesite='Strict',
-        # secure=True, # TODO: Set to this to true after real deployment
-        max_age=None  # Session cookie, expires when browser closes
-    )
+    set_access_cookies(response, access_token)
     return response, 200
 
 
@@ -73,7 +66,7 @@ def register():
 
 
 @security_bp.route('/logout', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def logout():
     """User logout endpoint - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()
@@ -86,13 +79,13 @@ def logout():
 
 
 @security_bp.route('/profile', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_profile():
     """Get user profile - placeholder for Sunny's implementation"""
-    current_user = get_jwt_identity()
+    claims = get_jwt()
     
     # TODO: Implement profile retrieval logic here
     return jsonify({
         'message': 'Profile endpoint - to be implemented by Sunny',
-        'user': current_user
+        'info': claims
     }), 200

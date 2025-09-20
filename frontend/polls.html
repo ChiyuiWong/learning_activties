@@ -565,7 +565,7 @@
       recentActivitiesContainer.innerHTML = '<p class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></p>';
       
       try {
-        const response = await fetch('http://localhost:5000/api/learning/activities', {
+        const response = await fetch('/api/learning/activities', {
           headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
         });
         
@@ -691,7 +691,7 @@
       document.getElementById('pollsContainer').innerHTML = '';
       
       try {
-        const response = await fetch('http://localhost:5000/api/learning/polls', {
+        const response = await fetch('/api/learning/polls', {
           headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
         });
         
@@ -820,7 +820,7 @@
       document.getElementById('createPollError').textContent = '';
       
       try {
-        const response = await fetch('http://localhost:5000/api/learning/polls', {
+        const response = await fetch('/api/learning/polls', {
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + JWT_TOKEN,
@@ -870,7 +870,7 @@
       }
 
       try {
-        const response = await fetch(`http://localhost:5000/api/learning/polls/${pollId}/vote`, {
+        const response = await fetch(`/api/learning/polls/${pollId}/vote`, {
           method: 'POST',
           headers: {
             'Authorization': 'Bearer ' + JWT_TOKEN,
@@ -919,7 +919,7 @@
       resultsContainer.classList.remove('hidden');
 
       try {
-        const response = await fetch(`http://localhost:5000/api/learning/polls/${pollId}/results`, {
+        const response = await fetch(`/api/learning/polls/${pollId}/results`, {
           headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
         });
         

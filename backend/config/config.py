@@ -19,10 +19,12 @@ class Config:
     
     # GenAI Configuration (for Ting's module)
     OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-    
+
     # Security Configuration
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
-    BCRYPT_LOG_ROUNDS = 12
+    JWT_COOKIE_SAMESITE = "Strict"
+    JWT_TOKEN_LOCATION = ["cookies"]
+    # JWT_COOKIE_SECURE = True # TODO: Set to true after deployed to HTTPS environment
     
     # CORS Configuration
     CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']

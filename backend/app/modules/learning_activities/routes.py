@@ -37,7 +37,7 @@ def learning_health():
 
 
 @learning_bp.route('/activities', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_activities():
     """Get all available learning activities"""
     current_user = get_jwt_identity()
@@ -83,7 +83,7 @@ def get_activities():
 
 
 @learning_bp.route('/activities', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_activity():
     """Create learning activity - placeholder for Charlie's implementation"""
     data = request.get_json()
@@ -98,7 +98,7 @@ def create_activity():
 
 
 @learning_bp.route('/activities/<activity_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_activity(activity_id):
     """Get specific learning activity - placeholder for Charlie's implementation"""
     current_user = get_jwt_identity()
@@ -112,7 +112,7 @@ def get_activity(activity_id):
 
 
 @learning_bp.route('/activities/<activity_id>/submit', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def submit_activity():
     """Submit activity completion - placeholder for Charlie's implementation"""
     data = request.get_json()

@@ -19,7 +19,7 @@ def genai_health():
 
 
 @genai_bp.route('/generate', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def generate_content():
     """Generate AI content - placeholder for Ting's implementation"""
     data = request.get_json()
@@ -32,7 +32,7 @@ def generate_content():
 
 
 @genai_bp.route('/analyze', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def analyze_content():
     """Analyze content with AI - placeholder for Ting's implementation"""
     data = request.get_json()
