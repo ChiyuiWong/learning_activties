@@ -103,12 +103,6 @@ cp env.example .env
 # - OPENAI_API_KEY (for GenAI features)
 ```
 
-#### Initialize Database
-```bash
-cd ../database
-python init_db.py
-```
-
 #### Start Backend Server
 ```bash
 cd ../backend
