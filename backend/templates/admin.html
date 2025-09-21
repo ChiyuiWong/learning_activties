@@ -2,13 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+        crossorigin="anonymous"></script>
+    <script src="static/js/api.js"></script>
 </head>
 <body>
-<div id="create_account">
-  <form>
+    <div id="create_accounts">
+        <h2>Upload accounts file</h2>
+        <form id="csvForm">
+            <input type="file" id="csvFile" accept=".csv" required>
+            <input type="submit">
+        </form>
+        <div id="error" class="error"></div>
+    </div>
 
-  </form>
-</div>
+    <div id="csvOutput"></div>
+
+    <script>
+        $(document).ready(async function () {
+          const api = new APIClient();
+          $('#csvOutput').text(await api.post("/admin/profile"));
+          $('#csvForm').on('submit', function (e) {
+            e.preventDefault();
+            $('#error').text('');
+            $('#csvOutput').empty();
+
+            const file = $('#csvFile')[0].files[0];
+            if (!file) {
+              $('#error').text('Please select a CSV file.');
+              return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+              //try {
+              const csvData = e.target.result;
+              const parsedData = parseCSV(csvData);
+              displayData(parsedData);
+              // } catch (err) {
+              //     $('#error').text('Error parsing CSV: ' + err.message);
+              // }
+            };
+
+            reader.onerror = function () {
+              $('#error').text('Error reading file.');
+            };
+
+            reader.readAsText(file);
+          });
+
+          function parseCSV(csvString) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csvString.length; i++) {
+              const char = csvString[i];
+
+              if (char === '"') {
+                // Handle escaped quotes ("" inside quoted cell)
+                if (inQuotes && csvString[i + 1] === '"') {
+                  currentCell += '"';
+                  i++; // Skip next quote
+                } else {
+                  inQuotes = !inQuotes;
+                }
+              } else if (char === ',' && !inQuotes) {
+                // End of cell
+                currentRow.push(currentCell);
+                currentCell = '';
+              } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                // End of row (handle Windows \r\n)
+                if (char === '\r' && csvString[i + 1] === '\n') {
+                  i++; // Skip \n after \r
+                }
+                // Add the last cell of the row
+                if (currentCell !== '' || currentRow.length > 0) {
+                  currentRow.push(currentCell);
+                  currentCell = '';
+                }
+                // Add the row if it's not empty
+                if (currentRow.length > 0) {
+                  rows.push(currentRow);
+                  currentRow = [];
+                }
+              } else {
+                currentCell += char;
+              }
+            }
+
+            // Add any remaining data (last row might not end with newline)
+            if (currentCell !== '' || currentRow.length > 0) {
+              currentRow.push(currentCell);
+            }
+            if (currentRow.length > 0) {
+              rows.push(currentRow);
+            }
+
+            createURLs(rows);
+          }
+
+
+          async function createURLs(rows) {
+            // Get the first row as header
+            const emailIndex = rows[0].indexOf("email");
+            const firstNameIndex = rows[0].indexOf("first_name");
+            const lastNameIndex = rows[0].indexOf("last_name");
+            const roleIndex = rows[0].indexOf("role");
+            const newAccounts = []
+            for (let i = 1; i < rows.length; i++) {
+              newAccounts.push({
+                email: rows[i][emailIndex],
+                first_name: rows[i][firstNameIndex],
+                last_name: rows[i][lastNameIndex],
+                role: rows[i][roleIndex]
+              })
+            }
+            let ret = await api.post("/admin/new_users", newAccounts);
+            for (let i = 0; i < ret.length; i++) {
+              ret[i][1] = window.location.origin + "/register/" + ret[i][1];
+            }
+            displayData(ret);
+          }
+
+          function displayData(data) {
+            if (data.length === 0) return;
+
+            const table = $('<table>');
+
+            // Create header row with column numbers if no header exists
+            const headerRow = $('<tr>');
+            $.each(data[0], function (i) {
+              headerRow.append($('<th>').text(`Column ${i + 1}`));
+            });
+            table.append(headerRow);
+
+            // Add data rows
+            $.each(data, function () {
+              const row = $('<tr>');
+              $.each(this, function () {
+                row.append($('<td>').text(this));
+              });
+              table.append(row);
+            });
+
+            $('#csvOutput').append(table);
+          }
+        });
+    </script>
 </body>
 </html>

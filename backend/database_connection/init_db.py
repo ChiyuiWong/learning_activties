@@ -42,7 +42,12 @@ def create_collections_and_indexes(db):
     db.users.create_index("username", unique=True)
     db.users.create_index("email", unique=True)
     db.users.create_index([("role", 1), ("is_active", 1)])
-    
+
+    # New users collection indexes
+    # Users collection indexes
+    db.new_users.create_index("email", unique=True)
+    db.new_users.create_index([("role", 1)])
+
     # Courses collection indexes
     db.courses.create_index("course_code", unique=True)
     db.courses.create_index([("instructor_id", 1), ("is_active", 1)])
