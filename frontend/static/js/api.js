@@ -9,26 +9,19 @@ class APIClient {
         this.baseUrl = baseUrl;
         this.token = localStorage.getItem('authToken');
     }
-    
-    // Set authentication token
-    setToken(token) {
-        this.token = token;
-        if (token) {
-
-        } else {
-            localStorage.removeItem('authToken');
-        }
+    getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
     }
     
     // Get authentication headers
     getHeaders() {
         const headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': this.getCookie('csrf_access_token'),
         };
-        
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
+
         
         return headers;
     }
@@ -328,7 +321,7 @@ const HealthAPI = {
             security: SecurityAPI.healthCheck,
             genai: GenAIAPI.healthCheck,
             courses: CoursesAPI.healthCheck,
-            activities: ActivitiesAPI.healthCheck,
+            activities: LearningActivitiesAPI.healthCheck,
             admin: AdminAPI.healthCheck
         };
         
@@ -349,7 +342,7 @@ window.api = api;
 window.SecurityAPI = SecurityAPI;
 window.GenAIAPI = GenAIAPI;
 window.CoursesAPI = CoursesAPI;
-window.ActivitiesAPI = ActivitiesAPI;
+window.ActivitiesAPI = LearningActivitiesAPI;
 window.AdminAPI = AdminAPI;
 window.HealthAPI = HealthAPI;
 

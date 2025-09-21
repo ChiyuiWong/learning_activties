@@ -70,6 +70,12 @@ def create_app(config_class=Config):
         if "role" not in claims or claims["role"] != "admin":
             return redirect('/')
         return render_template('admin.html')
+
+    @app.route('/register/<id>')
+    def register(id):
+        if id is None or id == '':
+            return redirect('/')
+        return render_template('register.html', id=id)
         
     @app.route('/login-test')
     def login_test():

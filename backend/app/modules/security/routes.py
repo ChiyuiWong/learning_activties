@@ -56,13 +56,28 @@ def register():
     User registration endpoint - placeholder for Sunny's implementation
     NOTE: Registration SHALL only be permitted to be carry out by trusted identities
     """
-    data = request.get_json()
-    
-    # TODO: Implement user registration logic here
-    return jsonify({
-        'message': 'Registration endpoint - to be implemented by Sunny',
-        'received_data': data
-    }), 200
+    data = request.form
+    username = data.get('username', '')
+    password = data.get('password', '')
+    msg = SecurityService.create_user(username, password, data.get('id'))
+    if msg != "OK":
+        return render_template('register.html', msg=msg, id=data.get('id'))
+    # Created account
+    role = SecurityService.get_role(username, password)
+    if role is None:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Create access token with user info
+    token_data = {
+        'username': username,
+        'role': role
+    }
+    access_token = create_access_token(identity=username, additional_claims=token_data)
+
+    response = Response(render_template('/sec_handshake.html', username=username, role=role))
+    # Set access_token in cookie with secure settings
+    set_access_cookies(response, access_token)
+    return response, 200
 
 
 @security_bp.route('/logout', methods=['POST'])
