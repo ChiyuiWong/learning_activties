@@ -21,7 +21,7 @@ load_dotenv()
 
 class SecurityService:
     """Service class for security operations"""
-    student_disallowed_name_list = ["professor", "prof.", "dr.", "teacher"]
+    student_disallowed_name_list = ["professor", "prof.", "dr.", "teacher", "lecturer"]
     @staticmethod
     def authenticate_user(username, password):
         """Authenticate user credentials"""
