@@ -72,7 +72,7 @@ class SecurityService:
             return "username already used by another user. Think of a new one."
         if new_user_doc["role"] == "student":
             for student_disallowed_name in SecurityService.student_disallowed_name_list:
-                if student_disallowed_name in username:
+                if student_disallowed_name in username.lower():
                     return "You are not a staff."
         # The user can create an account now
         salt = os.urandom(16)
