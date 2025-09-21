@@ -73,7 +73,7 @@ class SecurityService:
         if new_user_doc["role"] == "student":
             for student_disallowed_name in SecurityService.student_disallowed_name_list:
                 if student_disallowed_name in username.lower():
-                    return "You are not a staff."
+                    return "Academic title disallowed because you are not a staff. If you have a valid degree and would want to include the title in your username, please contact the admin."
         # The user can create an account now
         salt = os.urandom(16)
         iv = os.urandom(16)
