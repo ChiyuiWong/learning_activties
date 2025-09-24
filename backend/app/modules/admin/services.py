@@ -61,9 +61,23 @@ class AdminService:
         db = get_db_connection()
         ret = []
         for user in users:
-            url_id = base64.urlsafe_b64encode(os.urandom(32)).decode("utf-8").replace("=", "$")
-            db["new_users"].insert_one({"_id": url_id, "email": user["email"], "first_name": user["first_name"], "last_name": user["last_name"], "role": user["role"]})
-            ret.append([user["email"], url_id])
+            if user["role"] == "admin":
+                ret.append([user["email"], "[FAILED] Generation failed: Admin can't create admin."])
+                continue
+            if user["role"] not in ["teacher", "student"]:
+                ret.append([user["email"], "[FAILED] Generation failed: Incorrect role."])
+                continue
+            check_email_doc = db["users"].find_one({"email": user["email"]})
+            check_new_email_doc = db["new_users"].find_one({"email": user["email"]})
+            if check_email_doc is not None or check_new_email_doc is not None:
+                ret.append([user["email"], "[FAILED] Generation failed: Account with this email address already exists."])
+                continue
+            try:
+                url_id = base64.urlsafe_b64encode(os.urandom(32)).decode("utf-8").replace("=", "$")
+                db["new_users"].insert_one({"_id": url_id, "email": user["email"], "first_name": user["first_name"], "last_name": user["last_name"], "role": user["role"]})
+                ret.append([user["email"], url_id])
+            except Exception as e:
+                ret.append([user["email"], f"[FAILED] Generation failed: {str(e)}"])
         return ret
 
     @staticmethod
