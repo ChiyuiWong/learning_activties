@@ -3,7 +3,9 @@ COMP5241 Group 10 - Admin Module Routes
 Responsible: Sunny
 """
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+
+from app.modules.admin.services import AdminService
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -37,7 +39,6 @@ def update_user(user_id):
     """Update user - placeholder for Sunny's implementation"""
     data = request.get_json()
     current_user = get_jwt_identity()
-    
     # TODO: Implement user update logic with admin permissions check
     return jsonify({
         'message': 'Update user endpoint - to be implemented by Sunny',
@@ -58,6 +59,31 @@ def activate_user(user_id):
         'message': 'User activation endpoint - to be implemented by Sunny',
         'user_id': user_id,
         'admin': current_user
+    }), 200
+
+
+@admin_bp.route('/new_users', methods=['POST'])
+@jwt_required(locations=["cookies"])
+def new_users():
+    """Initialize a batch of new users and return activation URLs"""
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    ret = AdminService.new_users(request.get_json())
+    print(ret)
+    return jsonify(ret), 200
+
+
+@admin_bp.route('/profile', methods=['POST'])
+@jwt_required(locations=["cookies"])
+def get_profile():
+    """Get user profile - placeholder for Sunny's implementation"""
+    claims = get_jwt()
+
+    # TODO: Implement profile retrieval logic here
+    return jsonify({
+        'message': 'Profile endpoint - to be implemented by Sunny',
+        'info': claims
     }), 200
 
 

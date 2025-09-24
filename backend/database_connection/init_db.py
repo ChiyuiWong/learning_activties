@@ -42,7 +42,12 @@ def create_collections_and_indexes(db):
     db.users.create_index("username", unique=True)
     db.users.create_index("email", unique=True)
     db.users.create_index([("role", 1), ("is_active", 1)])
-    
+
+    # New users collection indexes
+    # Users collection indexes
+    db.new_users.create_index("email", unique=True)
+    db.new_users.create_index([("role", 1)])
+
     # Courses collection indexes
     db.courses.create_index("course_code", unique=True)
     db.courses.create_index([("instructor_id", 1), ("is_active", 1)])
@@ -77,10 +82,12 @@ def insert_sample_data(db):
     
     # Sample admin user (password should be hashed in real implementation)
     sample_admin = {
-        "_id": "admin_001",
-        "username": "admin",
+        "_id": "admin1",
+        "username": "admin1",
         "email": "admin@comp5241.edu",
-        "encrypted_pw_hash": "to_be_hashed",  # Sunny will implement proper hashing
+        "encrypted_pw_hash": base64.b64decode("7d3lNVDtPbg3+L0SAoP+ZkcXxHZv5/dfcQJkx0+72bGqmZ0pyrPI+Xtncgn49DF1"),
+        "encrypted_pw_hash_iv": base64.b64decode("LPA6e6FX2x8Qe2cEOBpneg=="),
+        "pw_hash_salt": base64.b64decode("UTCB7gclTJoxeZPpMxv5CA=="),
         "first_name": "System",
         "last_name": "Administrator",
         "role": "admin",
@@ -120,7 +127,7 @@ def insert_sample_data(db):
     }
     
     # Insert sample users (update if exists)
-    db.users.replace_one({"_id": "admin_001"}, sample_admin, upsert=True)
+    db.users.replace_one({"_id": "admin1"}, sample_admin, upsert=True)
     db.users.replace_one({"_id": "teacher1"}, sample_teacher, upsert=True)
     db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
     

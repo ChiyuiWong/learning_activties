@@ -29,36 +29,7 @@ class AuthManager {
             this.logout();
         }
     }
-    
-    // Login user
-    async login(username, password) {
-        try {
-            const response = await SecurityAPI.login(username, password);
-            
-            if (response.access_token) {
-                this.token = response.access_token;
-                this.currentUser = response.user;
-                
-                // Store token
-                api.setToken(this.token);
-                
-                // Update UI
-                this.updateUI();
-                
-                // Hide login modal
-                const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                if (loginModal) {
-                    loginModal.hide();
-                }
-                
-                showAlert('Login successful!', 'success');
-                return true;
-            }
-        } catch (error) {
-            showAlert('Login failed: ' + error.message, 'danger');
-            return false;
-        }
-    }
+
     
     // Register new user
     async register(userData) {
