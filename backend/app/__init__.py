@@ -1,9 +1,9 @@
 """
 COMP5241 Group 10 - Flask Application Factory
 """
-from flask import Flask
+from flask import Flask, render_template, redirect
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 from app.config.database import init_db
 from app.config.config import Config
 import os
@@ -62,6 +62,20 @@ def create_app(config_class=Config):
     @app.route('/polls')
     def polls():
         return send_from_directory(frontend_dir, 'polls.html')
+
+    @app.route('/admin')
+    @jwt_required(locations=["cookies"])
+    def admin():
+        claims = get_jwt()
+        if "role" not in claims or claims["role"] != "admin":
+            return redirect('/')
+        return render_template('admin.html')
+
+    @app.route('/register/<id>')
+    def register(id):
+        if id is None or id == '':
+            return redirect('/')
+        return render_template('register.html', id=id)
         
     @app.route('/login-test')
     def login_test():

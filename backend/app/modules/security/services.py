@@ -13,7 +13,7 @@ import bcrypt
 from config.database import get_db_connection
 from .models import User, UserSession, SecurityAuditLog
 import pymongo
-from datetime import datetime
+import datetime
 import os
 from dotenv import load_dotenv
 
@@ -21,10 +21,10 @@ load_dotenv()
 
 class SecurityService:
     """Service class for security operations"""
-    
+    student_disallowed_name_list = ["professor", "prof.", "dr.", "teacher", "lecturer"]
     @staticmethod
     def authenticate_user(username, password):
-        """Authenticate user credentials - to be implemented by Sunny"""
+        """Authenticate user credentials"""
         try:
             db = get_db_connection()
             user_doc = db["users"].find_one({"username": username})
@@ -61,16 +61,48 @@ class SecurityService:
         return user_role
     
     @staticmethod
-    def create_user(username, email, password, role='student'):
-        """Create new user account - to be implemented by Sunny"""
-        # TODO: Implement user creation logic
-        pass
-    
-    @staticmethod
-    def hash_password(password):
-        """Hash password using bcrypt - to be implemented by Sunny"""
-        # TODO: Implement password hashing
-        pass
+    def create_user(username, pw, activation_id):
+        """Create new user account"""
+        db = get_db_connection()
+        new_user_doc = db["new_users"].find_one({"_id": activation_id})
+        if new_user_doc is None:
+            return "Activation ID not found."
+        check_name_doc = db["users"].find_one({"username": username})
+        if check_name_doc is not None:
+            return "username already used by another user. Think of a new one."
+        if new_user_doc["role"] == "student":
+            for student_disallowed_name in SecurityService.student_disallowed_name_list:
+                if student_disallowed_name in username.lower():
+                    return "Academic title disallowed because you are not a staff. If you have a valid degree and would want to include the title in your username, please contact the admin."
+        # The user can create an account now
+        salt = os.urandom(16)
+        iv = os.urandom(16)
+        hashed_pw = bcrypt.kdf(
+            password=pw.encode("utf-8"),
+            salt=salt,
+            desired_key_bytes=32,
+            rounds=1000)
+        cipher = Cipher(algorithms.AES(base64.b64decode(os.environ.get("PW_HASH_ENC_KEY"))), modes.CBC(iv))
+        encryptor = cipher.encryptor()
+        padder = padding.PKCS7(128).padder()
+        padded_plaintext = padder.update(hashed_pw) + padder.finalize()
+        pw_ciphertext = encryptor.update(padded_plaintext) + encryptor.finalize()
+        db["users"].insert_one(
+            {"_id": username,
+             "username": username,
+             "email": new_user_doc["email"],
+             "encrypted_pw_hash": pw_ciphertext,
+             "encrypted_pw_hash_iv": iv,
+             "pw_hash_salt": salt,
+             "first_name": new_user_doc["first_name"],
+             "last_name": new_user_doc["last_name"],
+             "role": new_user_doc["role"],
+             "is_active": True,
+             "is_verified": True,
+             "created_at": datetime.datetime.now(datetime.UTC),
+             })
+        db["new_users"].delete_one({"_id": new_user_doc["_id"]})
+        return "OK"
     
     @staticmethod
     def verify_password(password, hashed_password):
