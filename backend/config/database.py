@@ -1,6 +1,8 @@
 """
 COMP5241 Group 10 - Database Configuration and Connection
 """
+import os
+
 from mongoengine import connect, disconnect
 import pymongo
 from flask import current_app
@@ -21,9 +23,10 @@ def init_db(app):
 
 def get_db_connection():
     """Get direct PyMongo connection for complex operations"""
-    mongodb_uri = current_app.config['MONGODB_SETTINGS']['host']
+    mongodb_uri = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/comp5241_g10')
     client = pymongo.MongoClient(mongodb_uri)
-    db_name = mongodb_uri.split('/')[-1] if '/' in mongodb_uri else 'comp5241_g10'
+    # Get database name from URI or use default
+    db_name = 'comp5241_g10'
     return client[db_name]
 
 

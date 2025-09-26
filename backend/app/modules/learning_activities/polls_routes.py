@@ -9,7 +9,7 @@ polls_bp = Blueprint('polls', __name__, url_prefix='/polls')
 
 # Create a poll (teacher only)
 @polls_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_poll():
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -36,7 +36,7 @@ def create_poll():
 
 # List polls (optionally filter by course)
 @polls_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_polls():
     course_id = request.args.get('course_id')
     query = Poll.objects(is_active=True)
@@ -62,7 +62,7 @@ def list_polls():
 
 # Get a specific poll
 @polls_bp.route('/<poll_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_poll(poll_id):
     try:
         poll = Poll.objects.get(id=poll_id)
@@ -81,7 +81,7 @@ def get_poll(poll_id):
 
 # Vote on a poll (student only)
 @polls_bp.route('/<poll_id>/vote', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def vote_poll(poll_id):
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -125,7 +125,7 @@ def vote_poll(poll_id):
 
 # Get poll results
 @polls_bp.route('/<poll_id>/results', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def poll_results(poll_id):
     try:
         poll = Poll.objects.get(id=poll_id)
@@ -152,7 +152,7 @@ def poll_results(poll_id):
 
 # Close/deactivate a poll (teacher only)
 @polls_bp.route('/<poll_id>/close', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def close_poll(poll_id):
     user_id = get_jwt_identity()
     

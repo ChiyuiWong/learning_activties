@@ -1,6 +1,8 @@
 """
 COMP5241 Group 10 - Database Initialization Script
 """
+import base64
+
 import pymongo
 from datetime import datetime
 import os
@@ -17,11 +19,8 @@ def init_database():
         client = pymongo.MongoClient(mongodb_uri)
         
         # Get database name from URI or use default
-        db_name = mongodb_uri.split('/')[-1] if '/' in mongodb_uri else 'comp5241_g10'
+        db_name = 'comp5241_g10'
         db = client[db_name]
-        
-        print(f"Connected to MongoDB: {mongodb_uri}")
-        print(f"Database: {db_name}")
         
         # Create collections and indexes
         create_collections_and_indexes(db)
@@ -29,7 +28,7 @@ def init_database():
         # Insert sample data (optional)
         insert_sample_data(db)
         
-        print("Database initialization completed successfully!")
+        print("Database initialization completed successfully.")
         
     except Exception as e:
         print(f"Error initializing database: {e}")
@@ -43,7 +42,12 @@ def create_collections_and_indexes(db):
     db.users.create_index("username", unique=True)
     db.users.create_index("email", unique=True)
     db.users.create_index([("role", 1), ("is_active", 1)])
-    
+
+    # New users collection indexes
+    # Users collection indexes
+    db.new_users.create_index("email", unique=True)
+    db.new_users.create_index([("role", 1)])
+
     # Courses collection indexes
     db.courses.create_index("course_code", unique=True)
     db.courses.create_index([("instructor_id", 1), ("is_active", 1)])
@@ -78,10 +82,12 @@ def insert_sample_data(db):
     
     # Sample admin user (password should be hashed in real implementation)
     sample_admin = {
-        "_id": "admin_001",
-        "username": "admin",
+        "_id": "admin1",
+        "username": "admin1",
         "email": "admin@comp5241.edu",
-        "password_hash": "to_be_hashed",  # Sunny will implement proper hashing
+        "encrypted_pw_hash": base64.b64decode("7d3lNVDtPbg3+L0SAoP+ZkcXxHZv5/dfcQJkx0+72bGqmZ0pyrPI+Xtncgn49DF1"),
+        "encrypted_pw_hash_iv": base64.b64decode("LPA6e6FX2x8Qe2cEOBpneg=="),
+        "pw_hash_salt": base64.b64decode("UTCB7gclTJoxeZPpMxv5CA=="),
         "first_name": "System",
         "last_name": "Administrator",
         "role": "admin",
@@ -92,10 +98,12 @@ def insert_sample_data(db):
     
     # Sample teacher user
     sample_teacher = {
-        "_id": "teacher_001", 
+        "_id": "teacher1",
         "username": "teacher1",
         "email": "teacher1@comp5241.edu",
-        "password_hash": "to_be_hashed",
+        "encrypted_pw_hash": base64.b64decode("7d3lNVDtPbg3+L0SAoP+ZkcXxHZv5/dfcQJkx0+72bGqmZ0pyrPI+Xtncgn49DF1"),
+        "encrypted_pw_hash_iv": base64.b64decode("LPA6e6FX2x8Qe2cEOBpneg=="),
+        "pw_hash_salt": base64.b64decode("UTCB7gclTJoxeZPpMxv5CA=="),
         "first_name": "John",
         "last_name": "Doe",
         "role": "teacher",
@@ -109,7 +117,7 @@ def insert_sample_data(db):
         "_id": "student_001",
         "username": "student1", 
         "email": "student1@comp5241.edu",
-        "password_hash": "to_be_hashed",
+        "encrypted_pw_hash": "to_be_hashed",
         "first_name": "Jane",
         "last_name": "Smith",
         "role": "student",
@@ -119,12 +127,8 @@ def insert_sample_data(db):
     }
     
     # Insert sample users (update if exists)
-    db.users.replace_one({"_id": "admin_001"}, sample_admin, upsert=True)
-    db.users.replace_one({"_id": "teacher_001"}, sample_teacher, upsert=True)
+    db.users.replace_one({"_id": "admin1"}, sample_admin, upsert=True)
+    db.users.replace_one({"_id": "teacher1"}, sample_teacher, upsert=True)
     db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
     
     print("Inserted sample data")
-
-
-if __name__ == "__main__":
-    init_database()
