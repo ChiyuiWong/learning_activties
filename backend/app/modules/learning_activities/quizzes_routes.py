@@ -76,7 +76,7 @@ def validate_quiz_data(data):
 
 # Create a quiz (teacher only)
 @quizzes_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_quiz():
     try:
         user_id = get_jwt_identity()
@@ -135,7 +135,7 @@ def create_quiz():
 
 # List quizzes (optionally filter by course)
 @quizzes_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_quizzes():
     try:
         user_id = get_jwt_identity()
@@ -192,7 +192,7 @@ def list_quizzes():
 
 # Get a specific quiz
 @quizzes_bp.route('/<quiz_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_quiz(quiz_id):
     try:
         quiz = Quiz.objects.get(id=quiz_id)
@@ -245,7 +245,7 @@ def get_quiz(quiz_id):
 
 # Start a quiz attempt
 @quizzes_bp.route('/<quiz_id>/attempt', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def start_quiz_attempt(quiz_id):
     try:
         user_id = get_jwt_identity()
@@ -319,7 +319,7 @@ def start_quiz_attempt(quiz_id):
 
 # Submit a quiz attempt with improved scoring
 @quizzes_bp.route('/<quiz_id>/submit', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def submit_quiz(quiz_id):
     try:
         user_id = get_jwt_identity()
@@ -433,7 +433,7 @@ def submit_quiz(quiz_id):
 
 # Get quiz results (teacher only)
 @quizzes_bp.route('/<quiz_id>/results', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def quiz_results(quiz_id):
     user_id = get_jwt_identity()
     
@@ -479,7 +479,7 @@ def quiz_results(quiz_id):
 
 # Get student's own quiz results
 @quizzes_bp.route('/<quiz_id>/my-result', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def my_quiz_result(quiz_id):
     user_id = get_jwt_identity()
     
@@ -506,7 +506,7 @@ def my_quiz_result(quiz_id):
 
 # Close/deactivate a quiz (teacher only)
 @quizzes_bp.route('/<quiz_id>/close', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def close_quiz(quiz_id):
     user_id = get_jwt_identity()
     

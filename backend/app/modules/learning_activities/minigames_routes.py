@@ -18,7 +18,7 @@ minigames_bp = Blueprint('minigames', __name__, url_prefix='/minigames')
 
 # Create a mini-game (teacher only) - enhanced
 @minigames_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_minigame():
     try:
         user_id = get_jwt_identity()
@@ -62,7 +62,7 @@ def create_minigame():
 
 # List mini-games (optionally filter by course or game type)
 @minigames_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_minigames():
     course_id = request.args.get('course_id')
     game_type = request.args.get('game_type')
@@ -94,7 +94,7 @@ def list_minigames():
 
 # Get a specific mini-game
 @minigames_bp.route('/<minigame_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_minigame(minigame_id):
     try:
         minigame = MiniGame.objects.get(id=minigame_id)
@@ -136,7 +136,7 @@ def get_minigame(minigame_id):
 
 # Submit a score for a mini-game
 @minigames_bp.route('/<minigame_id>/score', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def submit_score(minigame_id):
     user_id = get_jwt_identity()
     data = request.get_json()
@@ -197,7 +197,7 @@ def submit_score(minigame_id):
 
 # Get leaderboard for a mini-game
 @minigames_bp.route('/<minigame_id>/leaderboard', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def minigame_leaderboard(minigame_id):
     try:
         minigame = MiniGame.objects.get(id=minigame_id)
@@ -242,7 +242,7 @@ def minigame_leaderboard(minigame_id):
 
 # Close/deactivate a mini-game (teacher only)
 @minigames_bp.route('/<minigame_id>/close', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def close_minigame(minigame_id):
     user_id = get_jwt_identity()
     

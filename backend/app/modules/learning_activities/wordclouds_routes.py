@@ -74,7 +74,7 @@ def validate_word(word):
 
 # Create a word cloud (teacher only)
 @wordclouds_bp.route('/', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_wordcloud():
     try:
         user_id = get_jwt_identity()
@@ -111,7 +111,7 @@ def create_wordcloud():
 
 # List word clouds (optionally filter by course)
 @wordclouds_bp.route('/', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_wordclouds():
     try:
         user_id = get_jwt_identity()
@@ -164,7 +164,7 @@ def list_wordclouds():
 
 # Get a specific word cloud
 @wordclouds_bp.route('/<wordcloud_id>', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_wordcloud(wordcloud_id):
     try:
         wordcloud = WordCloud.objects.get(id=wordcloud_id)
@@ -191,7 +191,7 @@ def get_wordcloud(wordcloud_id):
 
 # Submit a word to the word cloud with enhanced validation
 @wordclouds_bp.route('/<wordcloud_id>/submit', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def submit_word(wordcloud_id):
     try:
         user_id = get_jwt_identity()
@@ -254,7 +254,7 @@ def submit_word(wordcloud_id):
 
 # Get enhanced word cloud results with analytics
 @wordclouds_bp.route('/<wordcloud_id>/results', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def wordcloud_results(wordcloud_id):
     try:
         wordcloud = WordCloud.objects.get(id=wordcloud_id)
@@ -324,7 +324,7 @@ def wordcloud_results(wordcloud_id):
 
 # Remove a user's word submission
 @wordclouds_bp.route('/<wordcloud_id>/remove', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def remove_word(wordcloud_id):
     try:
         user_id = get_jwt_identity()
@@ -365,7 +365,7 @@ def remove_word(wordcloud_id):
 
 # Close/deactivate a word cloud (teacher only)
 @wordclouds_bp.route('/<wordcloud_id>/close', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def close_wordcloud(wordcloud_id):
     user_id = get_jwt_identity()
     
