@@ -2,7 +2,9 @@
 COMP5241 Group 10 - Admin Module Routes
 Responsible: Sunny
 """
-from flask import Blueprint, request, jsonify
+import io
+
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from app.modules.admin.services import AdminService
@@ -99,7 +101,33 @@ def get_system_stats():
         'admin': current_user
     }), 200
 
+@admin_bp.route('action_log', methods=['GET'])
+@jwt_required(locations=["cookies"])
+def get_action_logs():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    data = request.form
+    file, file_id = AdminService.fetch_log(data.get("module"), data.get("start"), data.get("end"))
 
+    return send_file(
+        io.BytesIO(file),
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"{file_id}.zip"
+    )
+
+
+@admin_bp.route('zip_pw', methods=['GET'])
+@jwt_required(locations=["cookies"])
+def get_zip_pw():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    data = request.form
+    pw = AdminService.get_zip_pw(data.get("id"))
+
+    return jsonify({"pw": pw})
 @admin_bp.route('/audit-logs', methods=['GET'])
 @jwt_required(locations=["cookies"])
 def get_audit_logs():

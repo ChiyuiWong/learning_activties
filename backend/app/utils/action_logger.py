@@ -29,5 +29,5 @@ class ActionLogger:
                  "module": self.module,
                  "encrypted_data": encrypted_data,
                  "encryption_iv": iv,
-                 "created_at": datetime.datetime.now(datetime.UTC),
+                 "created_at": datetime.datetime.now(datetime.UTC).strftime("%a, %d %b %Y %H:%M:%S GMT"),
                 })
