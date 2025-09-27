@@ -26,8 +26,7 @@ def get_db_connection():
     mongodb_uri = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/comp5241_g10')
     client = pymongo.MongoClient(mongodb_uri)
     # Get database name from URI or use default
-    db_name = 'comp5241_g10'
-    return client[db_name]
+    return client
 
 
 def close_db_connection():

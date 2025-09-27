@@ -69,7 +69,7 @@ def new_users():
     claims = get_jwt()
     if "role" not in claims or claims["role"] != "admin":
         return jsonify({'message': 'No permission'}), 401
-    ret = AdminService.new_users(request.get_json())
+    ret = AdminService.new_users(request.get_json(), claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr))
     print(ret)
     return jsonify(ret), 200
 
