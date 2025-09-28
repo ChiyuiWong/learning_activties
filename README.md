@@ -5,13 +5,13 @@ This is a Learning Management System (LMS) developed by Group 10 for COMP5241. T
 
 ## Team Members & Responsibilities
 
-| Member | Responsibilities | Modules |
-|--------|-----------------|---------|
-| **Ting** | GenAI integration and AI-powered features | `/backend/app/modules/genai/` |
-| **Sunny** | Security, authentication, and admin panel | `/backend/app/modules/security/`, `/backend/app/modules/admin/` |
-| **Joyce** | UI/UX design and frontend development | `/frontend/` |
-| **Charlie** | Learning activities and student progress | `/backend/app/modules/learning_activities/` |
-| **Keith** | Course management and teacher tools | `/backend/app/modules/courses/` |
+| Member      | Responsibilities                          | Modules                                                         |
+|-------------|-------------------------------------------|-----------------------------------------------------------------|
+| **Ting**    | GenAI integration and AI-powered features | `/backend/app/modules/genai/`                                   |
+| **Sunny**   | Security, authentication, and admin panel | `/backend/app/modules/security/`, `/backend/app/modules/admin/` |
+| **Joyce**   | UI/UX design and frontend development     | `/frontend/`                                                    |
+| **Charlie** | Learning activities and student progress  | `/backend/app/modules/learning_activities/`                     |
+| **Keith**   | Course management and teacher tools       | `/backend/app/modules/courses/`                                 |
 
 ## Technology Stack
 

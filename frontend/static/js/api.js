@@ -27,7 +27,7 @@ class APIClient {
     }
     
     // Generic request method
-    async request(endpoint, options = {}) {
+    async request(endpoint, options = {}, is_include_header = false) {
         const url = `${this.baseUrl}${endpoint}`;
         const config = {
             headers: this.getHeaders(),
@@ -41,10 +41,14 @@ class APIClient {
             
             // Try to parse JSON response, but handle non-JSON responses gracefully
             let data;
+
             try {
-                data = await response.json();
+                if(response.headers.get('Content-Type') === 'application/json') {
+                    data = await response.json();
+                } else {
+                    data = await response.blob();
+                }
             } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
                 data = { error: 'Invalid response format' };
             }
             
@@ -52,7 +56,9 @@ class APIClient {
                 console.error('API request failed:', data);
                 throw new Error(data.message || 'API request failed');
             }
-            
+            if(is_include_header) {
+                return [data, response.headers];
+            }
             return data;
         } catch (error) {
             console.error('API Error:', error);
@@ -76,13 +82,14 @@ class APIClient {
     async get(endpoint) {
         return this.request(endpoint, { method: 'GET' });
     }
+
     
     // POST request
-    async post(endpoint, data) {
+    async post(endpoint, data, is_include_header = false) {
         return this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(data)
-        });
+        }, is_include_header);
     }
     
     // PUT request
