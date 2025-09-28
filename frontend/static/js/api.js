@@ -41,11 +41,15 @@ class APIClient {
             
             // Try to parse JSON response, but handle non-JSON responses gracefully
             let data;
+
             try {
-                data = await response.json();
+                if(response.headers.get('Content-Type') === 'application/json') {
+                    data = await response.json();
+                } else {
+                    data = await response.blob();
+                }
             } catch (parseError) {
-                // Not JSON, handle as binary
-                data = await response.blob();
+                data = { error: 'Invalid response format' };
             }
             
             if (!response.ok) {
@@ -78,16 +82,14 @@ class APIClient {
     async get(endpoint) {
         return this.request(endpoint, { method: 'GET' });
     }
-    async get_with_form(endpoint, formData, is_include_header = false) {
-        return this.request(endpoint, { method: 'GET', body: formData }, is_include_header);
-    }
+
     
     // POST request
-    async post(endpoint, data) {
+    async post(endpoint, data, is_include_header = false) {
         return this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(data)
-        });
+        }, is_include_header);
     }
     
     // PUT request

@@ -104,8 +104,11 @@ class AdminService:
         pass
 
     @staticmethod
-    def fetch_log(module: str = None, start_date: datetime = None, end_date: datetime = None, limit: int = 2048):
+    def fetch_log(admin_name, ip_address, module: str = None, start_date: datetime = None, end_date: datetime = None, limit: int = 2048):
         query = {}
+        print("hi")
+        print(start_date)
+        print(end_date)
         if module is not None:
             query["module"] = module
         if start_date is not None or end_date is not None:
@@ -136,16 +139,20 @@ class AdminService:
         file, pw = AdminService.create_encrypted_zip([("lms.log", decrypted_log)])
         file_id = os.urandom(32).hex()
         AdminService.store_zip_pw(file_id, pw.decode("UTF-8"))
+        AdminService.action_logger.log(admin_name, ip_address,
+                                       f"Fetched log for {module or 'all modules'} between {start_date or 'the beginning of time'} to {end_date or 'now'}, generated ZIP {file_id}.")
         return file, file_id
 
     @staticmethod
-    def get_zip_pw(file_id):
+    def get_zip_pw(admin_name, ip_address, file_id):
         with get_db_connection() as client:
             db: Database = client["comp5241_g10"]
             pw = db["zip_pw"].find_one({"_id": file_id})["password"]
             db["zip_pw"].delete_one({"_id": file_id})
             db["zip_pw"].delete_many({"created_at": {}})
             AdminService.clear_old_zip_pw()
+            AdminService.action_logger.log(admin_name, ip_address,
+                                           f"Fetched ZIP password for {file_id}.")
             return pw
 
     @staticmethod

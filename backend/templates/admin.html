@@ -10,6 +10,7 @@
     <script src="static/js/api.js"></script>
 </head>
 <body>
+===Create accounts===
 <div id="create_accounts">
     <h2>Upload accounts file</h2>
     <form id="accs_file_form">
@@ -19,6 +20,7 @@
     <div id="error" class="error"></div>
     <div id="acc_create_status"></div>
 </div>
+===Get log===
 <div id="get_log">
     <form id="get_log_form">
         <label for="module">Module:</label>
@@ -177,11 +179,7 @@
 
         $('#get_log_form').on('submit', async function (e) {
             e.preventDefault();
-            let data = new FormData();
-            data.append("module", $("#module").val())
-            data.append("start", $("#start").val())
-            data.append("end", $("#end").val())
-            const zip = await api.get_with_form("/admin/action_log", data);
+            const zip = await api.post("/admin/action_log", {"module": $("#module").val(), "start": $("#start").val(), "end": $("#end").val()}, true);
             const zipBlob = zip[0]; const headers = zip[1];
             const id = headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '').replace(".zip", '');
             // Create a link to download the file
@@ -197,12 +195,13 @@
             window.URL.revokeObjectURL(url);
             a.remove();
             url = null;
-            data = new FormData();
-            data.append("id", id);
-            const pw_res = await api.get_with_form("/admin/zip_pw", data);
-            $("#zip_pw").text(pw_res["pw"]);
+            const pw_res = await api.post("/admin/zip_pw", {"id": id});
+            $("#log_pw").text(pw_res["pw"]);
         });
 
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
 
     });
 </script>

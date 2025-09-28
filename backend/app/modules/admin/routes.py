@@ -2,6 +2,7 @@
 COMP5241 Group 10 - Admin Module Routes
 Responsible: Sunny
 """
+import datetime
 import io
 
 from flask import Blueprint, request, jsonify, send_file
@@ -101,14 +102,14 @@ def get_system_stats():
         'admin': current_user
     }), 200
 
-@admin_bp.route('action_log', methods=['GET'])
+@admin_bp.route('action_log', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_action_logs():
     claims = get_jwt()
     if "role" not in claims or claims["role"] != "admin":
         return jsonify({'message': 'No permission'}), 401
-    data = request.form
-    file, file_id = AdminService.fetch_log(data.get("module"), data.get("start"), data.get("end"))
+    data = request.get_json()
+    file, file_id = AdminService.fetch_log(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("module"), datetime.datetime.fromisoformat(data.get("start")), datetime.datetime.fromisoformat(data.get("end")))
 
     return send_file(
         io.BytesIO(file),
@@ -118,14 +119,14 @@ def get_action_logs():
     )
 
 
-@admin_bp.route('zip_pw', methods=['GET'])
+@admin_bp.route('zip_pw', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_zip_pw():
     claims = get_jwt()
     if "role" not in claims or claims["role"] != "admin":
         return jsonify({'message': 'No permission'}), 401
-    data = request.form
-    pw = AdminService.get_zip_pw(data.get("id"))
+    data = request.get_json()
+    pw = AdminService.get_zip_pw(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("id"))
 
     return jsonify({"pw": pw})
 @admin_bp.route('/audit-logs', methods=['GET'])
