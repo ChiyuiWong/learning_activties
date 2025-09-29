@@ -24,6 +24,7 @@ from typing import List, Tuple
 class AdminService:
     """Service class for admin operations"""
     action_logger = ActionLogger("admin")
+    available_cumulative_stats = ["active_users_num", "active_teacher_num", "active_student_num", "users_num", "unregistered_users_num", ]
 
     @staticmethod
     def get_all_users(admin_id):
@@ -97,11 +98,6 @@ class AdminService:
                                            f"batch new users preparation with:\n{json.dumps(ret, indent=4)}")
             return ret
 
-    @staticmethod
-    def generate_audit_report(start_date=None, end_date=None):
-        """Generate audit report - to be implemented by Sunny"""
-        # TODO: Implement audit report generation
-        pass
 
     @staticmethod
     def fetch_log(admin_name, ip_address, module: str = None, start_date: datetime = None, end_date: datetime = None, limit: int = 2048):
@@ -188,7 +184,28 @@ class AdminService:
         return zip_buffer.read(), pw
 
     @staticmethod
-    def is_admin(user_id):
-        """Check if user is admin - to be implemented by Sunny"""
-        # TODO: Implement admin permission check
-        pass
+    def get_cumulative_stats(admin_name, ip_address, wanted_stats: List[str]):
+        ret = {}
+        with get_db_connection() as client:
+            db: Database = client["comp5241_g10"]
+            if "active_users_num" in wanted_stats:
+                temp = db["users"].count_documents({"is_active": True})
+                ret["active_users_num"] = temp
+            if "active_teacher_num" in wanted_stats:
+                temp = db["users"].count_documents({"is_active": True, "role": "teacher"})
+                ret["active_teacher_num"] = temp
+            if "active_student_num" in wanted_stats:
+                temp = db["users"].count_documents({"is_active": True, "role": "student"})
+                ret["active_student_num"] = temp
+            if "active_admin_num" in wanted_stats:
+                temp = db["users"].count_documents({"is_active": True, "role": "admin"})
+                ret["active_admin_num"] = temp
+            if "registered_user_num" in wanted_stats:
+                temp = db["users"].count_documents({})
+                ret["user_num"] = temp
+            if "unregistered_user_num" in wanted_stats:
+                temp = db["new_users"].count_documents({})
+                ret["unregistered_user_num"] = temp
+        AdminService.action_logger.log(admin_name, ip_address,
+                                       f"Fetched cumulative stats: {','.join(wanted_stats)}.")
+        return ret

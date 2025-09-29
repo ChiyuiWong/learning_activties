@@ -102,7 +102,7 @@ def get_system_stats():
         'admin': current_user
     }), 200
 
-@admin_bp.route('action_log', methods=['POST'])
+@admin_bp.route('/action_log', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_action_logs():
     claims = get_jwt()
@@ -119,7 +119,7 @@ def get_action_logs():
     )
 
 
-@admin_bp.route('zip_pw', methods=['POST'])
+@admin_bp.route('/zip_pw', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_zip_pw():
     claims = get_jwt()
@@ -129,6 +129,17 @@ def get_zip_pw():
     pw = AdminService.get_zip_pw(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("id"))
 
     return jsonify({"pw": pw})
+
+@admin_bp.route('/cumulative_stats', methods=['GET'])
+@jwt_required(locations=["cookies"])
+def cumulative_stats():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    fields = request.args.get("fields", "").split('|')
+    ret = AdminService.get_cumulative_stats(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), fields)
+    return jsonify(ret)
+
 @admin_bp.route('/audit-logs', methods=['GET'])
 @jwt_required(locations=["cookies"])
 def get_audit_logs():
