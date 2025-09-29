@@ -2,7 +2,10 @@
 COMP5241 Group 10 - Admin Module Routes
 Responsible: Sunny
 """
-from flask import Blueprint, request, jsonify
+import datetime
+import io
+
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 
 from app.modules.admin.services import AdminService
@@ -69,7 +72,7 @@ def new_users():
     claims = get_jwt()
     if "role" not in claims or claims["role"] != "admin":
         return jsonify({'message': 'No permission'}), 401
-    ret = AdminService.new_users(request.get_json())
+    ret = AdminService.new_users(request.get_json(), claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr))
     print(ret)
     return jsonify(ret), 200
 
@@ -99,7 +102,33 @@ def get_system_stats():
         'admin': current_user
     }), 200
 
+@admin_bp.route('action_log', methods=['POST'])
+@jwt_required(locations=["cookies"])
+def get_action_logs():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    data = request.get_json()
+    file, file_id = AdminService.fetch_log(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("module"), datetime.datetime.fromisoformat(data.get("start")), datetime.datetime.fromisoformat(data.get("end")))
 
+    return send_file(
+        io.BytesIO(file),
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name=f"{file_id}.zip"
+    )
+
+
+@admin_bp.route('zip_pw', methods=['POST'])
+@jwt_required(locations=["cookies"])
+def get_zip_pw():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    data = request.get_json()
+    pw = AdminService.get_zip_pw(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("id"))
+
+    return jsonify({"pw": pw})
 @admin_bp.route('/audit-logs', methods=['GET'])
 @jwt_required(locations=["cookies"])
 def get_audit_logs():
