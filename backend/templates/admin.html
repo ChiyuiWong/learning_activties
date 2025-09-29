@@ -10,27 +10,44 @@
     <script src="static/js/api.js"></script>
 </head>
 <body>
+===Create accounts===
 <div id="create_accounts">
     <h2>Upload accounts file</h2>
-    <form id="csvForm">
+    <form id="accs_file_form">
         <input type="file" id="csvFile" accept=".csv" required>
         <input type="submit">
     </form>
     <div id="error" class="error"></div>
+    <div id="acc_create_status"></div>
 </div>
-
-<div id="csvOutput"></div>
+===Get log===
+<div id="get_log">
+    <form id="get_log_form">
+        <label for="module">Module:</label>
+        <select name="module" id="module">
+            <option value="admin">admin</option>
+            <option value="security">security</option>
+        </select>
+        <label for="start">Start:</label>
+        <input type="datetime-local" name="start" id="start">
+        <label for="end">End:</label>
+        <input type="datetime-local" name="end" id="end">
+        <input type="submit">
+    </form>
+    <div id="log_pw"></div>
+</div>
 
 <script>
     $(document).ready(async function () {
         const api = new APIClient();
-        $('#csvOutput').text(await api.post("/admin/profile"));
-        $('#csvForm').on('submit', function (e) {
-            e.preventDefault();
-            $('#error').text('');
-            $('#csvOutput').empty();
 
-            const file = $('#csvFile')[0].files[0];
+        // Create accounts
+
+        $('#accs_file_form').on('submit', function (e) {
+            e.preventDefault();
+            $('#acc_create_status').empty();
+
+            const file = $('#accs_file_form')[0].files[0];
             if (!file) {
                 $('#error').text('Please select a CSV file.');
                 return;
@@ -54,6 +71,7 @@
 
             reader.readAsText(file);
         });
+
 
         function parseCSV(csvString) {
             const rows = [];
@@ -154,8 +172,37 @@
                 table.append(row);
             });
 
-            $('#csvOutput').append(table);
+            $('#acc_create_status').append(table);
         }
+
+        // Log
+
+        $('#get_log_form').on('submit', async function (e) {
+            e.preventDefault();
+            const zip = await api.post("/admin/action_log", {"module": $("#module").val(), "start": $("#start").val(), "end": $("#end").val()}, true);
+            const zipBlob = zip[0]; const headers = zip[1];
+            const id = headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '').replace(".zip", '');
+            // Create a link to download the file
+            let url = window.URL.createObjectURL(zipBlob);
+            const a = $('<a></a>')
+                    .attr('href', url)
+                    .attr('download', `log_${Date.now()}.zip`)
+                    .css('display', 'none');
+
+            $('body').append(a);
+            a[0].click(); // Trigger the download
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            url = null;
+            const pw_res = await api.post("/admin/zip_pw", {"id": id});
+            $("#log_pw").text(pw_res["pw"]);
+        });
+
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
     });
 </script>
 </body>

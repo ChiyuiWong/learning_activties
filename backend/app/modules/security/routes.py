@@ -33,7 +33,7 @@ def login():
     if not username or not password:
         print("Missing username or password")
         return jsonify({'error': 'Username and password are required'}), 400
-    role = SecurityService.get_role(username, password)
+    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
     if role is None:
         return jsonify({'error': 'Invalid username or password'}), 401
     
@@ -59,11 +59,11 @@ def register():
     data = request.form
     username = data.get('username', '')
     password = data.get('password', '')
-    msg = SecurityService.create_user(username, password, data.get('id'))
+    msg = SecurityService.create_user(username, password, data.get('id'), request.headers.get('X-Forwarded-For', request.remote_addr))
     if msg != "OK":
         return render_template('register.html', msg=msg, id=data.get('id'))
     # Created account
-    role = SecurityService.get_role(username, password)
+    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
     if role is None:
         return jsonify({'error': 'Invalid username or password'}), 401
 
