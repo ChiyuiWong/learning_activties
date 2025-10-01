@@ -299,6 +299,30 @@ body.login-page {
     }
 }
 
+/* Gentle logo animation */
+@keyframes logoGlow {
+    0% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    50% {
+        transform: scale(1.05);
+        filter: brightness(1.1);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+/* Logo animation for large screens */
+@media (min-width: 992px) {
+    .illustration-panel img {
+        animation: logoGlow 2.5s ease-in-out infinite;
+        transition: all 0.3s ease;
+    }
+}
+
 /* Responsive Font Sizes for Welcome Text */
 /* Extra Large screens (1400px+) */
 @media (min-width: 1400px) {
@@ -323,10 +347,17 @@ body.login-page {
 
 /* Screens smaller than 991px - bigger logo and hide LMS text */
 @media (max-width: 991px) {
-    /* Mobile logo section inside card */
+    /* Mobile logo section inside card with gentle animation and extra spacing */
+    .mobile-logo-section {
+        margin-top: 3rem !important;
+        margin-bottom: 3rem !important;
+    }
+    
     .mobile-logo-section .logo-container img {
         width: 4rem !important;
         height: 4rem !important;
+        animation: logoGlow 2.5s ease-in-out infinite;
+        transition: all 0.3s ease;
     }
     
     /* Hide LMS text on small screens */
@@ -344,9 +375,11 @@ body.login-page {
         text-align: center !important;
     }
     
-    /* Smaller title for mobile "Sign in to your account" */
+    /* Smaller title for mobile "Sign in to your account" with extra top margin */
     .card-body h2.d-lg-none {
         font-size: 1.3rem !important;
+        margin-top: 2rem !important;
+        margin-bottom: 3rem !important;
     }
 }
 
