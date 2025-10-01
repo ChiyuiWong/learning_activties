@@ -15,64 +15,44 @@
     <link rel="stylesheet" href="static/css/login.css">
 </head>
 <body class="min-vh-100 login-page">
-    <div class="login-container">
-        <div class="row min-vh-100 g-0">
+    <div class="login-container d-flex min-vh-100">
+        <div class="d-flex w-100 min-vh-100 g-0">
             <!-- Left Illustration Panel -->
-            <div class="col-lg-6 d-none d-lg-flex illustration-panel position-relative">
+            <div class="d-none d-lg-flex illustration-panel position-relative">
                 <!-- Logo and LMS aligned with Sign In -->
                 <div class="position-absolute top-0 start-0 p-4 d-flex align-items-center" style="height: 88px; z-index: 10;">
-                    <div class="d-flex align-items-center">
-                        <div class="logo-icon bg-primary bg-opacity-10 rounded-3 d-inline-flex align-items-center justify-content-center me-2" 
-                             style="width: 2.5rem; height: 2.5rem; min-width: 2.5rem; min-height: 2.5rem;">
-                            <div class="logo-square bg-primary rounded" style="width: 1.25rem; height: 1.25rem;"></div>
-                        </div>
-                        <span class="h3 fw-bold mb-0 text-dark">LMS</span>
-                    </div>
+                    <a href="login.html" class="d-flex align-items-center text-decoration-none" style="cursor: pointer;">
+                        <img src="images/logo.png" alt="Learning Management System Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
+                    </a>
                 </div>
                 
-                <div class="d-flex align-items-center justify-content-center w-100 position-relative text-center px-4">
-                    <div>
-                        <div class="mb-4">
-                            <p class="lead text-secondary">Welcome to Advanced Learning Management System</p>
+                <div class="d-flex align-items-center justify-content-center w-100 position-relative px-4">
+                    <div class="w-100">
+                        <div class="mb-4 text-start">
+                            <p class="h1 fw-bold welcome-text-animated" style="font-size: 4rem; line-height: 1.2;">
+                                <span class="welcome-word" style="color: black;">Welcome</span>
+                                <span class="welcome-word" style="color: black;">to</span>
+                                <span class="welcome-word" style="color: black;">Advanced</span>
+                                <span class="welcome-word" style="color: #2D5A57;">Learning</span>
+                                <span class="welcome-word" style="color: #2D5A57;">Management</span>
+                                <span class="welcome-word" style="color: #2D5A57;">System</span>
+                            </p>
                         </div>
                         
-                        <!-- Illustration -->
-                        <div class="illustration-container mx-auto mb-4" id="illustrationContainer">
-                            <div class="bg-white border border-light rounded-4 p-4 shadow-lg">
-                                <div id="illustrationContent">
-                                    <!-- Dynamic content will be inserted here -->
-                                </div>
-                                
-                                <div class="mt-4 d-flex justify-content-center" id="avatarContainer">
-                                    <div class="avatar-placeholder bg-coral rounded-circle d-flex align-items-center justify-content-center">
-                                        <div class="avatar-inner bg-white rounded-circle"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Progress Dots -->
-                        <div class="d-flex justify-content-center gap-2">
-                            <div class="progress-dot active" data-index="0"></div>
-                            <div class="progress-dot" data-index="1"></div>
-                            <div class="progress-dot" data-index="2"></div>
-                        </div>
+
                     </div>
                 </div>
             </div>
             
             <!-- Right Form Panel -->
-            <div class="col-12 col-lg-6 d-flex align-items-center justify-content-center p-4 min-vh-100 login-form-panel">
-                <div class="w-100" style="max-width: 36rem;">
+            <div class="col-12 d-lg-flex align-items-center justify-content-center p-3 min-vh-100 login-form-panel" style="padding: 1.5rem;">
+                <div class="w-100" style="max-width: 36rem; margin-left: auto; margin-right: auto;">
                     <!-- Logo for mobile -->
                     <div class="d-lg-none text-center mb-4">
                         <div class="logo-container mb-3">
-                            <div class="logo-icon bg-primary rounded-3 d-inline-flex align-items-center justify-content-center">
-                                <div class="logo-square bg-white rounded"></div>
-                            </div>
+                            <img src="images/logo.png" alt="LMS Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
                         </div>
-                        <h2 class="h4 fw-bold text-dark mb-1">COMP5241 G10</h2>
-                        <p class="text-muted">Learning Management System</p>
+                        <p style="color: #2D5A57;">Learning Management System</p>
                     </div>
                     
                     <div class="card border-0 shadow-sm rounded-4">

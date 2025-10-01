@@ -250,3 +250,51 @@ body.login-page {
 .shadow-lg {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16) !important;
 }
+
+/* Welcome Message Animation */
+.welcome-text-animated {
+    animation: welcomeSlideIn 2s ease-out forwards;
+    opacity: 0;
+    transform: translateY(30px);
+}
+
+@keyframes welcomeSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translateY(15px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Animation for individual words */
+.welcome-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: wordSlideIn 0.8s ease-out forwards;
+}
+
+.welcome-word:nth-child(1) { animation-delay: 0.2s; }
+.welcome-word:nth-child(2) { animation-delay: 0.4s; }
+.welcome-word:nth-child(3) { animation-delay: 0.6s; }
+.welcome-word:nth-child(4) { animation-delay: 0.8s; }
+.welcome-word:nth-child(5) { animation-delay: 1.0s; }
+.welcome-word:nth-child(6) { animation-delay: 1.2s; }
+
+@keyframes wordSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
