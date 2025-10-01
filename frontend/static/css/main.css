@@ -279,6 +279,7 @@ body.login-page {
     opacity: 0;
     transform: translateY(20px);
     animation: wordSlideIn 0.8s ease-out forwards;
+    white-space: nowrap;
 }
 
 .welcome-word:nth-child(1) { animation-delay: 0.2s; }
@@ -286,7 +287,6 @@ body.login-page {
 .welcome-word:nth-child(3) { animation-delay: 0.6s; }
 .welcome-word:nth-child(4) { animation-delay: 0.8s; }
 .welcome-word:nth-child(5) { animation-delay: 1.0s; }
-.welcome-word:nth-child(6) { animation-delay: 1.2s; }
 
 @keyframes wordSlideIn {
     0% {
