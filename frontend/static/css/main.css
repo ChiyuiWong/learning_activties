@@ -357,7 +357,7 @@ body.login-page {
 /* Extra Large screens (1400px+) */
 @media (min-width: 1400px) {
     .welcome-text-animated {
-        font-size: 70px !important;
+        font-size: 60px !important;
     }
 }
 
