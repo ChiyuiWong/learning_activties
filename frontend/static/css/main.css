@@ -469,3 +469,102 @@ body.login-page {
 .lms-short-text {
     display: none;
 }
+
+/* Enhanced interactive cards for index page */
+.create-option-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent !important;
+}
+
+.create-option-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.activity-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.activity-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Navbar enhancements */
+.navbar {
+    backdrop-filter: blur(10px);
+    background: rgba(45, 90, 87, 0.95) !important;
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05);
+    transition: transform 0.3s ease;
+}
+
+/* Content section transitions */
+.content-section {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* List group enhancements */
+.list-group-item-action {
+    transition: all 0.3s ease;
+    border: none !important;
+}
+
+.list-group-item-action:hover {
+    transform: translateX(5px);
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.list-group-item-action.active {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    transform: translateX(5px);
+}
+
+/* Button group enhancements */
+.btn-group .btn {
+    transition: all 0.3s ease;
+}
+
+.btn-group .btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Alert enhancements */
+.alert {
+    border: none;
+    backdrop-filter: blur(10px);
+}
+
+/* Loading spinner enhancement */
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* Card hover effects for dashboard stats */
+.bg-light:hover {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    transition: all 0.3s ease;
+}
+
+.bg-light:hover i {
+    color: white !important;
+}
