@@ -298,3 +298,111 @@ body.login-page {
         transform: translateY(0);
     }
 }
+
+/* Responsive Font Sizes for Welcome Text */
+/* Extra Large screens (1400px+) */
+@media (min-width: 1400px) {
+    .welcome-text-animated {
+        font-size: 70px !important;
+    }
+}
+
+/* Large screens (1200-1399px) */
+@media (min-width: 1200px) and (max-width: 1399px) {
+    .welcome-text-animated {
+        font-size: 50px !important;
+    }
+}
+
+/* Medium screens (992-1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+    .welcome-text-animated {
+        font-size: 45px !important;
+    }
+}
+
+/* Screens smaller than 991px - bigger logo and hide LMS text */
+@media (max-width: 991px) {
+    /* Mobile logo section inside card */
+    .mobile-logo-section .logo-container img {
+        width: 4rem !important;
+        height: 4rem !important;
+    }
+    
+    /* Hide LMS text on small screens */
+    .mobile-logo-section p {
+        display: none !important;
+    }
+    
+    /* Center align Sign In and subtitle on mobile */
+    .card-body h2,
+    .card-body .h3 {
+        text-align: center !important;
+    }
+    
+    .card-body p.text-muted {
+        text-align: center !important;
+    }
+    
+    /* Smaller title for mobile "Sign in to your account" */
+    .card-body h2.d-lg-none {
+        font-size: 1.3rem !important;
+    }
+}
+
+/* Small-Medium screens (768-991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+    .welcome-text-animated {
+        font-size: 20px !important;
+    }
+    
+    /* Show LMS instead of full text on small-medium screens */
+    .lms-full-text {
+        display: none !important;
+    }
+    
+    .lms-short-text {
+        display: inline !important;
+    }
+}
+
+/* Small screens (576-767px) */
+@media (min-width: 576px) and (max-width: 767px) {
+    .welcome-text-animated {
+        font-size: 15px !important;
+    }
+    
+    /* Show LMS instead of full text on small screens */
+    .lms-full-text {
+        display: none !important;
+    }
+    
+    .lms-short-text {
+        display: inline !important;
+    }
+}
+
+/* Extra Small screens (<576px) */
+@media (max-width: 575px) {
+    .welcome-text-animated {
+        font-size: 10px !important;
+    }
+    
+    /* Show LMS instead of full text on super small screens */
+    .lms-full-text {
+        display: none !important;
+    }
+    
+    .lms-short-text {
+        display: inline !important;
+    }
+}
+
+/* Default state - show full text, hide short text */
+.lms-full-text {
+    display: inline;
+}
+
+.lms-short-text {
+    display: none;
+}
