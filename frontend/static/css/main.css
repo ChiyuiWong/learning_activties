@@ -5,7 +5,7 @@ Joyce's responsibility for UI design
 
 /* Global Styles */
 :root {
-    --primary-color: #0066cc;
+    --primary-color: #2D5A57;
     --secondary-color: #f8f9fa;
     --success-color: #28a745;
     --danger-color: #dc3545;
@@ -13,11 +13,24 @@ Joyce's responsibility for UI design
     --info-color: #17a2b8;
     --dark-color: #343a40;
     --light-color: #f8f9fa;
+    --coral: #FFDFD6;
+    --purple: #A78BFA;
+    --accent: #10B981;
+    
+    /* Bootstrap color overrides */
+    --bs-primary: #2D5A57;
+    --bs-primary-rgb: 45, 90, 87;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--light-color);
+    line-height: 1.6;
+}
+
+/* Login page specific styles */
+body.login-page {
+    background-color: #ffffff;
 }
 
 /* Custom Navigation Styles */
@@ -62,29 +75,52 @@ body {
 
 /* Button Styles */
 .btn {
-    border-radius: 6px;
+    border-radius: 0.75rem;
     padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #245854 100%);
     border-color: var(--primary-color);
+    color: white;
 }
 
 .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+    background: linear-gradient(135deg, #245854 0%, var(--primary-color) 100%);
+    border-color: #245854;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 90, 87, 0.3);
+    color: white;
+}
+
+.btn-primary:active {
+    transform: translateY(0);
 }
 
 /* Form Styles */
 .form-control {
-    border-radius: 6px;
-    border: 1px solid #ddd;
+    border-radius: 0.75rem;
+    border: 1px solid #e9ecef;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
 }
 
 .form-control:focus {
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    box-shadow: 0 0 0 0.25rem rgba(45, 90, 87, 0.25);
+    background-color: #fff;
+}
+
+.form-floating > .form-control {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > label {
+    padding: 1rem;
 }
 
 /* Modal Styles */
@@ -163,4 +199,54 @@ body {
 
 .admin-section {
     border-left: 4px solid var(--dark-color);
+}
+
+/* Additional utility classes */
+.text-coral {
+    color: var(--coral) !important;
+}
+
+.text-purple {
+    color: var(--purple) !important;
+}
+
+.bg-coral {
+    background-color: var(--coral) !important;
+}
+
+.bg-purple {
+    background-color: var(--purple) !important;
+}
+
+/* Card enhancements */
+.card {
+    border-radius: 1rem;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Modern spacing utilities */
+.gap-4 {
+    gap: 1.5rem !important;
+}
+
+.gap-5 {
+    gap: 3rem !important;
+}
+
+/* Enhanced shadows */
+.shadow-sm {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+}
+
+.shadow {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+}
+
+.shadow-lg {
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16) !important;
 }
