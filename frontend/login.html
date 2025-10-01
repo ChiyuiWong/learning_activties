@@ -47,18 +47,25 @@
             <!-- Right Form Panel -->
             <div class="col-12 d-lg-flex align-items-center justify-content-center p-3 min-vh-100 login-form-panel" style="padding: 1.5rem;">
                 <div class="w-100" style="max-width: 36rem; margin-left: auto; margin-right: auto;">
-                    <!-- Logo for mobile -->
-                    <div class="d-lg-none text-center mb-4">
-                        <div class="logo-container mb-3">
-                            <img src="images/logo.png" alt="LMS Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
-                        </div>
-                        <p style="color: #2D5A57;">Learning Management System</p>
-                    </div>
-                    
                     <div class="card border-0 shadow-sm rounded-4">
                         <div class="card-body p-4 p-md-5">
-                            <h2 class="h3 fw-bold text-dark mb-2">Sign In</h2>
-                            <p class="text-muted mb-4">Access your learning dashboard</p>
+                            <!-- Title for large screens -->
+                            <h2 class="h3 fw-bold text-dark mb-2 d-none d-lg-block">Sign In</h2>
+                            <p class="text-muted mb-4 d-none d-lg-block">Access your learning dashboard</p>
+                            
+                            <!-- Logo for mobile -->
+                            <div class="d-lg-none text-center mb-4 mobile-logo-section">
+                                <div class="logo-container">
+                                    <img src="images/logo.png" alt="LMS Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
+                                </div>
+                                <p style="color: #2D5A57;">
+                                    <span class="lms-full-text">Learning Management System</span>
+                                    <span class="lms-short-text">LMS</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Title for small screens after logo -->
+                            <h2 class="h3 fw-bold text-dark mb-4 d-lg-none text-center">Sign in to your account</h2>
                             
                             <form id="loginForm" class="mb-4">
                                 <!-- Username Input -->
