@@ -10,13 +10,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Main initialization function
 function initializeLogin() {
-    initializeIllustrations();
+    // initializeIllustrations(); // Disabled - using static HTML images instead
+    initializeStaticSlides(); // New static slide functionality
     initializeFormHandlers();
     initializeDemoUsers();
     initializePasswordToggle();
     initializeRoleToggle();
     checkExistingLogin();
 }
+
+// Static slide functionality
+function initializeStaticSlides() {
+    // Auto-change slides every 5 seconds
+    setInterval(() => {
+        const currentDot = document.querySelector('.progress-dot.active');
+        if (currentDot) {
+            const currentIndex = parseInt(currentDot.getAttribute('data-index'));
+            const nextIndex = (currentIndex + 1) % 3;
+            showSlide(nextIndex);
+        }
+    }, 5000);
+}
+
+function showSlide(index) {
+    // Hide all slides
+    const slides = document.querySelectorAll('.illustration-slide');
+    slides.forEach(slide => slide.style.display = 'none');
+    
+    // Show selected slide
+    const targetSlide = document.getElementById(`slide${index + 1}`);
+    if (targetSlide) {
+        targetSlide.style.display = 'block';
+    }
+    
+    // Update progress dots
+    const dots = document.querySelectorAll('.progress-dot');
+    dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+    });
+}
+
+// Make showSlide function globally accessible
+window.showSlide = showSlide;
 
 // Illustration management
 const illustrations = [
