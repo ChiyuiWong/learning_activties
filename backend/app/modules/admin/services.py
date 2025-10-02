@@ -18,7 +18,7 @@ from ..security.models import User
 import datetime
 import os
 from app.utils.action_logger import ActionLogger
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 
 class AdminService:
@@ -209,3 +209,30 @@ class AdminService:
         AdminService.action_logger.log(admin_name, ip_address,
                                        f"Fetched cumulative stats: {','.join(wanted_stats)}.")
         return ret
+    @staticmethod
+    def get_interval_stats(admin_name, ip_address, wanted_stats: List[Dict[str, str]], start_timestamp: float = None, end_timestamp: float = None):
+        ret = []
+        time_query = {}
+        if start_timestamp is not None or end_timestamp is not None:
+            time_query["interval_num"] = {}
+            if start_timestamp is not None:
+                time_query["interval_num"]["$gte"] = start_timestamp
+            if end_timestamp is not None:
+                time_query["interval_num"]["$lte"] = end_timestamp
+        with get_db_connection() as client:
+            db: Database = client["comp5241_g10"]
+            for wanted_stat in wanted_stats:
+                stat_query = {}
+                if wanted_stat["module"] is not None:
+                    stat_query["module"] = wanted_stat["module"]
+                if wanted_stat["act"] is not None:
+                    stat_query["act"] = wanted_stat["act"]
+                if wanted_stat["type"] is not None:
+                    stat_query["type"] = wanted_stat["type"]
+                query = stat_query | time_query
+                docs = db["interval_stats"].find(query)
+
+                for doc in docs:
+                    ret.append(stat_query | {"val": doc["val"], "interval_num": doc["interval_num"]})
+        return ret
+
