@@ -126,3 +126,7 @@ dmypy.json
 uploads/
 static/uploads/
 media/
+
+# GenAI
+.cursor/
+.github/copilot-instructions.md

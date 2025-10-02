@@ -218,7 +218,10 @@ function loadActivitiesData() {
 
 // GenAI data loading (Ting's responsibility)
 function loadGenAIData() {
-    console.log('Loading GenAI data... (Ting to implement)');
+    console.log('Loading GenAI data...');
+    if (typeof GenAI !== 'undefined') {
+        GenAI.init();
+    }
 }
 
 // Admin data loading (Sunny's responsibility)
@@ -228,7 +231,8 @@ function loadAdminData() {
 
 // Initialize module-specific functionality
 function initializeGenAI() {
-    console.log('Initializing GenAI module... (Ting to implement)');
+    console.log('Initializing GenAI module...');
+    // GenAI will be initialized when the section is loaded
 }
 
 function initializeSecurity() {
