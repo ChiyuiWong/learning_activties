@@ -3,102 +3,200 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>COMP5241 G10 - Login</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-        }
-        
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px 15px 0 0;
-        }
-        
-        .demo-users {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .demo-user-btn {
-            margin: 0.25rem;
-        }
-    </style>
+    <title>COMP5241 G10 - Learning Management System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/login.css">
 </head>
-<body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="card login-card">
-                    <div class="card-header login-header text-center py-4">
-                        <h3 class="mb-0">🎓 COMP5241 Group 10</h3>
-                        <p class="mb-0">Learning Management System</p>
-                    </div>
-                    <div class="card-body p-5">
-                        <form id="login-form" action="/api/security/login" method="POST">
-                            <div class="mb-4">
-                                <label for="username" class="form-label">Username</label>
-                                <input type="text" class="form-control form-control-lg" id="username" name="username" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control form-control-lg" id="password" name="password" required>
-                            </div>
-                            <input type="submit" value="login" class="btn btn-primary btn-lg w-100 mb-3"/>
-
-                        </form>
-                        
-                        <!-- Demo Users Section -->
-                        <div class="demo-users">
-                            <h6 class="mb-3">Demo Users (Click to login quickly):</h6>
-                            
-                            <div class="mb-2">
-                                <strong>👨‍🏫 Teachers:</strong><br>
-                                <button type="button" class="btn btn-outline-primary btn-sm demo-user-btn" 
-                                        onclick="quickLogin('teacher1', 'password123', 'teacher')">
-                                    Prof. Smith
-                                </button>
-                                <button type="button" class="btn btn-outline-primary btn-sm demo-user-btn" 
-                                        onclick="quickLogin('teacher2', 'password123', 'teacher')">
-                                    Dr. Johnson
-                                </button>
-                            </div>
-                            
-                            <div>
-                                <strong>👨‍🎓 Students:</strong><br>
-                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
-                                        onclick="quickLogin('student1', 'password123', 'student')">
-                                    Alice Wang
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
-                                        onclick="quickLogin('student2', 'password123', 'student')">
-                                    Bob Chen
-                                </button>
-                                <button type="button" class="btn btn-outline-success btn-sm demo-user-btn" 
-                                        onclick="quickLogin('student3', 'password123', 'student')">
-                                    Charlie Li
-                                </button>
-                            </div>
+<body class="min-vh-100 login-page">
+    <div class="login-container d-flex min-vh-100">
+        <div class="d-flex w-100 min-vh-100 g-0">
+            <!-- Left Illustration Panel -->
+            <div class="d-none d-lg-flex illustration-panel position-relative">
+                <!-- Logo and LMS aligned with Sign In -->
+                <div class="position-absolute top-0 start-0 p-4 d-flex align-items-center" style="height: 88px; z-index: 10;">
+                    <a href="login.html" class="d-flex align-items-center text-decoration-none" style="cursor: pointer;">
+                        <img src="images/logo.png" alt="Learning Management System Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
+                    </a>
+                </div>
+                
+                <div class="d-flex align-items-center justify-content-center w-100 position-relative px-4">
+                    <div class="w-100">
+                        <div class="mb-4 text-start">
+                            <p class="h1 fw-bold welcome-text-animated" style="font-size: 4rem; line-height: 1.2;">
+                                <span class="welcome-word" style="color: black;">Welcome to</span>
+                                <span class="welcome-word" style="color: black;">Advanced</span>
+                                <span class="welcome-word" style="color: #2D5A57;">Learning</span>
+                                <span class="welcome-word" style="color: #2D5A57;">Management</span>
+                                <span class="welcome-word" style="color: #2D5A57;">System</span>
+                            </p>
                         </div>
                         
-                        <div class="text-center mt-4">
-                            <small class="text-muted">
-                                Demo system for COMP5241 Group 10 project<br>
-                                Features: Learning Activities, AI Assistant, Course Management
-                            </small>
+
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Form Panel -->
+            <div class="col-12 d-lg-flex align-items-center justify-content-center p-3 min-vh-100 login-form-panel" style="padding: 1.5rem;">
+                <div class="w-100" style="max-width: 36rem; margin-left: auto; margin-right: auto;">
+                    <div class="card border-0 shadow-sm rounded-4">
+                        <div class="card-body p-4 p-md-5">
+                            <!-- Title for large screens -->
+                            <h2 class="h3 fw-bold text-dark mb-2 d-none d-lg-block">Sign In</h2>
+                            <p class="text-muted mb-4 d-none d-lg-block">Access your learning dashboard</p>
+                            
+                            <!-- Logo for mobile -->
+                            <div class="d-lg-none text-center mb-4 mobile-logo-section">
+                                <div class="logo-container">
+                                    <img src="images/logo.png" alt="LMS Logo" style="width: 3rem; height: 3rem; object-fit: contain;">
+                                </div>
+                                <p style="color: #2D5A57;">
+                                    <span class="lms-full-text">Learning Management System</span>
+                                    <span class="lms-short-text">LMS</span>
+                                </p>
+                            </div>
+                            
+                            <!-- Title for small screens after logo -->
+                            <h2 class="h3 fw-bold text-dark mb-4 d-lg-none text-center">Sign in to your account</h2>
+                            
+                            <form id="loginForm" class="mb-4">
+                                <!-- Username Input -->
+                                <div class="form-floating mb-3">
+                                    <input type="text" class="form-control form-control-lg" id="username" name="username" 
+                                           placeholder="Username" required>
+                                    <label for="username">Username</label>
+                                </div>
+                                
+                                <!-- Password Input -->
+                                <div class="form-floating mb-3 position-relative">
+                                    <input type="password" class="form-control form-control-lg pe-5" id="password" 
+                                           name="password" placeholder="Password" required>
+                                    <label for="password">Password</label>
+                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-2 password-toggle" 
+                                            id="passwordToggle">
+                                        <i class="bi bi-eye" id="passwordIcon"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Remember Me -->
+                                <div class="d-flex justify-content-between align-items-center mb-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                                        <label class="form-check-label text-muted" for="rememberMe">
+                                            Remember me
+                                        </label>
+                                    </div>
+                                    <a href="#" class="text-decoration-none text-primary small">Forgot password?</a>
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold py-3 mb-3">
+                                    <span class="signin-text">Sign In</span>
+                                    <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+                                </button>
+                            </form>
+                            
+                            <!-- Demo Users Section -->
+                            <div class="demo-section">
+                                <div class="text-center position-relative mb-4">
+                                    <span class="demo-divider bg-white px-3 text-muted small">Quick Demo Login</span>
+                                    <hr class="demo-divider-line">
+                                </div>
+                                
+                                <!-- Role Toggle -->
+                                <div class="d-flex justify-content-center mb-4">
+                                    <div class="btn-group role-toggle" role="group">
+                                        <input type="radio" class="btn-check" name="roleOptions" id="teachersTab" checked>
+                                        <label class="btn btn-outline-primary" for="teachersTab">Teachers</label>
+                                        
+                                        <input type="radio" class="btn-check" name="roleOptions" id="studentsTab">
+                                        <label class="btn btn-outline-primary" for="studentsTab">Students</label>
+                                    </div>
+                                </div>
+                                
+                                <!-- Teachers Section -->
+                                <div id="teachersSection" class="demo-users-section">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <div class="demo-user-card card h-100 border-0 bg-light" 
+                                                 data-username="prof.smith" data-password="password">
+                                                <div class="card-body p-3 d-flex align-items-center">
+                                                    <div class="avatar bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                        <span class="fw-semibold small">PS</span>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-semibold small text-dark">Prof. Smith</div>
+                                                        <div class="text-muted small">Computer Science</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="demo-user-card card h-100 border-0 bg-light" 
+                                                 data-username="dr.johnson" data-password="password">
+                                                <div class="card-body p-3 d-flex align-items-center">
+                                                    <div class="avatar bg-success bg-opacity-25 text-success rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                        <span class="fw-semibold small">DJ</span>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-semibold small text-dark">Dr. Johnson</div>
+                                                        <div class="text-muted small">Software Engineering</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Students Section -->
+                                <div id="studentsSection" class="demo-users-section d-none">
+                                    <div class="row g-2">
+                                        <div class="col-4">
+                                            <div class="demo-user-card card h-100 border-0 bg-light" 
+                                                 data-username="alice.wang" data-password="password">
+                                                <div class="card-body p-2 text-center">
+                                                    <div class="avatar bg-info bg-opacity-25 text-info rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2">
+                                                        <span class="fw-semibold small">AW</span>
+                                                    </div>
+                                                    <div class="fw-semibold small text-dark">Alice Wang</div>
+                                                    <div class="text-muted small">Student</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="demo-user-card card h-100 border-0 bg-light" 
+                                                 data-username="bob.chen" data-password="password">
+                                                <div class="card-body p-2 text-center">
+                                                    <div class="avatar bg-warning bg-opacity-25 text-warning rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2">
+                                                        <span class="fw-semibold small">BC</span>
+                                                    </div>
+                                                    <div class="fw-semibold small text-dark">Bob Chen</div>
+                                                    <div class="text-muted small">Student</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="demo-user-card card h-100 border-0 bg-light" 
+                                                 data-username="charlie.li" data-password="password">
+                                                <div class="card-body p-2 text-center">
+                                                    <div class="avatar bg-secondary bg-opacity-25 text-secondary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2">
+                                                        <span class="fw-semibold small">CL</span>
+                                                    </div>
+                                                    <div class="fw-semibold small text-dark">Charlie Li</div>
+                                                    <div class="text-muted small">Student</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -106,125 +204,35 @@
         </div>
     </div>
     
-    <!-- Alert container -->
-    <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1050;"></div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // API configuration
-        const API_BASE_URL = '/api';
-        
-        // Show notification
-        function showNotification(message, type = 'info') {
-            const alertContainer = document.getElementById('alert-container');
-            const alertId = 'alert-' + Date.now();
-            
-            const alertHTML = `
-                <div class="alert alert-${type} alert-dismissible fade show" role="alert" id="${alertId}">
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4">
+                <div class="modal-body text-center p-5">
+                    <div class="success-icon bg-primary bg-opacity-25 text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+                        <i class="bi bi-check-lg fs-2"></i>
+                    </div>
+                    <h3 class="h4 fw-bold text-dark mb-2">Login Successful!</h3>
+                    <p class="text-muted mb-4">Welcome to Learning Management System.</p>
+                    <button type="button" class="btn btn-primary btn-lg w-100 fw-semibold" data-bs-dismiss="modal">
+                        Continue
+                    </button>
                 </div>
-            `;
-            
-            alertContainer.innerHTML += alertHTML;
-            
-            // Auto-dismiss after 5 seconds
-            setTimeout(() => {
-                const alertElement = document.getElementById(alertId);
-                if (alertElement) {
-                    const bsAlert = new bootstrap.Alert(alertElement);
-                    bsAlert ? bsAlert.close() : alertElement.remove();
-                }
-            }, 5000);
-        }
-        
-        // Quick login function
-        function quickLogin(username, password, role) {
-            document.getElementById('username').value = username;
-            document.getElementById('password').value = password;
-            
-            // Auto-submit form
-            setTimeout(() => {
-                document.getElementById('login-form').dispatchEvent(new Event('submit'));
-            }, 100);
-        }
-        
-        // Handle login form submission
-        // document.getElementById('login-form').addEventListener('submit', async function(e) {
-        //     e.preventDefault();
-        //
-        //     const username = document.getElementById('username').value;
-        //     const password = document.getElementById('password').value;
-        //
-        //     if (!username || !password) {
-        //         showNotification('Please enter both username and password', 'warning');
-        //         return;
-        //     }
-        //
-        //     try {
-        //         const response = await fetch(`${API_BASE_URL}/security/login`, {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json'
-        //             },
-        //             body: JSON.stringify({ username, password })
-        //         });
-        //
-        //         if (response.ok) {
-        //             const data = await response.json();
-        //
-        //             // Store token
-        //
-        //             localStorage.setItem('userInfo', JSON.stringify({
-        //                 username: username,
-        //                 role: data.role || 'student'
-        //             }));
-        //
-        //             showNotification('Login successful! Redirecting...', 'success');
-        //
-        //             // Redirect to main application
-        //             setTimeout(() => {
-        //                 window.location.href = '/';
-        //             }, 1000);
-        //
-        //         } else {
-        //             const errorData = await response.json();
-        //             showNotification(errorData.message || 'Login failed', 'danger');
-        //         }
-        //
-        //     } catch (error) {
-        //         console.error('Login error:', error);
-        //
-        //         // For demo purposes, allow fake login if server is not available
-        //         if (error.message.includes('fetch')) {
-        //             showNotification('Server not available. Using demo mode...', 'warning');
-        //
-        //             // Fake successful login
-        //
-        //             localStorage.setItem('userInfo', JSON.stringify({
-        //                 username: username,
-        //                 role: username.includes('teacher') ? 'teacher' : 'student'
-        //             }));
-        //
-        //             setTimeout(() => {
-        //                 window.location.href = '/';
-        //             }, 1000);
-        //         } else {
-        //             showNotification('Network error. Please try again.', 'danger');
-        //         }
-        //     }
-        // });
-        
-        // Check if already logged in
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     const token = localStorage.getItem('authToken');
-        //     if (token) {
-        //         showNotification('You are already logged in. Redirecting...', 'info');
-        //         setTimeout(() => {
-        //             window.location.href = '/';
-        //         }, 1000);
-        //     }
-        // });
-    </script>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alert container -->
+    <div id="alert-container" class="position-fixed top-0 end-0 p-3" style="z-index: 1060;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="static/js/auth.js"></script>
+    <script src="static/js/login.js"></script>
 </body>
 </html>
