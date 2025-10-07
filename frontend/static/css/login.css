@@ -365,16 +365,25 @@ body {
 }
 
 /* Demo user cards */
-.demo-user-card {
+
+.demo-user-card,
+.demo-user-card:hover,
+.demo-user-card:active,
+.demo-user-card.active,
+.demo-user-card.selected {
+    background-color: #fafafa !important;
+    border-color: #dee2e6 !important;
+    color: inherit !important;
+    box-shadow: none !important;
     cursor: pointer;
     transition: all 0.3s ease;
     border-radius: 0.75rem !important;
 }
-
-.demo-user-card:hover {
+.demo-user-card:hover,
+.demo-user-card:active,
+.demo-user-card.active,
+.demo-user-card.selected {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-    border-color: var(--bs-primary) !important;
 }
 
 .demo-user-card .avatar {
