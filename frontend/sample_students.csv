@@ -1,0 +1,6 @@
+student_id,student_name,email,university,external_id
+ST001,John Smith,john.smith@student.edu,University of Technology,EXT001
+ST002,Jane Doe,jane.doe@student.edu,University of Technology,EXT002
+ST003,Alice Johnson,alice.johnson@student.edu,University of Technology,EXT003
+ST004,Bob Wilson,bob.wilson@student.edu,University of Technology,EXT004
+ST005,Charlie Brown,charlie.brown@student.edu,University of Technology,EXT005
