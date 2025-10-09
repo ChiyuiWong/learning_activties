@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Management - COMP5241 Group 10 LMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="static/css/main.css" rel="stylesheet">
+    <link href="static/css/components.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+        <!-- Header -->
+    <header class="bg-primary text-white py-3">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0"><i class="bi bi-book"></i> Course Management</h1>
+                <a href="/" class="btn btn-outline-light btn-sm">
+                    <i class="bi bi-house"></i> Back to Main
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="container mt-3"></div>
+
+    <div class="container mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1><i class="bi bi-book"></i> Course Management</h1>
+                <p class="text-muted">Manage your courses, students, and course content.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importTeachersModal">
+                    <i class="bi bi-upload"></i> Import Teachers
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCourseModal">
+                    <i class="bi bi-plus-circle"></i> Create New Course
+                </button>
+            </div>
+        </div>
+
+
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="filterCategory" class="form-label">Category</label>
+                        <select class="form-control" id="filterCategory">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterSemester" class="form-label">Semester</label>
+                        <select class="form-control" id="filterSemester">
+                            <option value="">All Semesters</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterStatus" class="form-label">Status</label>
+                        <select class="form-control" id="filterStatus">
+                            <option value="">All Courses</option>
+                            <option value="published">Published</option>
+                            <option value="unpublished">Unpublished</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="searchCourses" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchCourses" placeholder="Search courses...">
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button class="btn btn-primary" onclick="applyCourseFilters()">
+                            <i class="bi bi-funnel"></i> Apply Filters
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearCourseFilters()">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses List -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-list"></i> My Courses</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshCourses()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="coursesContainer">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading courses...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                <nav aria-label="Courses pagination" class="mt-4">
+                    <ul class="pagination justify-content-center" id="coursesPagination">
+                        <!-- Pagination will be populated by JavaScript -->
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Course Modal -->
+    <div class="modal fade" id="createCourseModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle"></i> Create New Course</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createCourseForm">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="courseTitle" class="form-label">Course Title *</label>
+                                    <input type="text" class="form-control" id="courseTitle" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="courseCode" class="form-label">Course Code *</label>
+                                    <input type="text" class="form-control" id="courseCode" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="courseDescription" rows="3"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="courseCategory" class="form-label">Category</label>
+                                    <input type="text" class="form-control" id="courseCategory">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="courseDifficulty" class="form-label">Difficulty Level</label>
+                                    <select class="form-control" id="courseDifficulty">
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="maxStudents" class="form-label">Max Students</label>
+                                    <input type="number" class="form-control" id="maxStudents" value="100" min="1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="courseSemester" class="form-label">Semester</label>
+                                    <input type="text" class="form-control" id="courseSemester" placeholder="e.g., Fall 2025">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseUniversity" class="form-label">University</label>
+                            <input type="text" class="form-control" id="courseUniversity">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="coursePublished">
+                                <label class="form-check-label" for="coursePublished">
+                                    Publish course immediately
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Course</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Details Modal -->
+    <div class="modal fade" id="courseDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="courseDetailsTitle">Course Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Course Details Tabs -->
+                    <ul class="nav nav-tabs" id="courseDetailsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                                <i class="bi bi-info-circle"></i> Overview
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers" type="button" role="tab">
+                                <i class="bi bi-person-badge"></i> Teachers
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students" type="button" role="tab">
+                                <i class="bi bi-people"></i> Students
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="materials-tab" data-bs-toggle="tab" data-bs-target="#materials" type="button" role="tab">
+                                <i class="bi bi-files"></i> Materials
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="announcements-tab" data-bs-toggle="tab" data-bs-target="#announcements" type="button" role="tab">
+                                <i class="bi bi-megaphone"></i> Announcements
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content mt-3" id="courseDetailsTabContent">
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                            <div id="courseOverview">
+                                <!-- Course overview content will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Teachers Tab -->
+                        <div class="tab-pane fade" id="teachers" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Course Teachers</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshTeachersList()">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="courseTeachers">
+                                <!-- Teachers list will be loaded here -->
+                                <div class="text-center p-4">
+                                    <i class="bi bi-person-badge h1 text-muted"></i>
+                                    <p class="text-muted">Loading teachers...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Students Tab -->
+                        <div class="tab-pane fade" id="students" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Enrolled Students</h6>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="refreshStudentsList()">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="courseStudents">
+                                <!-- Students list will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Materials Tab -->
+                        <div class="tab-pane fade" id="materials" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Course Materials</h6>
+                                <button class="btn btn-sm btn-primary" onclick="showUploadMaterialModal()">
+                                    <i class="bi bi-upload"></i> Upload Material
+                                </button>
+                            </div>
+                            <div id="courseMaterials">
+                                <!-- Materials list will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Announcements Tab -->
+                        <div class="tab-pane fade" id="announcements" role="tabpanel">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6>Course Announcements</h6>
+                                <button class="btn btn-sm btn-primary" onclick="showCreateAnnouncementModal()">
+                                    <i class="bi bi-plus-circle"></i> New Announcement
+                                </button>
+                            </div>
+                            <div id="courseAnnouncements">
+                                <!-- Announcements list will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Students Modal -->
+    <div class="modal fade" id="importStudentsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload"></i> Import Students</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="importStudentsForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="csvFile" class="form-label">CSV File *</label>
+                            <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                            <div class="form-text">
+                                CSV should have columns: student_id, student_name, email, university, external_id
+                            </div>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            <strong>Note:</strong> Duplicate students will be skipped and reported in the results.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Import Students</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Teachers Modal -->
+    <div class="modal fade" id="importTeachersModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-upload"></i> Import Teachers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="importTeachersForm">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="teacherCsvFile" class="form-label">CSV File *</label>
+                            <input type="file" class="form-control" id="teacherCsvFile" accept=".csv" required>
+                            <div class="form-text">
+                                CSV should have columns: teacher_id, teacher_name, email, department, specialization
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="courseSelect" class="form-label">Assign to Course *</label>
+                            <select class="form-control" id="courseSelect" required>
+                                <option value="">Select a course</option>
+                            </select>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            <strong>Note:</strong> This will check for duplicate teachers and report any errors during import.
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">Import Teachers</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- API Client -->
+    <script src="static/js/api.js"></script>
+    <!-- Auth Client -->
+    <script src="static/js/auth.js"></script>
+    <!-- Courses Script -->
+    <script src="static/js/courses.js"></script>
+</body>
+</html>
