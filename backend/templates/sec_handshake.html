@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security handshake</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"
+        integrity="sha256-WCzAhd2P6gRJF9Hv3oOOd+hFJi/QJbv+Azn4CGB8gfY="
+        crossorigin="anonymous"></script>
+</head>
+<body>
+    Establishing secure handshake to protect your and your students' privacy.
+    <div id="status"></div>
+<script>
+    $(document).ready(function () {
+        localStorage.setItem("userInfo", '{"username": "{{ username }}", "role": "{{ role }}"}');
+         $("#status").html("Handshake completed. <a href='/'>Click me</a> if you were not being redirected.");
+         window.location.href = "/";
+    })
+</script>
+</body>
+</html>

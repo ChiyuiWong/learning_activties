@@ -5,36 +5,29 @@ Shared API utilities for all team members
 
 // API Client class
 class APIClient {
-    constructor(baseUrl = 'http://localhost:5000/api') {
+    constructor(baseUrl = '/api') {
         this.baseUrl = baseUrl;
         this.token = localStorage.getItem('authToken');
     }
-    
-    // Set authentication token
-    setToken(token) {
-        this.token = token;
-        if (token) {
-            localStorage.setItem('authToken', token);
-        } else {
-            localStorage.removeItem('authToken');
-        }
+    getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
     }
     
     // Get authentication headers
     getHeaders() {
         const headers = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': this.getCookie('csrf_access_token'),
         };
-        
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
+
         
         return headers;
     }
     
     // Generic request method
-    async request(endpoint, options = {}) {
+    async request(endpoint, options = {}, is_include_header = false) {
         const url = `${this.baseUrl}${endpoint}`;
         const config = {
             headers: this.getHeaders(),
@@ -48,10 +41,14 @@ class APIClient {
             
             // Try to parse JSON response, but handle non-JSON responses gracefully
             let data;
+
             try {
-                data = await response.json();
+                if(response.headers.get('Content-Type') === 'application/json') {
+                    data = await response.json();
+                } else {
+                    data = await response.blob();
+                }
             } catch (parseError) {
-                console.error('Failed to parse JSON response:', parseError);
                 data = { error: 'Invalid response format' };
             }
             
@@ -59,7 +56,9 @@ class APIClient {
                 console.error('API request failed:', data);
                 throw new Error(data.message || 'API request failed');
             }
-            
+            if(is_include_header) {
+                return [data, response.headers];
+            }
             return data;
         } catch (error) {
             console.error('API Error:', error);
@@ -83,13 +82,14 @@ class APIClient {
     async get(endpoint) {
         return this.request(endpoint, { method: 'GET' });
     }
+
     
     // POST request
-    async post(endpoint, data) {
+    async post(endpoint, data, is_include_header = false) {
         return this.request(endpoint, {
             method: 'POST',
             body: JSON.stringify(data)
-        });
+        }, is_include_header);
     }
     
     // PUT request
@@ -280,6 +280,18 @@ const LearningActivitiesAPI = {
     healthCheck: async () => {
         return api.get('/learning/health');
     }
+    ,
+    // Poll endpoints
+    getPolls: async (courseId) => {
+        const endpoint = courseId ? `/learning/polls/?course_id=${courseId}` : '/learning/polls/';
+        return api.get(endpoint);
+    },
+    getPoll: async (pollId) => {
+        return api.get(`/learning/polls/${pollId}`);
+    },
+    createPoll: async (pollData) => {
+        return api.post('/learning/polls', pollData);
+    }
 };
 
 // Admin API endpoints (Sunny's module)
@@ -328,7 +340,7 @@ const HealthAPI = {
             security: SecurityAPI.healthCheck,
             genai: GenAIAPI.healthCheck,
             courses: CoursesAPI.healthCheck,
-            activities: ActivitiesAPI.healthCheck,
+            activities: LearningActivitiesAPI.healthCheck,
             admin: AdminAPI.healthCheck
         };
         
@@ -349,7 +361,7 @@ window.api = api;
 window.SecurityAPI = SecurityAPI;
 window.GenAIAPI = GenAIAPI;
 window.CoursesAPI = CoursesAPI;
-window.ActivitiesAPI = ActivitiesAPI;
+window.ActivitiesAPI = LearningActivitiesAPI;
 window.AdminAPI = AdminAPI;
 window.HealthAPI = HealthAPI;
 

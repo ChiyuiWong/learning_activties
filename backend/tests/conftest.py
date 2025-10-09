@@ -1,0 +1,50 @@
+import pytest
+from app import create_app
+from app.config.config import TestConfig
+
+
+@pytest.fixture(scope='session')
+def app():
+    app = create_app(config_class=TestConfig)
+    yield app
+
+
+@pytest.fixture(scope='session')
+def client(app):
+    return app.test_client()
+
+
+def _make_test_token(username: str, role: str) -> str:
+    """Create a mock JWT-like token where the payload is a base64url-encoded JSON.
+    The app's test-mode JWT decoder will extract the payload without verifying signatures.
+    """
+    import base64, json
+    payload = json.dumps({"sub": username, "role": role})
+    b = base64.urlsafe_b64encode(payload.encode('utf-8')).decode('utf-8').rstrip('=')
+    return f"header.{b}.signature"
+
+
+@pytest.fixture(scope='session')
+def teacher_token(app):
+    return _make_test_token('teacher1', 'teacher')
+
+
+@pytest.fixture(scope='session')
+def student_token(app):
+    return _make_test_token('student1', 'student')
+
+
+@pytest.fixture(scope='function')
+def poll_id(client, teacher_token):
+    """Create a poll via the API and return its id for tests that need an existing poll."""
+    headers = {'Authorization': f'Bearer {teacher_token}'}
+    payload = {
+        'question': 'Test poll?',
+        'options': ['Yes', 'No'],
+        'course_id': 'CS101'
+    }
+    resp = client.post('/api/learning/polls', json=payload, headers=headers)
+    if resp.status_code != 201:
+        raise RuntimeError(f"Failed to create poll for tests: {resp.status_code} {resp.data}")
+    data = resp.get_json()
+    return data.get('poll_id')
