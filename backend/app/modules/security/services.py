@@ -45,8 +45,10 @@ class SecurityService:
                     salt=user_doc["pw_hash_salt"],
                     desired_key_bytes=32,
                     rounds=1000)
-                SecurityService.action_logger.log(username, ip_address, f"{('successful' if hashed_pw == hashed_pw else 'failed')} authentication.")
-                return hashed_pw == org_hashed_pw
+                # Log whether authentication succeeded by comparing to stored hash
+                success = (hashed_pw == org_hashed_pw)
+                SecurityService.action_logger.log(username, ip_address, f"{('successful' if success else 'failed')} authentication.")
+                return success
         except Exception as e:
             SecurityService.action_logger.log(username, ip_address, f"failed authentication with {str(e)}.")
             return False
@@ -108,10 +110,11 @@ class SecurityService:
                  "role": new_user_doc["role"],
                  "is_active": True,
                  "is_verified": True,
-                 "created_at": datetime.datetime.now(datetime.UTC),
-                 })
+                 "created_at": datetime.datetime.now(datetime.timezone.utc),
+                 }
+            )
             db["new_users"].delete_one({"_id": new_user_doc["_id"]})
-            SecurityService.action_logger.log(username, ip_address, f"account created from activation code {new_user_doc["_id"]}")
+            SecurityService.action_logger.log(username, ip_address, f"account created from activation code {new_user_doc['_id']}")
         return "OK"
     
     @staticmethod

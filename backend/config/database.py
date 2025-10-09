@@ -6,6 +6,12 @@ import os
 from mongoengine import connect, disconnect
 import pymongo
 from flask import current_app
+import os
+
+try:
+    import mongomock  # type: ignore
+except Exception:
+    mongomock = None
 
 
 def init_db(app):
@@ -23,9 +29,17 @@ def init_db(app):
 
 def get_db_connection():
     """Get direct PyMongo connection for complex operations"""
+    # If running inside Flask app and tests request mongomock, prefer mongomock
+    try:
+        if current_app and current_app.config.get('TESTING') and current_app.config.get('MONGODB_MOCK') and mongomock:
+            # Return a mongomock MongoClient
+            return mongomock.MongoClient()
+    except RuntimeError:
+        # Not in app context; fall back to environment
+        pass
+
     mongodb_uri = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/comp5241_g10')
     client = pymongo.MongoClient(mongodb_uri)
-    # Get database name from URI or use default
     return client
 
 

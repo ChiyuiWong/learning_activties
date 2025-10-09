@@ -27,3 +27,15 @@ class Config:
     
     # CORS settings
     CORS_ORIGINS = ['http://localhost:3000', 'http://127.0.0.1:3000']
+
+
+class TestConfig(Config):
+    """Testing configuration"""
+    TESTING = True
+    # Use a separate test DB by default
+    MONGODB_DB = os.environ.get('MONGODB_TEST_DB', 'comp5241_g10_test')
+    # If set to true, init_db will connect to mongomock for in-memory tests
+    MONGODB_MOCK = True
+    # Provide a deterministic encryption key for action logging during tests
+    # (base64-encoded 32-byte key)
+    ACTION_LOG_ENC_KEY = os.environ.get('ACTION_LOG_ENC_KEY', 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=')
