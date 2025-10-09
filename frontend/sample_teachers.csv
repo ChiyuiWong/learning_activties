@@ -1,0 +1,6 @@
+teacher_id,teacher_name,email,department,specialization
+T001,Dr. John Smith,john.smith@university.edu,Computer Science,Database Systems
+T002,Prof. Jane Doe,jane.doe@university.edu,Information Technology,Web Development
+T003,Dr. Alice Johnson,alice.johnson@university.edu,Computer Science,Machine Learning
+T004,Prof. Bob Wilson,bob.wilson@university.edu,Information Systems,Systems Analysis
+T005,Dr. Charlie Brown,charlie.brown@university.edu,Software Engineering,Software Architecture
