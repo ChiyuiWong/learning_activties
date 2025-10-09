@@ -75,6 +75,7 @@ COMP5241_G10/
 - Python 3.11 or higher
 - MongoDB mongodb-community@8.2 (local installation or cloud service)
 - Git
+- **uv** (recommended) or pip for dependency management
 
 ### 1. Clone the Repository
 ```bash
@@ -84,8 +85,20 @@ cd COMP5241_G10
 
 ### 2. Backend Setup
 
-#### Install Python Dependencies
+#### Install uv (Recommended)
 ```bash
+# Install uv package manager
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Or using pip: pip install uv
+# Or using Homebrew: brew install uv
+```
+
+#### Install Dependencies
+```bash
+# Using uv (recommended - faster and more reliable)
+uv sync
+
+# Or using pip (legacy)
 cd backend
 pip install -r requirements.txt
 ```
@@ -93,6 +106,7 @@ pip install -r requirements.txt
 #### Set Up Environment Variables
 ```bash
 # Copy example environment file
+cd backend
 cp env.example .env
 
 # Edit .env file with your configuration
@@ -105,8 +119,19 @@ cp env.example .env
 
 #### Start Backend Server
 ```bash
-cd ../backend
+# Using uv (recommended)
+cd backend
+uv run python app.py
+
+# Or using pip (legacy)
+cd backend
 python app.py
+```
+
+**Alternative: Use the startup script (easiest)**
+```bash
+# From project root - automatically handles MongoDB and backend startup
+python start_system.py
 ```
 
 The backend will be available at `http://localhost:5000`
@@ -203,6 +228,10 @@ The system uses the following MongoDB collections:
 
 ### Backend Testing
 ```bash
+# Using uv (recommended)
+uv run pytest backend/tests/ -v
+
+# Or using pip (legacy)
 cd backend
 python -m pytest tests/ -v
 ```
@@ -232,10 +261,11 @@ curl -X POST http://localhost:5000/api/security/login \
 
 ### Production Setup
 ```bash
-# Install production server
-pip install gunicorn
+# Using uv (recommended)
+uv run gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
-# Run with Gunicorn
+# Or using pip (legacy)
+pip install gunicorn
 gunicorn -w 4 -b 0.0.0.0:5000 app:app
 ```
 
@@ -243,9 +273,23 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 ### GenAI Module (Ting)
 - Location: `/backend/app/modules/genai/`
-- Features: AI content generation, content analysis
-- Dependencies: OpenAI API, LangChain
-- TODO: Implement AI integration, content generation endpoints
+- Frontend: `/frontend/ai-assistant.html`
+- Features: 
+  - **AI Chat Assistant**: Real-time conversations with AI models
+  - **Model Management**: Download and manage Ollama AI models
+  - **Course Materials Integration**: Upload materials for context-aware responses (RAG)
+  - **Multi-Session Support**: Organize conversations by topic
+- Dependencies: Ollama, PyPDF2, python-docx, ChromaDB, LangChain
+- **Status**: ✅ Fully Implemented
+
+#### AI Assistant Usage
+1. **Install Ollama**: Download from [ollama.ai](https://ollama.ai)
+2. **Start Ollama Service**: Run `ollama serve` in terminal
+3. **Access AI Assistant**: Navigate to `/frontend/ai-assistant.html` or click AI Assistant from dashboard
+4. **Download Models**: Go to Models tab and download models (e.g., llama2, mistral, codellama)
+5. **Start Chatting**: Select a model and start conversing!
+
+For detailed setup instructions, see [GENAI_SETUP.md](GENAI_SETUP.md)
 
 ### Security Module (Sunny)
 - Location: `/backend/app/modules/security/` and `/backend/app/modules/admin/`
@@ -290,6 +334,35 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 - **Issues**: Use GitHub issues for bug reports and feature requests
 - **Team Communication**: WhatsApp Group
 - **Documentation**: Keep this README updated with changes
+
+## UV Package Manager
+
+This project now supports **uv** - a fast Python package manager and resolver. UV provides significant performance improvements over pip.
+
+### Quick UV Commands
+```bash
+# Install dependencies
+uv sync
+
+# Run the application
+uv run python backend/app.py
+
+# Run tests
+uv run pytest backend/tests/ -v
+
+# Add new dependencies
+uv add package-name
+uv add --dev package-name  # for development dependencies
+```
+
+### Benefits of UV
+- **10-100x faster** than pip for dependency resolution
+- **Automatic virtual environment** management
+- **Better dependency resolution** with conflict detection
+- **Lock file support** for reproducible builds
+- **Parallel downloads** for faster installation
+
+For detailed UV usage instructions, see [UV_GUIDE.md](UV_GUIDE.md).
 
 ## License
 

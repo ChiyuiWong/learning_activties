@@ -13,8 +13,8 @@ import requests
 from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
 import chromadb
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.embeddings import OpenAIEmbeddings
 from .models import (
     AIGeneration, AIAnalysis, CourseMaterial, ChatSession, 
     ChatMessage, OllamaModel
@@ -35,29 +35,42 @@ class GenAIService:
     
     def _initialize_services(self):
         """Initialize AI services"""
-        # Initialize OpenAI client
-        api_key = current_app.config.get('OPENAI_API_KEY')
-        if api_key:
-            openai.api_key = api_key
-            self.openai_client = openai
-        else:
-            current_app.logger.warning("OpenAI API key not configured")
+        try:
+            # Initialize OpenAI client
+            api_key = current_app.config.get('OPENAI_API_KEY')
+            if api_key:
+                openai.api_key = api_key
+                self.openai_client = openai
+            else:
+                current_app.logger.warning("OpenAI API key not configured")
+        except RuntimeError:
+            # Application context not available during initialization
+            # This is expected and will be handled when the service is first used
+            pass
         
         # Initialize ChromaDB client
         try:
             self.chroma_client = chromadb.Client()
-            current_app.logger.info("ChromaDB initialized successfully")
+            if hasattr(current_app, 'logger'):
+                current_app.logger.info("ChromaDB initialized successfully")
         except Exception as e:
-            current_app.logger.error(f"Failed to initialize ChromaDB: {e}")
+            if hasattr(current_app, 'logger'):
+                current_app.logger.error(f"Failed to initialize ChromaDB: {e}")
+            else:
+                print(f"Failed to initialize ChromaDB: {e}")
     
     def get_available_models(self):
         """Get list of available Ollama models"""
         try:
             models = ollama.list()
-            return models
+            # Ensure we always return a dict with 'models' key
+            if isinstance(models, dict):
+                return models
+            else:
+                return {'models': []}
         except Exception as e:
             current_app.logger.error(f"Failed to get Ollama models: {e}")
-            return []
+            return {'models': []}
     
     def download_model(self, model_name):
         """Download an Ollama model"""
@@ -197,7 +210,10 @@ class GenAIService:
                     ids=[f"{material_id}_chunk_{i}"]
                 )
         except Exception as e:
-            current_app.logger.error(f"Failed to store in vector DB: {e}")
+            if hasattr(current_app, 'logger'):
+                current_app.logger.error(f"Failed to store in vector DB: {e}")
+            else:
+                print(f"Failed to store in vector DB: {e}")
     
     def save_chat_session(self, user_id, model_name, course_id=None, context_materials=None):
         """Save a new chat session"""

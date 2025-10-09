@@ -12,8 +12,15 @@ from .models import CourseMaterial, ChatSession, ChatMessage, OllamaModel
 
 genai_bp = Blueprint('genai', __name__)
 
-# Initialize service
-genai_service = GenAIService()
+# Initialize service lazily to avoid application context issues
+genai_service = None
+
+def get_genai_service():
+    """Get or create GenAI service instance"""
+    global genai_service
+    if genai_service is None:
+        genai_service = GenAIService()
+    return genai_service
 
 # Configure upload settings
 UPLOAD_FOLDER = 'uploads/course_materials'
@@ -39,31 +46,40 @@ def genai_health():
 
 # Model Management Endpoints
 @genai_bp.route('/models', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_models():
     """Get list of available Ollama models"""
     try:
         # Get models from Ollama
-        available_models = genai_service.get_available_models()
+        available_models = get_genai_service().get_available_models()
+        
+        current_app.logger.info(f"Ollama models response: {available_models}")
         
         # Get model status from database
         db_models = {model.name: model for model in OllamaModel.objects()}
         
         # Combine information
         models_info = []
-        for model in available_models.get('models', []):
-            model_name = model['name']
+        models_list = available_models.get('models', [])
+        
+        for model in models_list:
+            model_name = model.get('name', '')
+            if not model_name:
+                continue
+                
             db_model = db_models.get(model_name)
             
             model_info = {
                 'name': model_name,
                 'size': model.get('size', ''),
                 'modified_at': model.get('modified_at', ''),
-                'is_downloaded': db_model.is_downloaded if db_model else False,
-                'download_progress': db_model.download_progress if db_model else 0,
+                'is_downloaded': db_model.is_downloaded if db_model else True,  # Assume downloaded if in Ollama
+                'download_progress': db_model.download_progress if db_model else 100,
                 'last_used': db_model.last_used.isoformat() if db_model and db_model.last_used else None
             }
             models_info.append(model_info)
+        
+        current_app.logger.info(f"Returning {len(models_info)} models")
         
         return jsonify({
             'success': True,
@@ -71,6 +87,8 @@ def list_models():
         })
     except Exception as e:
         current_app.logger.error(f"Failed to list models: {e}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
             'error': str(e)
@@ -78,7 +96,7 @@ def list_models():
 
 
 @genai_bp.route('/models/download', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def download_model():
     """Download an Ollama model"""
     try:
@@ -91,7 +109,7 @@ def download_model():
                 'error': 'Model name is required'
             }), 400
         
-        success, message = genai_service.download_model(model_name)
+        success, message = get_genai_service().download_model(model_name)
         
         return jsonify({
             'success': success,
@@ -107,7 +125,7 @@ def download_model():
 
 # Course Materials Management Endpoints
 @genai_bp.route('/materials', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_materials():
     """Get list of course materials"""
     try:
@@ -150,7 +168,7 @@ def list_materials():
 
 
 @genai_bp.route('/materials/upload', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def upload_material():
     """Upload course material"""
     try:
@@ -217,7 +235,7 @@ def upload_material():
         
         # Process the file to extract text content
         try:
-            genai_service.process_course_material(file_path, str(material.id))
+            get_genai_service().process_course_material(file_path, str(material.id))
         except Exception as e:
             current_app.logger.warning(f"Failed to process material immediately: {e}")
         
@@ -241,7 +259,7 @@ def upload_material():
 
 
 @genai_bp.route('/materials/<material_id>', methods=['DELETE'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def delete_material(material_id):
     """Delete course material"""
     try:
@@ -282,12 +300,12 @@ def delete_material(material_id):
 
 # Chat Endpoints
 @genai_bp.route('/chat/sessions', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def list_chat_sessions():
     """Get user's chat sessions"""
     try:
         user_id = get_jwt_identity()
-        sessions = genai_service.get_user_sessions(user_id)
+        sessions = get_genai_service().get_user_sessions(user_id)
         
         sessions_data = []
         for session in sessions:
@@ -314,7 +332,7 @@ def list_chat_sessions():
 
 
 @genai_bp.route('/chat/sessions', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def create_chat_session():
     """Create a new chat session"""
     try:
@@ -331,7 +349,7 @@ def create_chat_session():
                 'error': 'Model name is required'
             }), 400
         
-        session = genai_service.save_chat_session(
+        session = get_genai_service().save_chat_session(
             user_id=user_id,
             model_name=model_name,
             course_id=course_id,
@@ -356,11 +374,11 @@ def create_chat_session():
 
 
 @genai_bp.route('/chat/sessions/<session_id>/messages', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_chat_history(session_id):
     """Get chat history for a session"""
     try:
-        messages = genai_service.get_chat_history(session_id)
+        messages = get_genai_service().get_chat_history(session_id)
         
         messages_data = []
         for message in messages:
@@ -385,7 +403,7 @@ def get_chat_history(session_id):
 
 
 @genai_bp.route('/chat/sessions/<session_id>/messages', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def send_chat_message(session_id):
     """Send a message in a chat session"""
     try:
@@ -403,7 +421,7 @@ def send_chat_message(session_id):
         session = ChatSession.objects.get(id=session_id)
         
         # Save user message
-        user_message = genai_service.save_chat_message(
+        user_message = get_genai_service().save_chat_message(
             session_id=session_id,
             user_id=user_id,
             message_type='human',
@@ -411,7 +429,7 @@ def send_chat_message(session_id):
         )
         
         # Generate AI response
-        ai_response = genai_service.chat_with_model(
+        ai_response = get_genai_service().chat_with_model(
             model_name=session.model_name,
             prompt=message,
             context_materials=session.context_materials,
@@ -419,7 +437,7 @@ def send_chat_message(session_id):
         )
         
         # Save AI response
-        ai_message = genai_service.save_chat_message(
+        ai_message = get_genai_service().save_chat_message(
             session_id=session_id,
             user_id=user_id,
             message_type='ai',

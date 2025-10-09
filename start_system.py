@@ -40,24 +40,25 @@ def start_mongodb():
         return False
 
 def start_backend_server():
-    """Start the Flask backend server"""
+    """Start the Flask backend server using uv"""
     backend_dir = os.path.join(os.path.dirname(__file__), 'backend')
-    os.chdir(backend_dir)
+    project_root = os.path.dirname(__file__)
     
-    print("🚀 Starting Flask backend server...")
+    print("🚀 Starting Flask backend server with uv...")
     try:
-        # Try to run the Flask app
+        # Use uv to run the Flask app
         return subprocess.Popen([
-            sys.executable, 'app.py'
-        ], cwd=backend_dir)
+            'uv', 'run', 'python', 'app.py'
+        ], cwd=backend_dir, env={**os.environ, 'PYTHONPATH': project_root})
     except Exception as e:
         print(f"❌ Failed to start backend server: {e}")
+        print("💡 Make sure you have 'uv' installed: pip install uv")
         return None
 
 def open_browser():
     """Open the browser after a delay"""
     print("🌐 Opening browser...")
-    webbrowser.open('http://localhost:5000/login.html')
+    webbrowser.open('http://localhost:5001/login.html')
 
 def main():
     """Main startup function"""
@@ -76,9 +77,9 @@ def main():
     
     if backend_process:
         print("✅ Backend server started successfully!")
-        print("📊 Backend API: http://localhost:5000/api")
-        print("🌐 Frontend App: http://localhost:5000")
-        print("🔐 Login Page: http://localhost:5000/login.html")
+        print("📊 Backend API: http://localhost:5001/api")
+        print("🌐 Frontend App: http://localhost:5001")
+        print("🔐 Login Page: http://localhost:5001/login.html")
         print()
         
         # Open browser after 3 seconds
