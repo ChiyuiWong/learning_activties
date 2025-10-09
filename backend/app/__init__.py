@@ -166,4 +166,23 @@ def create_app(config_class=Config):
     def login_test():
         return send_from_directory(frontend_dir, 'login_test.html')
     
+    # Course Management Frontend Routes
+    @app.route('/teacher-dashboard')
+    @app.route('/teacher-dashboard.html')
+    @jwt_required(locations=["cookies"], optional=True)
+    def teacher_dashboard():
+        return send_from_directory(frontend_dir, 'teacher-dashboard.html')
+    
+    @app.route('/courses')
+    @app.route('/courses.html')
+    @jwt_required(locations=["cookies"], optional=True)
+    def courses():
+        return send_from_directory(frontend_dir, 'courses.html')
+    
+    @app.route('/student-dashboard')
+    @app.route('/student-dashboard.html')
+    @jwt_required(locations=["cookies"], optional=True)
+    def student_dashboard():
+        return send_from_directory(frontend_dir, 'student-dashboard.html')
+    
     return app
