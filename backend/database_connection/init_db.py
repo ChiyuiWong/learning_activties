@@ -38,16 +38,116 @@ def init_database():
 
 def create_collections_and_indexes(db):
     """Create collections and their indexes"""
-
+    collections_names = db.list_collection_names()
     # Users collection indexes
-    db.users.create_index("username", unique=True)
-    db.users.create_index("email", unique=True)
-    db.users.create_index([("role", 1), ("is_active", 1)])
+    if "users" not in collections_names:
+        db.create_collection(
+            "users",
+            validator={
+                "$jsonSchema": {
+                    "bsonType": "object",
+                    "required": [
+                        "_id",
+                        "created_at",
+                        "email",
+                        "encrypted_pw_hash",
+                        "first_name",
+                        "is_active",
+                        "is_verified",
+                        "last_name",
+                        "role",
+                        "username"
+                    ],
+                    "properties": {
+                        "_id": {
+                            "bsonType": "string"
+                        },
+                        "created_at": {
+                            "bsonType": "date"
+                        },
+                        "email": {
+                            "bsonType": "string"
+                        },
+                        "encrypted_pw_hash": {
+                            "bsonType": "binData",
+                            "minLength": 48,
+                            "maxLength": 48,
+                        },
+                        "encrypted_pw_hash_iv": {
+                            "bsonType": "binData",
+                            "minLength": 16,
+                            "maxLength": 16
+                        },
+                        "first_name": {
+                            "bsonType": "string"
+                        },
+                        "is_active": {
+                            "bsonType": "bool"
+                        },
+                        "is_verified": {
+                            "bsonType": "bool"
+                        },
+                        "last_name": {
+                            "bsonType": "string"
+                        },
+                        "pw_hash_salt": {
+                            "bsonType": "binData",
+                            "minLength": 16,
+                            "maxLength": 16
+                        },
+                        "role": {
+                            "bsonType": "string",
+                            "enum": ["student", "teacher", "admin"]
+                        },
+                        "username": {
+                            "bsonType": "string"
+                        }
+                    }
+                }
+            }
+        )
+        db.users.create_index("username", unique=True)
+        db.users.create_index("email", unique=True)
+        db.users.create_index([("role", 1), ("is_active", 1)])
 
     # New users collection indexes
-    # Users collection indexes
-    db.new_users.create_index("email", unique=True)
-    db.new_users.create_index([("role", 1)])
+    if "new_users" not in collections_names:
+        db.create_collection(
+            "new_users",
+            validator={
+                "$jsonSchema": {
+                    "bsonType": "object",
+                    "required": [
+                        "_id",
+                        "email",
+                        "first_name",
+                        "last_name",
+                        "role"
+                    ],
+                    "properties": {
+                        "_id": {
+                            "bsonType": "string",
+                            "minLength": 32
+                        },
+                        "email": {
+                            "bsonType": "string"
+                        },
+                        "first_name": {
+                            "bsonType": "string"
+                        },
+                        "last_name": {
+                            "bsonType": "string"
+                        },
+                        "role": {
+                            "bsonType": "string",
+                            "enum": ["student", "teacher"]
+                        }
+                    }
+                }
+            }
+        )
+        db.new_users.create_index("email", unique=True)
+        db.new_users.create_index([("role", 1)])
 
     # Courses collection indexes
     db.courses.create_index("course_code", unique=True)
@@ -67,39 +167,93 @@ def create_collections_and_indexes(db):
     db.activity_submissions.create_index([("activity_id", 1), ("student_id", 1)])
     db.activity_submissions.create_index("status")
 
-    # User sessions indexes
-    db.user_sessions.create_index("session_token", unique=True)
-    db.user_sessions.create_index("expires_at", expireAfterSeconds=0)
-
     # Audit logs indexes
-    db.security_audit_logs.create_index([("user_id", 1), ("timestamp", -1)])
-    db.admin_actions.create_index([("admin_id", 1), ("performed_at", -1)])
-    if 'action_log' not in db.list_collection_names():
+    if "action_log" not in collections_names:
         db.create_collection(
-            'action_log',
+            "action_log",
             validator={
-                '$jsonSchema': {
-                    'bsonType': 'object',
-                    'required': ['module', 'encrypted_data', 'encryption_iv', 'created_at'],
-                    'properties': {
-                        'module': {
-                            'bsonType': 'string'
+                "$jsonSchema": {
+                    "bsonType": "object",
+                    "required": ["module", "encrypted_data", "encryption_iv", "created_at"],
+                    "properties": {
+                        "module": {
+                            "bsonType": "string"
 
                         },
-                        'encrypted_data': {
-                            'bsonType': 'binData'
+                        "encrypted_data": {
+                            "bsonType": "binData"
                         },
-                        'encryption_iv': {
-                            'bsonType': 'binData'
+                        "encryption_iv": {
+                            "bsonType": "binData",
+                            "minLength": 16,
+                            "maxLength": 16
                         },
-                        'created_at': {
-                            'bsonType': 'date',
+                        "created_at": {
+                            "bsonType": "date",
                         }
                     }
                 }
             }
         )
-
+    if "interval_stats" not in collections_names:
+        db.create_collection(
+            "interval_stats",
+            validator={
+                "$jsonSchema": {
+                    "bsonType": "object",
+                    "required": [
+                        "_id",
+                        "act",
+                        "interval_num",
+                        "module",
+                        "val"
+                    ],
+                    "additionalProperties": False,
+                    "properties": {
+                        "_id": {
+                            "bsonType": "objectId"
+                        },
+                        "act": {
+                            "bsonType": "string"
+                        },
+                        "interval_num": {
+                            "bsonType": "int",
+                            "minimum": 1759837655
+                        },
+                        "module": {
+                            "bsonType": "string"
+                        },
+                        "type": {
+                            "bsonType": "string"
+                        },
+                        "val": {
+                            "bsonType": ["double", "int"]
+                        }
+                    }
+                }
+            }
+        )
+    if "zip_pw" not in collections_names:
+        db.create_collection("zip_pw",
+                             validator={
+                                 "$jsonSchema": {
+                                     "bsonType": "object",
+                                     "required": [
+                                         "_id",
+                                         "password"
+                                     ],
+                                     "properties": {
+                                         "_id": {
+                                             "bsonType": "string",
+                                             "minLength": 64
+                                         },
+                                         "password": {
+                                             "bsonType": "string",
+                                             "minLength": 44
+                                         }
+                                     }
+                                 }
+                             })
     print("Created collections and indexes")
 
 
@@ -138,23 +292,8 @@ def insert_sample_data(db):
         "created_at": datetime.utcnow()
     }
 
-    # Sample student user
-    sample_student = {
-        "_id": "student_001",
-        "username": "student1",
-        "email": "student1@comp5241.edu",
-        "encrypted_pw_hash": "to_be_hashed",
-        "first_name": "Jane",
-        "last_name": "Smith",
-        "role": "student",
-        "is_active": True,
-        "is_verified": True,
-        "created_at": datetime.utcnow()
-    }
-
     # Insert sample users (update if exists)
     db.users.replace_one({"_id": "admin1"}, sample_admin, upsert=True)
     db.users.replace_one({"_id": "teacher1"}, sample_teacher, upsert=True)
-    # db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
 
     print("Inserted sample data")
