@@ -19,7 +19,69 @@ def test_models():
             ShortAnswerQuestion, ShortAnswerSubmission,
             MiniGame, MiniGameScore
         )
+        from app.modules.learning_activities.models import LearningActivity
+        from app.modules.learning_activities.services import LearningActivityService
+
+        # Test creating a learning activity
+        print("\n🔄 Testing Learning Activity creation...")
+        activity = LearningActivityService.create_activity(
+            title="Test Activity",
+            description="Test description",
+            activity_type="quiz",
+            course_id="COMP5241",
+            created_by="teacher1",
+            instructions="Test instructions",
+            max_score=100,
+            time_limit=30,
+            tags=["test", "demo"],
+            metadata={
+                "questions": [
+                    {
+                        "text": "Test question?",
+                        "options": [
+                            {"text": "Option 1", "is_correct": True},
+                            {"text": "Option 2", "is_correct": False}
+                        ]
+                    }
+                ]
+            }
+        )
+        print(f"✅ Activity created with ID: {activity.id}")
+
+        # Test retrieving activities
+        activities = LearningActivityService.get_activities(course_id="COMP5241")
+        print(f"✅ Retrieved {len(activities)} activities")
+
+        # Test updating activity
+        LearningActivityService.update_activity(
+            str(activity.id),
+            title="Updated Test Activity",
+            status="published"
+        )
+        print("✅ Activity updated successfully")
         print("✅ All learning activity models imported successfully!")
+        
+        # Test WordCloud CRUD operations
+        print("\n🔄 Testing WordCloud CRUD operations...")
+        wordcloud = WordCloud(
+            title="Test Cloud",
+            prompt="Enter test words",
+            created_by="teacher1",
+            course_id="COMP5241"
+        )
+        wordcloud.save()
+        print(f"✅ WordCloud created with ID: {wordcloud.id}")
+        
+        # Test submission
+        submission = WordCloudSubmission(word="testing", submitted_by="student1")
+        wordcloud.submissions.append(submission)
+        wordcloud.save()
+        print("✅ Added word submission to cloud")
+        
+        # Test retrieval
+        saved_cloud = WordCloud.objects.get(id=wordcloud.id)
+        print(f"✅ Retrieved cloud: {saved_cloud.title} with {len(saved_cloud.submissions)} submissions")
+        print(f"Word frequency: {saved_cloud.get_word_frequency()}")
         
         # Test creating some sample instances
         print("\n🔍 Testing model creation...")
