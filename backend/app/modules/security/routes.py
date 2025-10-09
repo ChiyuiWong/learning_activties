@@ -2,8 +2,10 @@
 COMP5241 Group 10 - Security Module Routes
 Responsible: Sunny
 """
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from flask import Blueprint, request, jsonify, Response, render_template
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies, get_jwt
+
+from app.modules.security.services import SecurityService
 
 security_bp = Blueprint('security', __name__)
 
@@ -21,61 +23,75 @@ def security_health():
 @security_bp.route('/login', methods=['POST'])
 def login():
     """User login endpoint with simple mock authentication for testing"""
-    data = request.get_json()
+    # Accept JSON payloads (used by tests) or fallback to form data
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
     username = data.get('username', '')
     password = data.get('password', '')
     
     print(f"Login attempt: username={username}")
-    
-    # Simple mock authentication for testing
-    # In a real application, you would validate against your database
-    mock_users = {
-        'teacher1': {'password': '123', 'role': 'teacher'},
-        'teacher2': {'password': 'password123', 'role': 'teacher'},
-        'student1': {'password': 'password123', 'role': 'student'},
-        'student2': {'password': 'password123', 'role': 'student'}
-    }
+
     
     if not username or not password:
         print("Missing username or password")
         return jsonify({'error': 'Username and password are required'}), 400
-        
-    if username not in mock_users:
-        print(f"Username not found: {username}")
-        return jsonify({'error': 'Invalid username or password'}), 401
-        
-    if mock_users[username]['password'] != password:
-        print(f"Invalid password for user: {username}")
+    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
+    if role is None:
         return jsonify({'error': 'Invalid username or password'}), 401
     
     # Create access token with user info
     token_data = {
         'username': username,
-        'role': mock_users[username]['role']
+        'role': role
     }
     access_token = create_access_token(identity=username, additional_claims=token_data)
-    
-    return jsonify({
-        'access_token': access_token,
-        'username': username,
-        'role': mock_users[username]['role']
-    }), 200
+
+    # If the client asked with JSON, return JSON (API clients/tests). Otherwise render the HTML handshake.
+    if request.is_json:
+        resp = jsonify({'access_token': access_token, 'role': role})
+        set_access_cookies(resp, access_token)
+        return resp, 200
+
+    response = Response(render_template('/sec_handshake.html', username=username, role=role))
+    # Set access_token in cookie with secure settings
+    set_access_cookies(response, access_token)
+    return response, 200
 
 
 @security_bp.route('/register', methods=['POST'])
 def register():
-    """User registration endpoint - placeholder for Sunny's implementation"""
-    data = request.get_json()
-    
-    # TODO: Implement user registration logic here
-    return jsonify({
-        'message': 'Registration endpoint - to be implemented by Sunny',
-        'received_data': data
-    }), 200
+    """
+    User registration endpoint - placeholder for Sunny's implementation
+    NOTE: Registration SHALL only be permitted to be carry out by trusted identities
+    """
+    data = request.form
+    username = data.get('username', '')
+    password = data.get('password', '')
+    msg = SecurityService.create_user(username, password, data.get('id'), request.headers.get('X-Forwarded-For', request.remote_addr))
+    if msg != "OK":
+        return render_template('register.html', msg=msg, id=data.get('id'))
+    # Created account
+    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
+    if role is None:
+        return jsonify({'error': 'Invalid username or password'}), 401
+
+    # Create access token with user info
+    token_data = {
+        'username': username,
+        'role': role
+    }
+    access_token = create_access_token(identity=username, additional_claims=token_data)
+
+    response = Response(render_template('/sec_handshake.html', username=username, role=role))
+    # Set access_token in cookie with secure settings
+    set_access_cookies(response, access_token)
+    return response, 200
 
 
 @security_bp.route('/logout', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def logout():
     """User logout endpoint - placeholder for Sunny's implementation"""
     current_user = get_jwt_identity()
@@ -88,13 +104,13 @@ def logout():
 
 
 @security_bp.route('/profile', methods=['GET'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def get_profile():
     """Get user profile - placeholder for Sunny's implementation"""
-    current_user = get_jwt_identity()
+    claims = get_jwt()
     
     # TODO: Implement profile retrieval logic here
     return jsonify({
         'message': 'Profile endpoint - to be implemented by Sunny',
-        'user': current_user
+        'info': claims
     }), 200

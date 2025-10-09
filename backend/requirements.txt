@@ -10,6 +10,7 @@ mongoengine==0.27.0
 # Security
 bcrypt==4.1.2
 python-dotenv==1.0.0
+cryptography==46.0.1
 
 # GenAI Dependencies (for Ting's module)
 openai==1.6.1
@@ -36,3 +37,6 @@ gunicorn==21.2.0
 
 # Utilities
 python-dateutil==2.8.2
+
+# Encrypted zip
+pyzipper==0.3.6

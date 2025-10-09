@@ -13,6 +13,85 @@ class LearningActivitiesManager {
         
         this.init();
     }
+
+    // Basic poll view (show poll question and options, allow teacher to view results)
+    showPollInterface(poll) {
+        const content = document.getElementById('activity-details-content');
+        let html = `
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 ${poll.question}</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group mb-3">
+                        ${poll.options.map((opt, idx) => `<li class="list-group-item">${idx+1}. ${opt.text} <span class="badge bg-secondary float-end">${opt.votes||0}</span></li>`).join('')}
+                    </ul>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="learningActivities.refreshCurrentView()">Refresh</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        content.innerHTML = html;
+    }
+
+    // Show create form for different types; add poll handling
+    showCreateForm(type) {
+        const content = document.getElementById('activity-details-content');
+        if (type === 'poll') {
+            content.innerHTML = `
+                <div class="card">
+                    <div class="card-header"><h5>Create Poll</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Question</label>
+                            <input class="form-control" id="poll-question">
+                        </div>
+                        <div id="poll-options">
+                            <div class="input-group mb-2"><input class="form-control poll-option" placeholder="Option 1"></div>
+                            <div class="input-group mb-2"><input class="form-control poll-option" placeholder="Option 2"></div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary mb-3" id="add-option">Add Option</button>
+                        <div>
+                            <button class="btn btn-success" id="create-poll-btn">Create Poll</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add option handler
+            document.getElementById('add-option').addEventListener('click', () => {
+                const idx = document.querySelectorAll('.poll-option').length + 1;
+                const div = document.createElement('div');
+                div.className = 'input-group mb-2';
+                div.innerHTML = `<input class="form-control poll-option" placeholder="Option ${idx}">`;
+                document.getElementById('poll-options').appendChild(div);
+            });
+
+            // Create poll handler
+            document.getElementById('create-poll-btn').addEventListener('click', async () => {
+                const question = document.getElementById('poll-question').value.trim();
+                const opts = Array.from(document.querySelectorAll('.poll-option')).map(el => el.value.trim()).filter(Boolean);
+                if (!question || opts.length < 2) {
+                    alert('Please provide a question and at least two options.');
+                    return;
+                }
+                try {
+                    const payload = { question, options: opts, course_id: 'COMP5241' };
+                    const res = await this.api.post('/learning/polls', payload);
+                    showNotification('Poll created', 'success');
+                    this.openActivity('poll', res.poll_id || res.id || res._id);
+                } catch (e) {
+                    console.error('Create poll failed', e);
+                    showNotification('Failed to create poll', 'error');
+                }
+            });
+        } else {
+            // fallback: existing create flow for other types
+            const details = document.getElementById('activity-details-content');
+            details.innerHTML = `<div class="alert alert-info">Create form for ${type} is not implemented yet.</div>`;
+        }
+    }
     
     init() {
         console.log('Initializing Learning Activities Manager...');
@@ -115,6 +194,19 @@ class LearningActivitiesManager {
             });
         }
     }
+
+    // Include polls in the counts
+    async loadPollCount() {
+        try {
+            const courseId = 'COMP5241';
+            const polls = await this.api.get(`/learning/polls/?course_id=${courseId}`);
+            const el = document.getElementById('poll-count');
+            if (el) el.textContent = `${polls.length} active`;
+        } catch (e) {
+            const el = document.getElementById('poll-count');
+            if (el) el.textContent = 'Error loading';
+        }
+    }
     
     async loadMyActivities() {
         const content = document.getElementById('my-activities-content');
@@ -137,12 +229,16 @@ class LearningActivitiesManager {
                 this.api.get(`/learning/shortanswers/?course_id=${courseId}`),
                 this.api.get(`/learning/minigames/?course_id=${courseId}`)
             ]);
+
+            // Fetch polls as well
+            const polls = await this.api.get(`/learning/polls/?course_id=${courseId}`);
             
             const activities = [
                 ...quizzes.map(q => ({...q, type: 'quiz', icon: '📝', color: 'primary'})),
                 ...wordclouds.map(w => ({...w, type: 'wordcloud', icon: '☁️', color: 'success'})),
                 ...shortanswers.map(s => ({...s, type: 'shortanswer', icon: '📄', color: 'info'})),
                 ...minigames.map(m => ({...m, type: 'minigame', icon: '🎮', color: 'warning'}))
+                ,...polls.map(p => ({...p, type: 'poll', icon: '📊', color: 'secondary'}))
             ];
             
             if (activities.length === 0) {
@@ -221,7 +317,8 @@ class LearningActivitiesManager {
             quiz: { name: 'Quizzes', icon: '📝' },
             wordcloud: { name: 'Word Clouds', icon: '☁️' },
             shortanswer: { name: 'Short Answers', icon: '📄' },
-            minigame: { name: 'Mini Games', icon: '🎮' }
+            minigame: { name: 'Mini Games', icon: '🎮' },
+            poll: { name: 'Polls', icon: '📊' }
         };
         return typeMap[type] || { name: 'Unknown', icon: '❓' };
     }
@@ -289,7 +386,8 @@ class LearningActivitiesManager {
             quiz: 'primary',
             wordcloud: 'success', 
             shortanswer: 'info',
-            minigame: 'warning'
+            minigame: 'warning',
+            poll: 'secondary'
         };
         const color = colorMap[type] || 'secondary';
         
@@ -305,7 +403,7 @@ class LearningActivitiesManager {
                                 ${activity.expires_at ? `Expires: ${new Date(activity.expires_at).toLocaleDateString()}` : 'No deadline'}
                             </small>
                             <button class="btn btn-${color}" onclick="learningActivities.openActivity('${type}', '${activity.id || activity._id}')">
-                                ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : 'Play Game'}
+                                ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : type === 'poll' ? 'View Poll' : 'Play Game'}
                             </button>
                         </div>
                     </div>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+            integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+            crossorigin="anonymous"></script>
+    <script src="static/js/api.js"></script>
+</head>
+<body>
+===Create accounts===
+<div id="create_accounts">
+    <h2>Upload accounts file</h2>
+    <form id="accs_file_form">
+        <input type="file" id="csvFile" accept=".csv" required>
+        <input type="submit">
+    </form>
+    <div id="error" class="error"></div>
+    <div id="acc_create_status"></div>
+</div>
+===Get log===
+<div id="get_log">
+    <form id="get_log_form">
+        <label for="module">Module:</label>
+        <select name="module" id="module">
+            <option value="admin">admin</option>
+            <option value="security">security</option>
+        </select>
+        <label for="start">Start:</label>
+        <input type="datetime-local" name="start" id="start">
+        <label for="end">End:</label>
+        <input type="datetime-local" name="end" id="end">
+        <input type="submit">
+    </form>
+    <div id="log_pw"></div>
+</div>
+
+<script>
+    $(document).ready(async function () {
+        const api = new APIClient();
+
+        // Create accounts
+
+        $('#accs_file_form').on('submit', function (e) {
+            e.preventDefault();
+            $('#acc_create_status').empty();
+
+            const file = $('#accs_file_form')[0].files[0];
+            if (!file) {
+                $('#error').text('Please select a CSV file.');
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = function (e) {
+                //try {
+                const csvData = e.target.result;
+                const parsedData = parseCSV(csvData);
+                displayData(parsedData);
+                // } catch (err) {
+                //     $('#error').text('Error parsing CSV: ' + err.message);
+                // }
+            };
+
+            reader.onerror = function () {
+                $('#error').text('Error reading file.');
+            };
+
+            reader.readAsText(file);
+        });
+
+
+        function parseCSV(csvString) {
+            const rows = [];
+            let currentRow = [];
+            let currentCell = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < csvString.length; i++) {
+                const char = csvString[i];
+
+                if (char === '"') {
+                    // Handle escaped quotes ("" inside quoted cell)
+                    if (inQuotes && csvString[i + 1] === '"') {
+                        currentCell += '"';
+                        i++; // Skip next quote
+                    } else {
+                        inQuotes = !inQuotes;
+                    }
+                } else if (char === ',' && !inQuotes) {
+                    // End of cell
+                    currentRow.push(currentCell);
+                    currentCell = '';
+                } else if ((char === '\n' || char === '\r') && !inQuotes) {
+                    // End of row (handle Windows \r\n)
+                    if (char === '\r' && csvString[i + 1] === '\n') {
+                        i++; // Skip \n after \r
+                    }
+                    // Add the last cell of the row
+                    if (currentCell !== '' || currentRow.length > 0) {
+                        currentRow.push(currentCell);
+                        currentCell = '';
+                    }
+                    // Add the row if it's not empty
+                    if (currentRow.length > 0) {
+                        rows.push(currentRow);
+                        currentRow = [];
+                    }
+                } else {
+                    currentCell += char;
+                }
+            }
+
+            // Add any remaining data (last row might not end with newline)
+            if (currentCell !== '' || currentRow.length > 0) {
+                currentRow.push(currentCell);
+            }
+            if (currentRow.length > 0) {
+                rows.push(currentRow);
+            }
+
+            createURLs(rows);
+        }
+
+
+        async function createURLs(rows) {
+            // Get the first row as header
+            const emailIndex = rows[0].indexOf("email");
+            const firstNameIndex = rows[0].indexOf("first_name");
+            const lastNameIndex = rows[0].indexOf("last_name");
+            const roleIndex = rows[0].indexOf("role");
+            const newAccounts = []
+            for (let i = 1; i < rows.length; i++) {
+                newAccounts.push({
+                    email: rows[i][emailIndex],
+                    first_name: rows[i][firstNameIndex],
+                    last_name: rows[i][lastNameIndex],
+                    role: rows[i][roleIndex]
+                })
+            }
+            let ret = await api.post("/admin/new_users", newAccounts);
+            for (let i = 0; i < ret.length; i++) {
+                if(ret[i][1].includes("[FAILED]")) {
+                    continue;
+                }
+                ret[i][1] = window.location.origin + "/register/" + ret[i][1];
+            }
+            displayData(ret);
+        }
+
+        function displayData(data) {
+            if (data.length === 0) return;
+
+            const table = $('<table>');
+
+            // Create header row with column numbers if no header exists
+            const headerRow = $('<tr>');
+            $.each(data[0], function (i) {
+                headerRow.append($('<th>').text(`Column ${i + 1}`));
+            });
+            table.append(headerRow);
+
+            // Add data rows
+            $.each(data, function () {
+                const row = $('<tr>');
+                $.each(this, function () {
+                    row.append($('<td>').text(this));
+                });
+                table.append(row);
+            });
+
+            $('#acc_create_status').append(table);
+        }
+
+        // Log
+
+        $('#get_log_form').on('submit', async function (e) {
+            e.preventDefault();
+            const zip = await api.post("/admin/action_log", {"module": $("#module").val(), "start": $("#start").val(), "end": $("#end").val()}, true);
+            const zipBlob = zip[0]; const headers = zip[1];
+            const id = headers.get('Content-Disposition').split('filename=')[1].replace(/"/g, '').replace(".zip", '');
+            // Create a link to download the file
+            let url = window.URL.createObjectURL(zipBlob);
+            const a = $('<a></a>')
+                    .attr('href', url)
+                    .attr('download', `log_${Date.now()}.zip`)
+                    .css('display', 'none');
+
+            $('body').append(a);
+            a[0].click(); // Trigger the download
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            url = null;
+            const pw_res = await api.post("/admin/zip_pw", {"id": id});
+            $("#log_pw").text(pw_res["pw"]);
+        });
+
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+    });
+</script>
+</body>
+</html>

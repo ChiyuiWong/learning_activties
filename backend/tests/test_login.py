@@ -1,60 +1,49 @@
-"""
-Test script for login functionality
-"""
-import requests
-import json
-import os
-import socket
+"""Pytest for login functionality.
 
-# Get hostname for codespace URL
+This file replaces the old script-style tests with pytest parametrized
+cases. It posts to the running server at localhost:5000 which is started by
+the test runner when running the full suite.
+"""
+import json
+import socket
+import os
+
+import pytest
+import requests
+
+
+# Determine base URL (supports codespaces or local runs)
 hostname = socket.gethostname()
-# Use the public URL if in codespace environment
 if '.codespaces.' in hostname:
     BASE_URL = f"https://{os.environ.get('CODESPACE_NAME')}-5000.{os.environ.get('GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN')}"
 else:
     BASE_URL = 'http://localhost:5000'
 
-print(f"Using base URL: {BASE_URL}")
 
-def test_login(username, password):
-    """Test login with given credentials"""
-    print(f"Testing login with username='{username}', password='{password}'")
-    
-    try:
-        response = requests.post(
-            f'{BASE_URL}/api/security/login',
-            json={'username': username, 'password': password},
-            headers={'Content-Type': 'application/json'}
-        )
-        
-        print(f"Status code: {response.status_code}")
-        data = response.json()
-        print(f"Response: {json.dumps(data, indent=2)}")
-        
-        if response.ok:
-            print("✓ Login successful!")
-            return data.get('access_token')
-        else:
-            print("✗ Login failed")
-            return None
-            
-    except Exception as e:
-        print(f"Error: {str(e)}")
-        return None
+@pytest.mark.parametrize(
+    "username,password,should_succeed",
+    [
+        ("teacher1", "password123", True),
+        ("student1", "password123", True),
+        ("invalid_user", "password123", False),
+        ("teacher1", "wrong_password", False),
+    ],
+)
+def test_login_endpoint(username: str, password: str, should_succeed: bool):
+    """POST to /api/security/login and assert success/failure as expected."""
+    resp = requests.post(
+        f"{BASE_URL}/api/security/login",
+        json={"username": username, "password": password},
+        headers={"Content-Type": "application/json"},
+        timeout=5,
+    )
 
-def main():
-    """Main test function"""
-    print("==== Testing Teacher Login ====")
-    teacher_token = test_login('teacher1', 'password123')
-    
-    print("\n==== Testing Student Login ====")
-    student_token = test_login('student1', 'password123')
-    
-    print("\n==== Testing Invalid Username ====")
-    test_login('invalid_user', 'password123')
-    
-    print("\n==== Testing Invalid Password ====")
-    test_login('teacher1', 'wrong_password')
-
-if __name__ == "__main__":
-    main()
+    # For successful logins we expect a 200 and a JSON access_token
+    if should_succeed:
+        assert resp.status_code == 200, f"Expected 200 OK for valid creds, got {resp.status_code}: {resp.text}"
+        data = resp.json()
+        assert isinstance(data, dict)
+        assert "access_token" in data or "token" in data or "role" in data
+    else:
+        # For invalid credentials we expect a 4xx response
+        assert 400 <= resp.status_code < 500, f"Expected client error for invalid creds, got {resp.status_code}: {resp.text}"

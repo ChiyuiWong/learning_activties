@@ -457,7 +457,7 @@ def send_chat_message(session_id):
 
 
 @genai_bp.route('/generate', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def generate_content():
     """Generate AI content - legacy endpoint"""
     data = request.get_json()
@@ -469,7 +469,7 @@ def generate_content():
 
 
 @genai_bp.route('/analyze', methods=['POST'])
-@jwt_required()
+@jwt_required(locations=["cookies"])
 def analyze_content():
     """Analyze content with AI - placeholder for future implementation"""
     data = request.get_json()
