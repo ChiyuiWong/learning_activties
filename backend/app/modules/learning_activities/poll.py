@@ -16,9 +16,14 @@ class Poll(Document):
 	expires_at = DateTimeField()
 	course_id = StringField(required=True)
 
+	# Disable automatic index creation to avoid mongoengine checking the
+	# server primary (which can attempt a real MongoDB connection) during
+	# tests or when using in-memory mongomock. Indexes can be managed
+	# explicitly in production migrations if needed.
 	meta = {
 		'collection': 'polls',
-		'indexes': ['course_id', 'created_by', 'is_active', 'expires_at']
+		'indexes': ['course_id', 'created_by', 'is_active', 'expires_at'],
+		'auto_create_index': False,
 	}
 
 # Vote model
@@ -34,6 +39,7 @@ class Vote(Document):
 			{'fields': ['poll', 'student_id'], 'unique': True},  # Prevent multiple votes per poll per student
 			'poll',
 			'student_id'
-		]
+		],
+		'auto_create_index': False,
 	}
 

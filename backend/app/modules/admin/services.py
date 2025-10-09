@@ -134,7 +134,7 @@ class AdminService:
             plaintext = unpadder.update(padded) + unpadder.finalize()
             plaintext = plaintext.decode("UTF-8")
             created_at: datetime = doc["created_at"]
-            decrypted_log.append(f"{created_at.strftime("%a, %d %b %Y %H:%M:%S GMT")} [{doc['module']}]: {plaintext}")
+            decrypted_log.append(f"{created_at.strftime('%a, %d %b %Y %H:%M:%S GMT')} [{doc['module']}]: {plaintext}")
         decrypted_log = '\n'.join(decrypted_log)
         file, pw = AdminService.create_encrypted_zip([("lms.log", decrypted_log)])
         file_id = os.urandom(32).hex()
@@ -159,14 +159,14 @@ class AdminService:
     def store_zip_pw(file_id, pw):
         with get_db_connection() as client:
             db: Database = client["comp5241_g10"]
-            db["zip_pw"].insert_one({"_id": file_id, "password": pw, "created_at": datetime.datetime.now(datetime.UTC)})
+            db["zip_pw"].insert_one({"_id": file_id, "password": pw, "created_at": datetime.datetime.now(datetime.timezone.utc)})
         AdminService.clear_old_zip_pw()
 
     @staticmethod
     def clear_old_zip_pw():
         with get_db_connection() as client:
             db: Database = client["comp5241_g10"]
-            cutoff_time = datetime.datetime.now(datetime.UTC) - datetime.timedelta(minutes=10)
+            cutoff_time = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=10)
             db["zip_pw"].delete_many({"created_at": {"$lte": cutoff_time}})
 
     @staticmethod

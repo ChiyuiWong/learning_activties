@@ -23,7 +23,11 @@ def security_health():
 @security_bp.route('/login', methods=['POST'])
 def login():
     """User login endpoint with simple mock authentication for testing"""
-    data = request.form
+    # Accept JSON payloads (used by tests) or fallback to form data
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
     username = data.get('username', '')
     password = data.get('password', '')
     
@@ -43,7 +47,13 @@ def login():
         'role': role
     }
     access_token = create_access_token(identity=username, additional_claims=token_data)
-    
+
+    # If the client asked with JSON, return JSON (API clients/tests). Otherwise render the HTML handshake.
+    if request.is_json:
+        resp = jsonify({'access_token': access_token, 'role': role})
+        set_access_cookies(resp, access_token)
+        return resp, 200
+
     response = Response(render_template('/sec_handshake.html', username=username, role=role))
     # Set access_token in cookie with secure settings
     set_access_cookies(response, access_token)
