@@ -14,10 +14,10 @@ def create_app(config_class=Config):
     # Get frontend directory path
     frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend')
     
-    # Initialize Flask app with static files from frontend directory
+    # Initialize Flask app with frontend directory as static folder
     app = Flask(__name__,
-                static_folder=os.path.join(frontend_dir, 'static'),
-                static_url_path='/static',
+                static_folder=frontend_dir,
+                static_url_path='',
                 template_folder=os.path.abspath("templates"))
     print(os.path.abspath("templates"))
     app.config.from_object(config_class)
@@ -38,6 +38,12 @@ def create_app(config_class=Config):
     app.url_map.strict_slashes = False
 
     jwt = JWTManager(app)
+
+    # Route to serve the index.html file
+    @app.route('/')
+    def index():
+        return app.send_static_file('index.html')
+
     # If running tests, provide a lightweight JWT helper that accepts mock
     # Authorization bearer tokens without verifying signatures. This lets unit
     # tests supply fake tokens in headers and still get an identity via
@@ -136,10 +142,11 @@ def create_app(config_class=Config):
     # Serve frontend HTML files
     from flask import send_from_directory
     
-    @app.route('/')
-    def index():
-        return send_from_directory(frontend_dir, 'index.html')
-    
+    # Temporarily commented out to resolve route conflict
+    # @app.route('/')
+    # def index():
+    #     return send_from_directory(frontend_dir, 'index.html')
+
     @app.route('/login.html')
     def login():
         return send_from_directory(frontend_dir, 'login.html')
