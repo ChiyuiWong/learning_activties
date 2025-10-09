@@ -34,8 +34,8 @@ CORS(app)
 # Get the frontend directory path
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend')
 
-@app.route('/test')
-def test_index():
+@app.route('/')
+def index():
     """Landing page with links to all test pages"""
     return '''
 <!DOCTYPE html>
