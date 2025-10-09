@@ -7,6 +7,8 @@ from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 from app.config.database import init_db
 from app.config.config import Config
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
 
 def create_app(config_class=Config):
@@ -30,6 +32,58 @@ def create_app(config_class=Config):
         if _os.environ.get('PYTEST_CURRENT_TEST') or _os.environ.get('PYTEST_ADDOPTS'):
             app.config['TESTING'] = True
     
+    # Configure logging
+    if not app.config.get('TESTING'):
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+        
+        # File handler for error logs
+        error_log_file = os.path.join(log_dir, 'error.log')
+        error_handler = RotatingFileHandler(
+            error_log_file,
+            maxBytes=10485760,  # 10MB
+            backupCount=10
+        )
+        error_handler.setLevel(logging.ERROR)
+        error_handler.setFormatter(logging.Formatter(
+            '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+        ))
+        
+        # File handler for all logs
+        app_log_file = os.path.join(log_dir, 'app.log')
+        app_handler = RotatingFileHandler(
+            app_log_file,
+            maxBytes=10485760,  # 10MB
+            backupCount=10
+        )
+        app_handler.setLevel(logging.INFO)
+        app_handler.setFormatter(logging.Formatter(
+            '[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+        ))
+        
+        # Console handler
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(logging.Formatter(
+            '[%(levelname)s] %(message)s'
+        ))
+        
+        # Configure app logger
+        app.logger.setLevel(logging.INFO)
+        app.logger.addHandler(error_handler)
+        app.logger.addHandler(app_handler)
+        app.logger.addHandler(console_handler)
+        
+        # Configure root logger for other modules
+        logging.basicConfig(
+            level=logging.INFO,
+            handlers=[error_handler, app_handler, console_handler]
+        )
+        
+        app.logger.info('COMP5241 LMS Application starting up...')
+    
     # Initialize extensions with explicit CORS settings
     CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 
@@ -43,6 +97,39 @@ def create_app(config_class=Config):
     @app.route('/')
     def index():
         return app.send_static_file('index.html')
+
+    # If authentication is disabled (development mode), override jwt_required
+    if app.config.get('DISABLE_AUTH'):
+        import flask_jwt_extended as _fjw
+        from functools import wraps
+        
+        app.logger.warning('⚠️  AUTHENTICATION DISABLED - DEVELOPMENT MODE ONLY!')
+        
+        def no_auth_required(locations=None, optional=False):
+            """Bypass authentication decorator for development"""
+            def decorator(fn):
+                @wraps(fn)
+                def wrapper(*args, **kwargs):
+                    # Set a fake identity for routes that need it
+                    from flask import g
+                    g._dev_identity = 'dev_user'
+                    return fn(*args, **kwargs)
+                return wrapper
+            return decorator
+        
+        def fake_get_jwt_identity():
+            """Return a fake identity when auth is disabled"""
+            from flask import g
+            return getattr(g, '_dev_identity', 'dev_user')
+        
+        def fake_get_jwt():
+            """Return fake JWT claims when auth is disabled"""
+            return {'sub': 'dev_user', 'role': 'teacher', 'username': 'dev_user'}
+        
+        # Override the jwt_required decorator globally
+        _fjw.jwt_required = no_auth_required
+        _fjw.get_jwt_identity = fake_get_jwt_identity
+        _fjw.get_jwt = fake_get_jwt
 
     # If running tests, provide a lightweight JWT helper that accepts mock
     # Authorization bearer tokens without verifying signatures. This lets unit
