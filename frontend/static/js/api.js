@@ -18,10 +18,14 @@ class APIClient {
     // Get authentication headers
     getHeaders() {
         const headers = {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': this.getCookie('csrf_access_token'),
+            'Content-Type': 'application/json'
         };
-
+        
+        // Add CSRF token if it exists
+        const csrfToken = this.getCookie('csrf_access_token');
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken;
+        }
         
         return headers;
     }
@@ -31,6 +35,7 @@ class APIClient {
         const url = `${this.baseUrl}${endpoint}`;
         const config = {
             headers: this.getHeaders(),
+            credentials: 'include',  // Important: Include cookies with requests
             ...options
         };
         
@@ -279,6 +284,18 @@ const LearningActivitiesAPI = {
     // Health check
     healthCheck: async () => {
         return api.get('/learning/health');
+    }
+    ,
+    // Poll endpoints
+    getPolls: async (courseId) => {
+        const endpoint = courseId ? `/learning/polls/?course_id=${courseId}` : '/learning/polls/';
+        return api.get(endpoint);
+    },
+    getPoll: async (pollId) => {
+        return api.get(`/learning/polls/${pollId}`);
+    },
+    createPoll: async (pollData) => {
+        return api.post('/learning/polls', pollData);
     }
 };
 

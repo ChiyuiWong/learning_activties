@@ -18,10 +18,20 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Initialize application
-function initializeApp() {
+async function initializeApp() {
     console.log('Initializing COMP5241 LMS Application...');
     
-    // Check if user is logged in
+    // Development mode - bypass authentication
+    const devMode = true; // Set to false to re-enable authentication
+    if (devMode && !localStorage.getItem('userInfo')) {
+        localStorage.setItem('userInfo', JSON.stringify({
+            username: 'dev_user',
+            role: 'teacher'
+        }));
+        console.log('🔓 DEVELOPMENT MODE: Authentication bypassed');
+    }
+    
+    // Check if user is logged in via localStorage
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
         try {
@@ -35,11 +45,13 @@ function initializeApp() {
             }
         } catch (error) {
             console.error('Error parsing user info:', error);
-            redirectToLogin();
+            // Try to get profile from server using cookies
+            await tryAuthWithCookies();
             return;
         }
     } else {
-        redirectToLogin();
+        // No localStorage, try to authenticate with cookies
+        await tryAuthWithCookies();
         return;
     }
     
@@ -49,6 +61,32 @@ function initializeApp() {
     initializeCourses();
     initializeActivities();
     initializeAdmin();
+}
+
+// Try to authenticate using existing JWT cookies
+async function tryAuthWithCookies() {
+    try {
+        // Check if we have JWT cookies by trying to fetch profile
+        const profile = await SecurityAPI.getProfile();
+        if (profile && profile.username) {
+            // Save user info to localStorage
+            const userData = {
+                username: profile.username,
+                role: profile.role || 'student'
+            };
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+            app.currentUser = userData;
+            console.log('Authenticated via cookies:', app.currentUser);
+            
+            // Reload to initialize properly
+            window.location.reload();
+        } else {
+            redirectToLogin();
+        }
+    } catch (error) {
+        console.log('No valid authentication found, redirecting to login');
+        redirectToLogin();
+    }
 }
 
 function updateUserInterface() {
@@ -210,7 +248,10 @@ function loadActivitiesData() {
 
 // GenAI data loading (Ting's responsibility)
 function loadGenAIData() {
-    console.log('Loading GenAI data... (Ting to implement)');
+    console.log('Loading GenAI data...');
+    if (typeof GenAI !== 'undefined') {
+        GenAI.init();
+    }
 }
 
 // Admin data loading (Sunny's responsibility)
@@ -220,7 +261,8 @@ function loadAdminData() {
 
 // Initialize module-specific functionality
 function initializeGenAI() {
-    console.log('Initializing GenAI module... (Ting to implement)');
+    console.log('Initializing GenAI module...');
+    // GenAI will be initialized when the section is loaded
 }
 
 function initializeSecurity() {
