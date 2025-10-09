@@ -20,6 +20,12 @@ const GenAI = {
         this.loadModels();
         this.loadChatSessions();
         this.loadMaterials();
+        
+        // Handle hash navigation
+        const hash = window.location.hash.replace('#', '');
+        if (hash && ['chat', 'models', 'materials', 'help'].includes(hash)) {
+            this.showView(hash);
+        }
     },
     
     // Bind all event listeners
@@ -122,30 +128,60 @@ const GenAI = {
     async loadModels() {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/models`, {
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }
             });
             
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 422) {
+                showAlert('Authentication required. Please login again.', 'warning');
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 2000);
+                return;
+            }
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
             const data = await response.json();
+            console.log('Models API response:', data);
             
             if (data.success) {
-                this.updateModelsList(data.models);
-                this.updateModelSelect(data.models);
+                this.updateModelsList(data.models || []);
+                this.updateModelSelect(data.models || []);
+                
+                if (!data.models || data.models.length === 0) {
+                    showAlert('No models found. You need to download models first using: ollama pull <model-name>', 'info');
+                }
             } else {
                 console.error('Failed to load models:', data.error);
-                showAlert('Failed to load models: ' + data.error, 'danger');
+                showAlert('Failed to load models: ' + (data.error || 'Unknown error'), 'danger');
             }
         } catch (error) {
             console.error('Error loading models:', error);
-            showAlert('Error loading models. Please check if Ollama is running.', 'danger');
+            // Check if it's a network error vs Ollama error
+            if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                showAlert('Cannot connect to server. Please check if the backend is running.', 'danger');
+            } else {
+                showAlert('Error: ' + error.message + '. Ollama might not be running. Start it with: ollama serve', 'danger');
+            }
         }
     },
     
     // Update models list in models view
     updateModelsList(models) {
         const modelsTable = document.getElementById('models-table');
-        if (!modelsTable) return;
+        console.log('updateModelsList called with', models.length, 'models');
+        console.log('models-table element:', modelsTable);
+        
+        if (!modelsTable) {
+            console.error('models-table element not found!');
+            return;
+        }
         
         if (models.length === 0) {
             modelsTable.innerHTML = `
@@ -158,55 +194,66 @@ const GenAI = {
             return;
         }
         
-        let tableHTML = `
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Model Name</th>
-                            <th>Size</th>
-                            <th>Status</th>
-                            <th>Last Used</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-        
-        models.forEach(model => {
-            const lastUsed = model.last_used ? 
-                new Date(model.last_used).toLocaleDateString() : 
-                'Never';
+        try {
+            let tableHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Model Name</th>
+                                <th>Size</th>
+                                <th>Status</th>
+                                <th>Last Used</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
             
-            const status = model.is_downloaded ? 
-                '<span class="badge bg-success">Downloaded</span>' :
-                '<span class="badge bg-warning">Available</span>';
+            models.forEach(model => {
+                const lastUsed = model.last_used ? 
+                    new Date(model.last_used).toLocaleDateString() : 
+                    'Never';
+                
+                const status = model.is_downloaded ? 
+                    '<span class="badge bg-success">Downloaded</span>' :
+                    '<span class="badge bg-warning">Available</span>';
+                
+                tableHTML += `
+                    <tr>
+                        <td>
+                            <strong>${model.name}</strong>
+                        </td>
+                        <td>${this.formatSize(model.size)}</td>
+                        <td>${status}</td>
+                        <td>${lastUsed}</td>
+                        <td>
+                            ${model.is_downloaded ? 
+                                `<button class="btn btn-sm btn-primary" onclick="GenAI.selectModelInChat('${model.name}')">Use</button>` :
+                                `<button class="btn btn-sm btn-success" onclick="GenAI.downloadSpecificModel('${model.name}')">Download</button>`
+                            }
+                        </td>
+                    </tr>
+                `;
+            });
             
             tableHTML += `
-                <tr>
-                    <td>
-                        <strong>${model.name}</strong>
-                    </td>
-                    <td>${this.formatSize(model.size)}</td>
-                    <td>${status}</td>
-                    <td>${lastUsed}</td>
-                    <td>
-                        ${model.is_downloaded ? 
-                            `<button class="btn btn-sm btn-primary" onclick="GenAI.selectModelInChat('${model.name}')">Use</button>` :
-                            `<button class="btn btn-sm btn-success" onclick="GenAI.downloadSpecificModel('${model.name}')">Download</button>`
-                        }
-                    </td>
-                </tr>
+                        </tbody>
+                    </table>
+                </div>
             `;
-        });
-        
-        tableHTML += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-        
-        modelsTable.innerHTML = tableHTML;
+            
+            console.log('Setting innerHTML with', models.length, 'models');
+            modelsTable.innerHTML = tableHTML;
+            console.log('Models table updated successfully');
+        } catch (error) {
+            console.error('Error updating models table:', error);
+            modelsTable.innerHTML = `
+                <div class="alert alert-danger">
+                    Error rendering models: ${error.message}
+                </div>
+            `;
+        }
     },
     
     // Update model select dropdown
@@ -263,6 +310,7 @@ const GenAI = {
             
             const response = await fetch(`${app.apiBaseUrl}/genai/models/download`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -293,6 +341,7 @@ const GenAI = {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/models/download`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -362,6 +411,7 @@ const GenAI = {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/chat/sessions`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -415,6 +465,7 @@ const GenAI = {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/chat/sessions/${this.currentSession}/messages`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
@@ -514,10 +565,17 @@ const GenAI = {
     async loadChatSessions() {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/chat/sessions`, {
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }
             });
+            
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 422) {
+                console.log('Authentication required for chat sessions');
+                return;
+            }
             
             const data = await response.json();
             
@@ -572,6 +630,7 @@ const GenAI = {
     async loadChatSession(sessionId) {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/chat/sessions/${sessionId}/messages`, {
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }
@@ -607,10 +666,17 @@ const GenAI = {
     async loadMaterials() {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/materials`, {
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }
             });
+            
+            // Check for authentication errors
+            if (response.status === 401 || response.status === 422) {
+                console.log('Authentication required for materials');
+                return;
+            }
             
             const data = await response.json();
             
@@ -780,6 +846,7 @@ const GenAI = {
             
             const response = await fetch(`${app.apiBaseUrl}/genai/materials/upload`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 },
@@ -813,6 +880,7 @@ const GenAI = {
         try {
             const response = await fetch(`${app.apiBaseUrl}/genai/materials/${materialId}`, {
                 method: 'DELETE',
+                credentials: 'include',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('authToken')}`
                 }

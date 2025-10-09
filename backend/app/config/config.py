@@ -13,9 +13,17 @@ class Config:
     # Flask settings
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
     
+    # Development settings - WARNING: Set to False in production!
+    DISABLE_AUTH = os.environ.get('DISABLE_AUTH', 'true').lower() == 'true'
+    
     # JWT settings
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key')
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_TOKEN_LOCATION = ['cookies', 'headers']
+    JWT_COOKIE_SECURE = False  # Set to True in production with HTTPS
+    JWT_COOKIE_CSRF_PROTECT = True  # Enable CSRF protection
+    JWT_CSRF_IN_COOKIES = True  # Put CSRF token in a cookie
+    JWT_CSRF_CHECK_FORM = False  # Don't check form data for CSRF token
     
     # MongoDB settings
     MONGODB_HOST = os.environ.get('MONGODB_HOST', 'localhost')
