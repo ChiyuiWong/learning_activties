@@ -280,6 +280,18 @@ const LearningActivitiesAPI = {
     healthCheck: async () => {
         return api.get('/learning/health');
     }
+    ,
+    // Poll endpoints
+    getPolls: async (courseId) => {
+        const endpoint = courseId ? `/learning/polls/?course_id=${courseId}` : '/learning/polls/';
+        return api.get(endpoint);
+    },
+    getPoll: async (pollId) => {
+        return api.get(`/learning/polls/${pollId}`);
+    },
+    createPoll: async (pollData) => {
+        return api.post('/learning/polls', pollData);
+    }
 };
 
 // Admin API endpoints (Sunny's module)
