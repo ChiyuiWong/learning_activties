@@ -102,7 +102,7 @@ def get_system_stats():
         'admin': current_user
     }), 200
 
-@admin_bp.route('action_log', methods=['POST'])
+@admin_bp.route('/action_log', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_action_logs():
     claims = get_jwt()
@@ -119,7 +119,7 @@ def get_action_logs():
     )
 
 
-@admin_bp.route('zip_pw', methods=['POST'])
+@admin_bp.route('/zip_pw', methods=['POST'])
 @jwt_required(locations=["cookies"])
 def get_zip_pw():
     claims = get_jwt()
@@ -129,6 +129,35 @@ def get_zip_pw():
     pw = AdminService.get_zip_pw(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), data.get("id"))
 
     return jsonify({"pw": pw})
+
+@admin_bp.route('/cumulative_stats', methods=['GET'])
+@jwt_required(locations=["cookies"])
+def cumulative_stats():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    fields = request.args.get("fields", "").split('|')
+    ret = AdminService.get_cumulative_stats(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), fields)
+    return jsonify(ret)
+
+@admin_bp.route('/interval_stats', methods=['GET'])
+@jwt_required(locations=["cookies"])
+def interval_stats():
+    claims = get_jwt()
+    if "role" not in claims or claims["role"] != "admin":
+        return jsonify({'message': 'No permission'}), 401
+    modules = request.args.get("modules", "").split('|')
+    acts = request.args.get("acts", "").split('|')
+    types = request.args.get("types", "").split('|')
+    start_timestamp_str = request.args.get("start_timestamp")
+    end_timestamp_str = request.args.get("start_timestamp")
+    wanted_stats = []
+    for i in range(min(len(modules), len(acts), len(types))):
+        wanted_stats.append({"module": None if modules[i] == "none" else modules[i], "act": None if acts[i] == "none" else acts[i], "type": None if types[i] == "none" else types[i]})
+    print(wanted_stats)
+    ret = AdminService.get_interval_stats(claims["username"], request.headers.get('X-Forwarded-For', request.remote_addr), wanted_stats, None if start_timestamp_str is None else float(start_timestamp_str), None if end_timestamp_str is None else float(end_timestamp_str))
+    return jsonify(ret)
+
 @admin_bp.route('/audit-logs', methods=['GET'])
 @jwt_required(locations=["cookies"])
 def get_audit_logs():

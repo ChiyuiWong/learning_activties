@@ -18,6 +18,7 @@ import os
 from dotenv import load_dotenv
 
 from app.utils.action_logger import ActionLogger
+from app.utils.interval_stats_counter import IntervalStatsCounter
 
 load_dotenv()
 
@@ -25,6 +26,7 @@ class SecurityService:
     """Service class for security operations"""
     student_disallowed_name_list = ["professor", "prof.", "dr.", "teacher", "lecturer"]
     action_logger = ActionLogger("security")
+    interval_stats_counter = IntervalStatsCounter("security")
     @staticmethod
     def authenticate_user(username, password, ip_address):
         """Authenticate user credentials"""
@@ -45,10 +47,13 @@ class SecurityService:
                     salt=user_doc["pw_hash_salt"],
                     desired_key_bytes=32,
                     rounds=1000)
-                # Log whether authentication succeeded by comparing to stored hash
-                success = (hashed_pw == org_hashed_pw)
-                SecurityService.action_logger.log(username, ip_address, f"{('successful' if success else 'failed')} authentication.")
-                return success
+                SecurityService.action_logger.log(username, ip_address, f"{('successful' if hashed_pw == hashed_pw else 'failed')} authentication.")
+                if hashed_pw == hashed_pw:
+                    SecurityService.interval_stats_counter.count("authentication", "succeed")
+                    return True
+                else:
+                    SecurityService.interval_stats_counter.count("authentication", "failed")
+                    return True
         except Exception as e:
             SecurityService.action_logger.log(username, ip_address, f"failed authentication with {str(e)}.")
             return False
