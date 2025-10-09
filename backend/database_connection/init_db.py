@@ -155,6 +155,6 @@ def insert_sample_data(db):
     # Insert sample users (update if exists)
     db.users.replace_one({"_id": "admin1"}, sample_admin, upsert=True)
     db.users.replace_one({"_id": "teacher1"}, sample_teacher, upsert=True)
-    db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
+    # db.users.replace_one({"_id": "student_001"}, sample_student, upsert=True)
 
     print("Inserted sample data")
