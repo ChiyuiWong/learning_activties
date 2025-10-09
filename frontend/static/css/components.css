@@ -376,6 +376,56 @@ Joyce's responsibility for UI design
     color: white;
 }
 
+/* Login Page Components */
+.login-page .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #245854 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+.login-page .btn-primary:hover {
+    background: linear-gradient(135deg, #245854 0%, var(--primary-color, #2D5A57) 100%) !important;
+    border-color: #245854 !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 90, 87, 0.3);
+}
+
+.login-page .btn-primary:focus,
+.login-page .btn-primary:active {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #1a403d 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.25rem rgba(45, 90, 87, 0.25) !important;
+}
+
+.login-page .btn-outline-primary {
+    color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+}
+
+.login-page .btn-outline-primary:hover,
+.login-page .btn-outline-primary:focus,
+.login-page .btn-outline-primary:active {
+    background-color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+/* Role toggle buttons in login page */
+.login-page .role-toggle .btn-check:checked + .btn {
+    background-color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+/* Success modal button */
+.login-page .modal .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #245854 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
 /* Responsive Design for Learning Activities */
 @media (max-width: 768px) {
     .activity-icon {

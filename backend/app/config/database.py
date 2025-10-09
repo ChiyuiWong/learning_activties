@@ -2,6 +2,12 @@
 COMP5241 Group 10 - Database Configuration
 """
 from mongoengine import connect, disconnect
+import os
+
+try:
+    import mongomock  # type: ignore
+except Exception:
+    mongomock = None
 
 def init_db(app):
     """Initialize MongoDB connection"""
@@ -18,5 +24,10 @@ def init_db(app):
         # 'password': app.config.get('MONGODB_PASSWORD'),
     }
     
-    # Connect to MongoDB
-    connect(**mongodb_settings)
+    # Connect to MongoDB or mongomock for tests
+    if app.config.get('TESTING') and app.config.get('MONGODB_MOCK') and mongomock:
+        # Use mongomock in-memory MongoDB. Newer mongoengine versions require
+        # passing mongo_client_class instead of the mongomock:// URI.
+        connect(db=app.config.get('MONGODB_DB', 'comp5241_g10_test'), alias='default', mongo_client_class=mongomock.MongoClient)
+    else:
+        connect(**mongodb_settings)

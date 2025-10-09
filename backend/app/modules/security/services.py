@@ -115,10 +115,11 @@ class SecurityService:
                  "role": new_user_doc["role"],
                  "is_active": True,
                  "is_verified": True,
-                 "created_at": datetime.datetime.now(datetime.UTC),
-                 })
+                 "created_at": datetime.datetime.now(datetime.timezone.utc),
+                 }
+            )
             db["new_users"].delete_one({"_id": new_user_doc["_id"]})
-            SecurityService.action_logger.log(username, ip_address, f"account created from activation code {new_user_doc["_id"]}")
+            SecurityService.action_logger.log(username, ip_address, f"account created from activation code {new_user_doc['_id']}")
         return "OK"
     
     @staticmethod
