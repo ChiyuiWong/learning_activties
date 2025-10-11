@@ -59,7 +59,7 @@ def validate_quiz_data(data):
     
     # Validate time limit
     time_limit = data.get('time_limit')
-    if time_limit is not None and (not isinstance(time_limit, int) or time_limit < 1 or time_limit > 300):
+    if time_limit is not None and (not isinstance(time_limit, int) or time_limit < 1 or time_limit > 900):
         errors.append('Time limit must be an integer between 1 and 300 minutes')
     
     # Validate expiration date
