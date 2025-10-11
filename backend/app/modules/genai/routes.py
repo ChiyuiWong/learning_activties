@@ -1,7 +1,15 @@
 """
-GenAI Routes (DISABLED)
-All code in this module is disabled for deployment without GenAI dependencies.
+COMP5241 Group 10 - GenAI Module Routes
+Responsible: Ting
 """
+import os
+from datetime import datetime
+from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from werkzeug.utils import secure_filename
+from .services import GenAIService
+from bson import ObjectId
+from config.database import get_db_connection
 
 genai_bp = Blueprint('genai', __name__)
 

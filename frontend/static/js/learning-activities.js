@@ -924,6 +924,7 @@ class LearningActivitiesManager {
             
             updateCount('quiz-count', quizzes, 'available');
             updateCount('wordcloud-count', wordclouds, 'active');
+            updateCount('poll-count', polls, 'active');
             updateCount('shortanswer-count', shortanswers, 'questions');
             updateCount('minigame-count', minigames, 'games');
             
