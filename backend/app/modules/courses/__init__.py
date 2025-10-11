@@ -9,17 +9,6 @@ This module provides comprehensive course management functionality including:
 - Teacher and student dashboards
 """
 
-from .models import (
-    Course,
-    CourseEnrollment,
-    CourseMaterial,
-    CourseAnnouncement,
-    StudentImportLog,
-    ImportError,
-    MaterialDownloadLog,
-    CourseModule
-)
-
 from .services import (
     CourseService,
     EnrollmentService,
@@ -31,8 +20,6 @@ from .services import (
 from .routes import courses_bp
 
 __all__ = [
-    'Course', 'CourseEnrollment', 'CourseMaterial', 'CourseAnnouncement',
-    'StudentImportLog', 'ImportError', 'MaterialDownloadLog', 'CourseModule',
     'CourseService', 'EnrollmentService', 'MaterialService', 'AnnouncementService', 'TeacherToolsService',
     'courses_bp'
 ]

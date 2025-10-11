@@ -2,30 +2,10 @@
 COMP5241 Group 10 - Learning Activities Module Services
 Responsible: Charlie
 """
-import sys
-
-# Prefer normal package import. If a test registers a stub module under the
-# package path (e.g. 'app.modules.learning_activities.models') we'll use that
-# instead. This avoids fragile file-path imports while still allowing tests to
-# inject simple stand-ins.
-try:
-    from .models import LearningActivity, ActivitySubmission, ActivityProgress
-except Exception:
-    models_mod_name = 'app.modules.learning_activities.models'
-    if models_mod_name in sys.modules:
-        la_models = sys.modules[models_mod_name]
-        LearningActivity = la_models.LearningActivity
-        ActivitySubmission = la_models.ActivitySubmission
-        ActivityProgress = la_models.ActivityProgress
-    else:
-        # Re-raise the original import error so missing package dependencies
-        # surface immediately. Tests should install or register appropriate
-        # stubs via sys.modules or run with the application package on PYTHONPATH.
-        raise
-
 from datetime import datetime
 from typing import Any, List, Optional
-from mongoengine.errors import DoesNotExist, ValidationError
+from flask import current_app
+from bson import ObjectId
 
 
 class LearningActivityService:
@@ -60,21 +40,23 @@ class LearningActivityService:
             except Exception:
                 raise ValueError('due_date must be a datetime or ISO date string')
 
-        activity = LearningActivity(
-            title=str(title).strip(),
-            description=str(description or '').strip(),
-            activity_type=str(activity_type).strip() if activity_type else None,
-            course_id=str(course_id).strip(),
-            created_by=str(created_by).strip(),
-            instructions=str(kwargs.get('instructions', '')).strip(),
-            max_score=kwargs.get('max_score', 100),
-            time_limit=kwargs.get('time_limit'),
-            due_date=due_date,
-            is_active=kwargs.get('is_active', True)
-        )
+        activity_data = {
+            'title': str(title).strip(),
+            'description': str(description or '').strip(),
+            'activity_type': str(activity_type).strip() if activity_type else None,
+            'course_id': str(course_id).strip(),
+            'created_by': str(created_by).strip(),
+            'instructions': str(kwargs.get('instructions', '')).strip(),
+            'max_score': kwargs.get('max_score', 100),
+            'time_limit': kwargs.get('time_limit'),
+            'due_date': due_date,
+            'is_active': kwargs.get('is_active', True),
+            'created_at': datetime.utcnow()
+        }
 
-        activity.save()
-        return activity
+        result = current_app.db.learning_activities.insert_one(activity_data)
+        activity_data['_id'] = result.inserted_id
+        return activity_data
 
     @staticmethod
     def get_activities_by_course(course_id: str, include_inactive: bool = False) -> Any:
@@ -86,18 +68,21 @@ class LearningActivityService:
         if not course_id:
             raise ValueError('course_id is required')
 
-        query = LearningActivity.objects.filter(course_id=course_id)
+        query = {'course_id': course_id}
         if not include_inactive:
-            query = query.filter(is_active=True)
+            query['is_active'] = True
 
-        return query.order_by('-created_at')
+        return list(current_app.db.learning_activities.find(query).sort('created_at', -1))
 
     @staticmethod
     def get_activity_by_id(activity_id: str) -> Any:
         """Return a single LearningActivity or raise DoesNotExist."""
         if not activity_id:
             raise ValueError('activity_id is required')
-        return LearningActivity.objects.get(id=activity_id)
+        activity = current_app.db.learning_activities.find_one({'_id': ObjectId(activity_id)})
+        if not activity:
+            raise ValueError('Activity not found')
+        return activity
 
     @staticmethod
     def submit_activity(activity_id: str, student_id: str, submission_data: Optional[dict]) -> Any:
@@ -108,23 +93,26 @@ class LearningActivityService:
         if not activity_id or not student_id:
             raise ValueError('activity_id and student_id are required')
 
-        activity = LearningActivity.objects.get(id=activity_id)
+        activity = current_app.db.learning_activities.find_one({'_id': ObjectId(activity_id)})
+        if not activity:
+            raise ValueError('Activity not found')
 
         # Basic checks
-        if not activity.is_active:
-            raise ValidationError('Activity is closed')
-        if activity.due_date and activity.due_date < datetime.utcnow():
-            raise ValidationError('Activity is past its due date')
+        if not activity.get('is_active', True):
+            raise ValueError('Activity is closed')
+        if activity.get('due_date') and activity['due_date'] < datetime.utcnow():
+            raise ValueError('Activity is past its due date')
 
-        submission = ActivitySubmission(
-            activity_id=str(activity.id),
-            student_id=str(student_id),
-            submission_data=submission_data or {},
-            status='submitted',
-            submitted_at=datetime.utcnow()
-        )
-        submission.save()
-        return submission
+        submission_data = {
+            'activity_id': str(activity_id),
+            'student_id': str(student_id),
+            'submission_data': submission_data or {},
+            'status': 'submitted',
+            'submitted_at': datetime.utcnow()
+        }
+        result = current_app.db.activity_submissions.insert_one(submission_data)
+        submission_data['_id'] = result.inserted_id
+        return submission_data
 
     @staticmethod
     def grade_submission(submission_id: str, score: Optional[float] = None, feedback: Optional[str] = None, graded_by: Optional[str] = None) -> Any:
@@ -135,7 +123,11 @@ class LearningActivityService:
         if not submission_id:
             raise ValueError('submission_id is required')
 
-        submission = ActivitySubmission.objects.get(id=submission_id)
+        submission = current_app.db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
+        if not submission:
+            raise ValueError('Submission not found')
+
+        update_data = {}
 
         if score is not None:
             try:
@@ -144,18 +136,24 @@ class LearningActivityService:
                 raise ValueError('score must be a number')
             if score_val < 0 or score_val > 100:
                 raise ValueError('score must be between 0 and 100')
-            submission.score = score_val
+            update_data['score'] = score_val
 
         if feedback is not None:
-            submission.feedback = str(feedback)
+            update_data['feedback'] = str(feedback)
 
         if graded_by:
-            submission.graded_by = str(graded_by)
+            update_data['graded_by'] = str(graded_by)
 
-        submission.graded_at = datetime.utcnow()
-        submission.status = 'graded'
-        submission.save()
-        return submission
+        update_data['graded_at'] = datetime.utcnow()
+        update_data['status'] = 'graded'
+
+        current_app.db.activity_submissions.update_one(
+            {'_id': ObjectId(submission_id)},
+            {'$set': update_data}
+        )
+
+        # Return updated submission
+        return current_app.db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
 
     @staticmethod
     def update_progress(activity_id: str, student_id: str, progress_percentage: int = 0, time_spent: int = 0) -> Any:
@@ -182,26 +180,41 @@ class LearningActivityService:
         except Exception:
             raise ValueError('time_spent must be an integer (minutes)')
 
-        prog = ActivityProgress.objects(activity_id=activity_id, student_id=student_id).first()
-        if not prog:
-            prog = ActivityProgress(
-                activity_id=str(activity_id),
-                student_id=str(student_id),
-                progress_percentage=progress_percentage,
-                time_spent=time_spent,
-                last_accessed=datetime.utcnow(),
-                is_completed=(progress_percentage >= 100)
-            )
+        # Check if progress record exists
+        existing_progress = current_app.db.activity_progress.find_one({
+            'activity_id': str(activity_id),
+            'student_id': str(student_id)
+        })
+
+        if not existing_progress:
+            progress_data = {
+                'activity_id': str(activity_id),
+                'student_id': str(student_id),
+                'progress_percentage': progress_percentage,
+                'time_spent': time_spent,
+                'last_accessed': datetime.utcnow(),
+                'is_completed': (progress_percentage >= 100)
+            }
+            result = current_app.db.activity_progress.insert_one(progress_data)
+            progress_data['_id'] = result.inserted_id
+            return progress_data
         else:
             # Update fields incrementally
-            prog.progress_percentage = max(prog.progress_percentage, progress_percentage)
-            prog.time_spent = prog.time_spent + time_spent
-            prog.last_accessed = datetime.utcnow()
+            update_data = {
+                'progress_percentage': max(existing_progress.get('progress_percentage', 0), progress_percentage),
+                'time_spent': existing_progress.get('time_spent', 0) + time_spent,
+                'last_accessed': datetime.utcnow()
+            }
             if progress_percentage >= 100:
-                prog.is_completed = True
+                update_data['is_completed'] = True
 
-        prog.save()
-        return prog
+            current_app.db.activity_progress.update_one(
+                {'_id': existing_progress['_id']},
+                {'$set': update_data}
+            )
+
+            # Return updated progress
+            return current_app.db.activity_progress.find_one({'_id': existing_progress['_id']})
 
     @staticmethod
     def get_student_progress(student_id: str, course_id: Optional[str] = None) -> Any:
@@ -209,21 +222,18 @@ class LearningActivityService:
         if not student_id:
             raise ValueError('student_id is required')
 
-        progresses = ActivityProgress.objects.filter(student_id=student_id)
+        query = {'student_id': student_id}
 
         if course_id:
-            # Filter progresses by checking the related activity's course_id
-            activity_ids = [str(a.id) for a in LearningActivity.objects.filter(course_id=course_id)]
-            progresses = progresses.filter(activity_id__in=activity_ids)
+            # Find activity IDs for the course
+            activities = list(current_app.db.learning_activities.find({'course_id': course_id}, {'_id': 1}))
+            activity_ids = [str(a['_id']) for a in activities]
+            if activity_ids:
+                query['activity_id'] = {'$in': activity_ids}
+            else:
+                return []
 
-        # If the returned object is a queryset-like with order_by, use it.
-        if hasattr(progresses, 'order_by'):
-            return progresses.order_by('-last_accessed')
-
-        # If it's a plain list (as in some tests), sort and return the list
-        if isinstance(progresses, list):
-            return sorted(progresses, key=lambda p: getattr(p, 'last_accessed', None) or datetime.min, reverse=True)
-
+        progresses = list(current_app.db.activity_progress.find(query).sort('last_accessed', -1))
         return progresses
 
     @staticmethod
@@ -236,16 +246,20 @@ class LearningActivityService:
             raise ValueError('teacher_id is required')
 
         # Find activities created by this teacher
-        activity_query = LearningActivity.objects.filter(created_by=teacher_id)
+        activity_query = {'created_by': teacher_id}
         if course_id:
-            activity_query = activity_query.filter(course_id=course_id)
+            activity_query['course_id'] = course_id
 
-        activity_ids = [str(a.id) for a in activity_query]
+        activities = list(current_app.db.learning_activities.find(activity_query, {'_id': 1}))
+        activity_ids = [str(a['_id']) for a in activities]
 
         if not activity_ids:
             return []
 
-        submissions = ActivitySubmission.objects.filter(activity_id__in=activity_ids, status='submitted').order_by('submitted_at')
+        submissions = list(current_app.db.activity_submissions.find({
+            'activity_id': {'$in': activity_ids},
+            'status': 'submitted'
+        }).sort('submitted_at', 1))
         return submissions
 
     @staticmethod
@@ -256,5 +270,7 @@ class LearningActivityService:
         if not activity_id:
             raise ValueError('activity_id is required')
 
-        submissions = ActivitySubmission.objects.filter(activity_id=str(activity_id)).order_by('submitted_at')
+        submissions = list(current_app.db.activity_submissions.find({
+            'activity_id': str(activity_id)
+        }).sort('submitted_at', 1))
         return submissions

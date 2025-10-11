@@ -3,7 +3,6 @@ COMP5241 Group 10 - Database Configuration and Connection
 """
 import os
 
-from mongoengine import connect, disconnect
 import pymongo
 from flask import current_app
 import os
@@ -19,8 +18,9 @@ def init_db(app):
     mongodb_uri = app.config['MONGODB_SETTINGS']['host']
     
     try:
-        # Initialize MongoEngine connection
-        connect(host=mongodb_uri)
+        # Initialize PyMongo connection
+        app.db_client = pymongo.MongoClient(mongodb_uri)
+        app.db = app.db_client[app.config['MONGODB_SETTINGS'].get('db', 'comp5241_g10')]
         app.logger.info(f"Connected to MongoDB: {mongodb_uri}")
     except Exception as e:
         app.logger.error(f"Failed to connect to MongoDB: {e}")
@@ -46,6 +46,7 @@ def get_db_connection():
 def close_db_connection():
     """Close MongoDB connection"""
     try:
-        disconnect()
+        if hasattr(current_app, 'db_client'):
+            current_app.db_client.close()
     except Exception as e:
         current_app.logger.error(f"Error closing database connection: {e}")

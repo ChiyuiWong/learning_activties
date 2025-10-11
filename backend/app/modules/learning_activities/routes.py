@@ -1,10 +1,4 @@
 
-# --- Poll Endpoints (after blueprint definition) ---
-from .poll import Poll, Option, Vote
-from mongoengine.errors import ValidationError, NotUniqueError, DoesNotExist
-from datetime import datetime
-
-# Place poll endpoints here, after blueprint and imports
 """
 COMP5241 Group 10 - Learning Activities Module Routes
 Responsible: Charlie
@@ -17,7 +11,7 @@ from .wordclouds_routes import wordclouds_bp
 from .shortanswers_routes import shortanswers_bp
 from .minigames_routes import minigames_bp
 from .services import LearningActivityService
-from mongoengine.errors import DoesNotExist, ValidationError
+from bson import ObjectId
 
 learning_bp = Blueprint('learning', __name__)
 
@@ -96,11 +90,11 @@ def get_submissions_to_grade():
         result = []
         for s in subs:
             result.append({
-                'submission_id': str(s.id),
-                'activity_id': s.activity_id,
-                'student_id': s.student_id,
-                'submitted_at': s.submitted_at.isoformat() if s.submitted_at else None,
-                'status': s.status
+                'submission_id': str(s['_id']),
+                'activity_id': s['activity_id'],
+                'student_id': s['student_id'],
+                'submitted_at': s['submitted_at'].isoformat() if s.get('submitted_at') else None,
+                'status': s['status']
             })
         return jsonify(result), 200
     except ValueError as ve:
@@ -120,9 +114,7 @@ def grade_submission(submission_id):
         score = data.get('score')
         feedback = data.get('feedback')
         updated = LearningActivityService.grade_submission(submission_id=submission_id, score=score, feedback=feedback, graded_by=user_id)
-        return jsonify({'message': 'Submission graded', 'submission_id': str(updated.id), 'score': updated.score}), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Submission not found'}), 404
+        return jsonify({'message': 'Submission graded', 'submission_id': str(updated['_id']), 'score': updated.get('score')}), 200
     except ValueError as ve:
         return jsonify({'error': 'Invalid score', 'details': str(ve)}), 400
     except Exception as e:
@@ -140,15 +132,13 @@ def list_activity_submissions(activity_id):
         result = []
         for s in subs:
             result.append({
-                'submission_id': str(s.id),
-                'student_id': s.student_id,
-                'submitted_at': s.submitted_at.isoformat() if s.submitted_at else None,
-                'status': s.status,
-                'score': getattr(s, 'score', None)
+                'submission_id': str(s['_id']),
+                'student_id': s['student_id'],
+                'submitted_at': s['submitted_at'].isoformat() if s.get('submitted_at') else None,
+                'status': s['status'],
+                'score': s.get('score')
             })
         return jsonify(result), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Activity not found'}), 404
     except Exception as e:
         return jsonify({'error': 'Failed to list submissions', 'details': str(e)}), 500
 
@@ -163,11 +153,11 @@ def get_student_progress(student_id):
         result = []
         for p in progresses:
             result.append({
-                'activity_id': p.activity_id,
-                'progress_percentage': p.progress_percentage,
-                'time_spent': p.time_spent,
-                'is_completed': p.is_completed,
-                'last_accessed': p.last_accessed.isoformat() if p.last_accessed else None
+                'activity_id': p['activity_id'],
+                'progress_percentage': p['progress_percentage'],
+                'time_spent': p['time_spent'],
+                'is_completed': p['is_completed'],
+                'last_accessed': p['last_accessed'].isoformat() if p.get('last_accessed') else None
             })
         return jsonify(result), 200
     except ValueError as ve:
@@ -199,12 +189,10 @@ def create_activity():
 
         return jsonify({
             'message': 'Activity created successfully',
-            'activity_id': str(activity.id)
+            'activity_id': str(activity['_id'])
         }), 201
     except ValueError as ve:
         return jsonify({'error': 'Invalid input', 'details': str(ve)}), 400
-    except ValidationError as ve:
-        return jsonify({'error': 'Validation error', 'details': str(ve)}), 400
     except Exception as e:
         return jsonify({'error': 'Failed to create activity', 'details': str(e)}), 500
 
@@ -218,22 +206,20 @@ def get_activity(activity_id):
         activity = LearningActivityService.get_activity_by_id(activity_id)
         # Basic serialization
         result = {
-            'id': str(activity.id),
-            'title': activity.title,
-            'description': activity.description,
-            'activity_type': activity.activity_type,
-            'course_id': activity.course_id,
-            'created_by': activity.created_by,
-            'instructions': activity.instructions,
-            'max_score': activity.max_score,
-            'time_limit': activity.time_limit,
-            'due_date': activity.due_date.isoformat() if activity.due_date else None,
-            'is_active': activity.is_active,
-            'created_at': activity.created_at.isoformat() if activity.created_at else None
+            'id': str(activity['_id']),
+            'title': activity['title'],
+            'description': activity['description'],
+            'activity_type': activity['activity_type'],
+            'course_id': activity['course_id'],
+            'created_by': activity['created_by'],
+            'instructions': activity['instructions'],
+            'max_score': activity['max_score'],
+            'time_limit': activity['time_limit'],
+            'due_date': activity['due_date'].isoformat() if activity.get('due_date') else None,
+            'is_active': activity['is_active'],
+            'created_at': activity['created_at'].isoformat() if activity.get('created_at') else None
         }
         return jsonify(result), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Activity not found'}), 404
     except Exception as e:
         return jsonify({'error': 'Failed to retrieve activity', 'details': str(e)}), 500
 
@@ -253,13 +239,9 @@ def submit_activity():
 
         return jsonify({
             'message': 'Submission received',
-            'submission_id': str(submission.id),
-            'status': submission.status
+            'submission_id': str(submission['_id']),
+            'status': submission['status']
         }), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Activity not found'}), 404
-    except ValidationError as ve:
-        return jsonify({'error': 'Invalid submission', 'details': str(ve)}), 400
     except ValueError as ve:
         return jsonify({'error': 'Invalid input', 'details': str(ve)}), 400
     except Exception as e:

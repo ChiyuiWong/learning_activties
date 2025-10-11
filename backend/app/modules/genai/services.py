@@ -15,10 +15,7 @@ from docx import Document as DocxDocument
 import chromadb
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
-from .models import (
-    AIGeneration, AIAnalysis, CourseMaterial, ChatSession, 
-    ChatMessage, OllamaModel
-)
+from bson import ObjectId
 
 
 class GenAIService:
@@ -75,20 +72,34 @@ class GenAIService:
     def download_model(self, model_name):
         """Download an Ollama model"""
         try:
-            # Update model status in database
-            model_obj, created = OllamaModel.objects.get_or_create(
-                name=model_name,
-                defaults={'is_downloaded': False, 'download_progress': 0}
-            )
+            db = current_app.db
+            
+            # Check if model already exists
+            model_doc = db.ollama_models.find_one({'name': model_name})
+            if not model_doc:
+                # Create model document
+                model_doc = {
+                    'name': model_name,
+                    'is_downloaded': False,
+                    'download_progress': 0,
+                    'created_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                }
+                result = db.ollama_models.insert_one(model_doc)
+                model_doc['_id'] = result.inserted_id
             
             # Start download
             response = ollama.pull(model_name)
             
             # Update model status
-            model_obj.is_downloaded = True
-            model_obj.download_progress = 100
-            model_obj.updated_at = datetime.utcnow()
-            model_obj.save()
+            db.ollama_models.update_one(
+                {'_id': model_doc['_id']},
+                {'$set': {
+                    'is_downloaded': True,
+                    'download_progress': 100,
+                    'updated_at': datetime.utcnow()
+                }}
+            )
             
             return True, "Model downloaded successfully"
         except Exception as e:
@@ -124,13 +135,14 @@ class GenAIService:
     
     def _get_context_from_materials(self, material_ids):
         """Retrieve and combine content from course materials"""
+        db = current_app.db
         context_texts = []
         for material_id in material_ids:
             try:
-                material = CourseMaterial.objects.get(id=material_id)
-                if material.content_text:
-                    context_texts.append(f"From {material.title}: {material.content_text}")
-            except CourseMaterial.DoesNotExist:
+                material = db.course_materials.find_one({'_id': ObjectId(material_id)})
+                if material and material.get('content_text'):
+                    context_texts.append(f"From {material['title']}: {material['content_text']}")
+            except Exception:
                 current_app.logger.warning(f"Course material {material_id} not found")
         
         return "\n\n".join(context_texts)
@@ -138,23 +150,31 @@ class GenAIService:
     def process_course_material(self, file_path, material_id):
         """Extract text content from uploaded course material"""
         try:
-            material = CourseMaterial.objects.get(id=material_id)
+            db = current_app.db
+            material = db.course_materials.find_one({'_id': ObjectId(material_id)})
             
-            if material.file_type == 'pdf':
+            if not material:
+                raise ValueError(f"Material {material_id} not found")
+            
+            if material['file_type'] == 'pdf':
                 text = self._extract_text_from_pdf(file_path)
-            elif material.file_type == 'docx':
+            elif material['file_type'] == 'docx':
                 text = self._extract_text_from_docx(file_path)
-            elif material.file_type == 'txt':
+            elif material['file_type'] == 'txt':
                 with open(file_path, 'r', encoding='utf-8') as f:
                     text = f.read()
             else:
-                raise ValueError(f"Unsupported file type: {material.file_type}")
+                raise ValueError(f"Unsupported file type: {material['file_type']}")
             
             # Store extracted text
-            material.content_text = text
-            material.is_processed = True
-            material.updated_at = datetime.utcnow()
-            material.save()
+            db.course_materials.update_one(
+                {'_id': ObjectId(material_id)},
+                {'$set': {
+                    'content_text': text,
+                    'is_processed': True,
+                    'updated_at': datetime.utcnow()
+                }}
+            )
             
             # Optionally, store in vector database for better RAG
             self._store_in_vector_db(text, material_id)
@@ -217,34 +237,43 @@ class GenAIService:
     
     def save_chat_session(self, user_id, model_name, course_id=None, context_materials=None):
         """Save a new chat session"""
-        session = ChatSession(
-            user_id=user_id,
-            course_id=course_id,
-            model_name=model_name,
-            context_materials=context_materials or []
-        )
-        session.save()
-        return session
+        db = current_app.db
+        session_data = {
+            'user_id': user_id,
+            'course_id': course_id,
+            'model_name': model_name,
+            'context_materials': context_materials or [],
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        result = db.chat_sessions.insert_one(session_data)
+        session_data['_id'] = result.inserted_id
+        return session_data
     
     def save_chat_message(self, session_id, user_id, message_type, content, metadata=None):
         """Save a chat message"""
-        message = ChatMessage(
-            session_id=session_id,
-            user_id=user_id,
-            message_type=message_type,
-            content=content,
-            metadata=metadata or {}
-        )
-        message.save()
-        return message
+        db = current_app.db
+        message_data = {
+            'session_id': session_id,
+            'user_id': user_id,
+            'message_type': message_type,
+            'content': content,
+            'metadata': metadata or {},
+            'created_at': datetime.utcnow()
+        }
+        result = db.chat_messages.insert_one(message_data)
+        message_data['_id'] = result.inserted_id
+        return message_data
     
     def get_chat_history(self, session_id):
         """Get chat history for a session"""
-        return ChatMessage.objects(session_id=session_id).order_by('created_at')
+        db = current_app.db
+        return list(db.chat_messages.find({'session_id': session_id}).sort('created_at', 1))
     
     def get_user_sessions(self, user_id):
         """Get all chat sessions for a user"""
-        return ChatSession.objects(user_id=user_id).order_by('-created_at')
+        db = current_app.db
+        return list(db.chat_sessions.find({'user_id': user_id}).sort('created_at', -1))
     
     def generate_text(self, prompt, user_id):
         """Generate text using AI - to be implemented by Ting"""
@@ -258,22 +287,29 @@ class GenAIService:
     
     def save_generation(self, user_id, prompt, content, generation_type='text'):
         """Save AI generation to database"""
-        generation = AIGeneration(
-            user_id=user_id,
-            prompt=prompt,
-            generated_content=content,
-            generation_type=generation_type
-        )
-        generation.save()
-        return generation
+        db = current_app.db
+        generation_data = {
+            'user_id': user_id,
+            'prompt': prompt,
+            'generated_content': content,
+            'generation_type': generation_type,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        result = db.ai_generations.insert_one(generation_data)
+        generation_data['_id'] = result.inserted_id
+        return generation_data
     
     def save_analysis(self, content_id, analysis_type, result, confidence=None):
         """Save AI analysis to database"""
-        analysis = AIAnalysis(
-            content_id=content_id,
-            analysis_type=analysis_type,
-            analysis_result=result,
-            confidence_score=confidence
-        )
-        analysis.save()
-        return analysis
+        db = current_app.db
+        analysis_data = {
+            'content_id': content_id,
+            'analysis_type': analysis_type,
+            'analysis_result': result,
+            'confidence_score': confidence,
+            'created_at': datetime.utcnow()
+        }
+        result = db.ai_analyses.insert_one(analysis_data)
+        analysis_data['_id'] = result.inserted_id
+        return analysis_data
