@@ -15,9 +15,12 @@ load_dotenv()
 def init_database():
     """Initialize MongoDB database with collections and indexes"""
     try:
-        # Connect to MongoDB
+        # Connect to MongoDB with a short timeout
         mongodb_uri = os.environ.get('MONGODB_URI', 'mongodb://localhost:27017/comp5241_g10')
-        client = pymongo.MongoClient(mongodb_uri)
+        client = pymongo.MongoClient(mongodb_uri, serverSelectionTimeoutMS=2000)
+        
+        # Test connection with short timeout
+        client.server_info()
 
         # Get database name from URI or use default
         db_name = 'comp5241_g10'
@@ -30,10 +33,63 @@ def init_database():
         insert_sample_data(db)
 
         print("Database initialization completed successfully.")
+        return client, db
 
     except Exception as e:
-        print(f"Error initializing database: {e}")
-        raise
+        print(f"WARNING: MongoDB connection failed: {e}")
+        print("Continuing in development mode with in-memory database")
+        try:
+            import mongomock
+            client = mongomock.MongoClient()
+            db = client["comp5241_g10_mock"]
+            print("Using mongomock in-memory database")
+            return client, db
+        except ImportError:
+            print("mongomock not available, using dummy database object")
+            # Create a minimal dict-based mock if mongomock is not available
+            class DummyCollection(dict):
+                def __init__(self, name):
+                    self.name = name
+                    self.data = []
+                def insert_one(self, doc):
+                    doc['_id'] = len(self.data) + 1
+                    self.data.append(doc)
+                    return type('obj', (object,), {'inserted_id': doc['_id']})
+                def insert_many(self, docs):
+                    for doc in docs:
+                        self.insert_one(doc)
+                def find(self, query=None):
+                    return self.data
+                def find_one(self, query=None):
+                    return self.data[0] if self.data else None
+                def create_index(self, *args, **kwargs):
+                    pass
+            
+            class DummyDB:
+                def __init__(self):
+                    self.collections = {}
+                def __getitem__(self, name):
+                    if name not in self.collections:
+                        self.collections[name] = DummyCollection(name)
+                    return self.collections[name]
+                def create_collection(self, name, **kwargs):
+                    self.collections[name] = DummyCollection(name)
+                    return self.collections[name]
+                def list_collection_names(self):
+                    return list(self.collections.keys())
+            
+            class DummyClient:
+                def __init__(self):
+                    self.db = DummyDB()
+                def __getitem__(self, name):
+                    return self.db
+                def server_info(self):
+                    return {"version": "mock"}
+            
+            client = DummyClient()
+            db = client["comp5241_g10_dummy"]
+            print("Using dummy in-memory database")
+            return client, db
 
 
 def create_collections_and_indexes(db):

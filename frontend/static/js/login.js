@@ -241,12 +241,22 @@ async function handleLogin(event) {
         // Store user info
         localStorage.setItem('userInfo', JSON.stringify(userData));
         
+        // Store auth token for API requests
+        localStorage.setItem('authToken', 'test-token-for-development');
+        
+        // Store user data in format expected by our test pages
+        localStorage.setItem('user', JSON.stringify({
+            id: username,
+            username: username,
+            role: userData.role
+        }));
+        
         // Show success modal
         showSuccessModal();
         
         // Redirect after modal is shown
         setTimeout(() => {
-            window.location.href = '/';
+            window.location.href = 'index.html';
         }, 2000);
 
     } catch (error) {
@@ -390,15 +400,19 @@ function getAlertIcon(type) {
 // Check for existing login
 function checkExistingLogin() {
     const userInfo = localStorage.getItem('userInfo');
-    if (userInfo) {
+    const authToken = localStorage.getItem('authToken');
+    
+    if (userInfo && authToken) {
         try {
             const userData = JSON.parse(userInfo);
             showAlert(`Welcome back, ${userData.name || userData.username}! Redirecting...`, 'info');
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = 'index.html';
             }, 1500);
         } catch (error) {
             localStorage.removeItem('userInfo');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('user');
         }
     }
 }

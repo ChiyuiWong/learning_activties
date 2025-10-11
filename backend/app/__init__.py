@@ -1,7 +1,7 @@
 """
 COMP5241 Group 10 - Flask Application Factory
 """
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt
 from app.config.database import init_db
@@ -93,6 +93,10 @@ def create_app(config_class=Config):
 
     jwt = JWTManager(app)
 
+    # Register error handlers
+    from app.error_handlers import register_error_handlers
+    register_error_handlers(app)
+
     # Route to serve the index.html file
     @app.route('/')
     def index():
@@ -102,8 +106,7 @@ def create_app(config_class=Config):
     if app.config.get('DISABLE_AUTH'):
         import flask_jwt_extended as _fjw
         from functools import wraps
-        
-        app.logger.warning('⚠️  AUTHENTICATION DISABLED - DEVELOPMENT MODE ONLY!')
+        app.logger.warning('WARNING: AUTHENTICATION DISABLED - DEVELOPMENT MODE ONLY!')
         
         def no_auth_required(locations=None, optional=False):
             """Bypass authentication decorator for development"""
@@ -140,7 +143,6 @@ def create_app(config_class=Config):
     if app.config.get('TESTING'):
         import flask_jwt_extended as _fjw
         from functools import wraps
-        from flask import request, g
 
         def _decode_token_noverify(token: str):
             # Manually decode JWT payload (base64url) without verifying signature.
@@ -209,22 +211,32 @@ def create_app(config_class=Config):
     init_db(app)
     
     # Register blueprints
-    from app.modules.genai.routes import genai_bp
+    # from app.modules.genai.routes import genai_bp
     from app.modules.security.routes import security_bp
     from app.modules.admin.routes import admin_bp
     from app.modules.learning_activities.routes import learning_bp
     from app.modules.courses.routes import courses_bp
     
-    app.register_blueprint(genai_bp, url_prefix='/api/genai')
+    # app.register_blueprint(genai_bp, url_prefix='/api/genai')
     app.register_blueprint(security_bp, url_prefix='/api/security')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(learning_bp, url_prefix='/api/learning')
     app.register_blueprint(courses_bp, url_prefix='/api/courses')
     
+    # Register placeholder endpoints for learning activities that haven't been implemented yet
+    from app.modules.learning_activities.placeholder_endpoints import register_placeholder_endpoints
+    register_placeholder_endpoints(app)
+    
     # Health check endpoint
     @app.route('/api/health')
     def health_check():
         return {'status': 'healthy', 'message': 'COMP5241 Group 10 API is running'}
+    
+    # API documentation route
+    @app.route('/api')
+    @app.route('/api/')
+    def api_docs():
+        return render_template('api_docs.html')
     
     # Serve frontend HTML files
     from flask import send_from_directory
@@ -249,6 +261,30 @@ def create_app(config_class=Config):
         if "role" not in claims or claims["role"] != "admin":
             return redirect('/')
         return render_template('admin.html')
+    
+    # Custom 404 error handler - suggests using /api prefix for API routes
+    @app.errorhandler(404)
+    def page_not_found(error):
+        # Check if the request was for an API route that's missing the /api prefix
+        path = request.path
+        if path.startswith('/learning/') or path.startswith('/security/') or path == '/health':
+            fixed_path = f"/api{path}"
+            return {
+                "error": "Not Found", 
+                "message": f"The requested URL was not found. Did you mean to use '{fixed_path}'?",
+                "suggestion": "All API endpoints should be prefixed with /api"
+            }, 404
+        return render_template('api_docs.html'), 404
+    
+    # Generic error handler for API routes
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        app.logger.error(f"Internal server error: {error}")
+        return {
+            "error": "Internal Server Error",
+            "message": "The server encountered an internal error. Please try again later.",
+            "details": str(error)
+        }, 500
 
     @app.route('/register/<id>')
     def register(id):

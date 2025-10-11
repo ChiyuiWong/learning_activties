@@ -1,20 +1,7 @@
 """
-COMP5241 Group 10 - GenAI Module Services
-Responsible: Ting
+GenAI Services (DISABLED)
+All code in this module is disabled for deployment without GenAI dependencies.
 """
-import os
-import json
-import tempfile
-from datetime import datetime
-from flask import current_app
-import openai
-import ollama
-from config.database import get_db_connection
-import requests
-from PyPDF2 import PdfReader
-from docx import Document as DocxDocument
-import chromadb
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import OpenAIEmbeddings
 from bson import ObjectId
 

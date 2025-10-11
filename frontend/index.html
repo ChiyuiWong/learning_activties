@@ -13,6 +13,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="static/css/main.css">
     <link rel="stylesheet" href="static/css/components.css">
+    <link rel="stylesheet" href="static/css/notifications.css">
+    <link rel="stylesheet" href="static/css/quiz.css">
 </head>
 <body>
     <!-- Navigation Header -->
@@ -69,6 +71,11 @@
             </div>
         </div>
     </nav>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="container-fluid mt-3">
+        <!-- Alerts will be dynamically inserted here -->
+    </div>
 
     <!-- Main Content Area -->
     <div class="container-fluid py-4">
@@ -334,9 +341,10 @@
                                 <div class="card-body p-4">
                                     <div class="row g-4">
                                         <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="quiz">
+                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="quiz" style="cursor: pointer;" onclick="window.location.href='test_quiz.html'">
                                                 <div class="card-body text-center p-4">
                                                     <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                                                        <i class="bi bi-question-circle fs-4 text-primary"></i>
                                                     </div>
                                                     <h6 class="fw-semibold mb-2">Create Quiz</h6>
                                                     <p class="small text-muted mb-0">Multiple choice, true/false, or multiple select questions</p>
@@ -344,9 +352,10 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="wordcloud">
+                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="wordcloud" style="cursor: pointer;" onclick="window.location.href='test_wordcloud.html'">
                                                 <div class="card-body text-center p-4">
                                                     <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                                                        <i class="bi bi-cloud fs-4 text-success"></i>
                                                     </div>
                                                     <h6 class="fw-semibold mb-2">Create Word Cloud</h6>
                                                     <p class="small text-muted mb-0">Collect words from students on a specific topic</p>
@@ -354,9 +363,10 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="shortanswer">
+                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="shortanswer" style="cursor: pointer;" onclick="window.location.href='test_shortanswer.html'">
                                                 <div class="card-body text-center p-4">
                                                     <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                                                        <i class="bi bi-file-text fs-4 text-info"></i>
                                                     </div>
                                                     <h6 class="fw-semibold mb-2">Create Short Answer</h6>
                                                     <p class="small text-muted mb-0">Essay-style questions with personalized feedback</p>
@@ -367,6 +377,7 @@
                                             <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="minigame">
                                                 <div class="card-body text-center p-4">
                                                     <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                                                        <i class="bi bi-controller fs-4 text-warning"></i>
                                                     </div>
                                                     <h6 class="fw-semibold mb-2">Create Mini Game</h6>
                                                     <p class="small text-muted mb-0">Interactive games with scoring and competition</p>
@@ -374,9 +385,10 @@
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="poll">
+                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="poll" style="cursor: pointer;" onclick="window.location.href='test_poll.html'">
                                                 <div class="card-body text-center p-4">
                                                     <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
+                                                        <i class="bi bi-bar-chart-fill fs-4 text-secondary"></i>
                                                     </div>
                                                     <h6 class="fw-semibold mb-2">Create Poll</h6>
                                                     <p class="small text-muted mb-0">Create live polls with multiple options and real-time voting</p>

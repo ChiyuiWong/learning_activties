@@ -10,6 +10,7 @@ from .quizzes_routes import quizzes_bp
 from .wordclouds_routes import wordclouds_bp
 from .shortanswers_routes import shortanswers_bp
 from .minigames_routes import minigames_bp
+from .activity_routes import activities_bp
 from .services import LearningActivityService
 from bson import ObjectId
 
@@ -21,6 +22,7 @@ learning_bp.register_blueprint(quizzes_bp)
 learning_bp.register_blueprint(wordclouds_bp)
 learning_bp.register_blueprint(shortanswers_bp)
 learning_bp.register_blueprint(minigames_bp)
+learning_bp.register_blueprint(activities_bp)
 
 @learning_bp.route('/health', methods=['GET'])
 def learning_health():
