@@ -138,6 +138,9 @@
                     </div>
                     
                     <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-secondary rounded-3 px-4 py-2 fw-medium">
+                            <i class="bi bi-bar-chart me-2"></i>Create Quiz without a second look
+                        </button>
                         <button type="button" class="btn btn-primary" onclick="confirmSubmit()">Create Quiz</button>
                         <button type="button" class="btn btn-outline-secondary" onclick="window.location.href='index.html'">Cancel</button>
                     </div>
@@ -177,7 +180,6 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="static/js/auth-helpers.js"></script>
     <script src="static/js/api.js"></script>
     <script>
         // Question counter
@@ -185,11 +187,6 @@
         
         // Add a question when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            // Check authentication
-            if (!checkAuth()) {
-                window.location.href = 'login.html';
-                return;
-            }
             
             addQuestion();
             
@@ -685,6 +682,7 @@
         }
         
         function submitQuiz() {
+            console.log("SUBMITTING!!!!!!!!!!!!")
             const form = document.getElementById('quiz-test-form');
             const formData = new FormData(form);
             
@@ -708,13 +706,14 @@
                 max_score: parseInt(formData.get('max_score') || 100),
                 time_limit: timeLimit,
                 due_date: expiresAt,
+                questions: processQuizQuestions(form),
                 metadata: {
                     shuffle_questions: document.getElementById('shuffle_questions').checked,
                     passing_score: parseInt(formData.get('passing_score') || 60),
                     show_results: document.getElementById('show_results').checked,
                     allow_retries: document.getElementById('allow_retries').checked,
                     show_explanations: document.getElementById('show_explanations').checked,
-                    questions: processQuizQuestions(form),
+
                 }
             };
             
