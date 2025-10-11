@@ -48,11 +48,13 @@ class LearningActivityService:
             'course_id': str(course_id).strip(),
             'created_by': str(created_by).strip(),
             'instructions': str(kwargs.get('instructions', '')).strip(),
-            'max_score': kwargs.get('max_score', 100),
-            'time_limit': kwargs.get('time_limit'),
+            'max_score': int(kwargs.get('max_score', 0)),
+            'time_limit': int(kwargs.get('time_limit', 0)),
             'due_date': due_date,
-            'is_active': kwargs.get('is_active', True),
-            'created_at': datetime.utcnow()
+            'is_active': bool(kwargs.get('is_active', True)),
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow(),
+            'status': 'active'
         }
 
         with get_db_connection() as client:
@@ -62,140 +64,186 @@ class LearningActivityService:
         return activity_data
 
     @staticmethod
-    def get_activities_by_course(course_id: str, include_inactive: bool = False) -> Any:
-        """Return a queryset/list of activities for a course.
+    def get_activities(course_id: Optional[str] = None, created_by: Optional[str] = None,
+                       is_active: bool = True, activity_type: Optional[str] = None) -> List:
+        """Get learning activities filtered by parameters.
 
-        By default only returns active activities. Set include_inactive=True
-        to include archived/closed activities.
+        Returns list of activity documents. Filter by:
+        - course_id: activities for a specific course
+        - created_by: activities created by a specific teacher
+        - is_active: active/inactive activities
+        - activity_type: filter by type (quiz, poll, etc.)
         """
-        if not course_id:
-            raise ValueError('course_id is required')
-
-        query = {'course_id': course_id}
-        if not include_inactive:
-            query['is_active'] = True
+        query = {}
+        if course_id:
+            query['course_id'] = str(course_id).strip()
+        if created_by:
+            query['created_by'] = str(created_by).strip()
+        if is_active is not None:
+            query['is_active'] = bool(is_active)
+        if activity_type:
+            query['activity_type'] = str(activity_type).strip()
 
         with get_db_connection() as client:
             db = client['comp5241_g10']
-            return list(db.learning_activities.find(query).sort('created_at', -1))
+            activities = list(db.learning_activities.find(query))
+
+        return activities
 
     @staticmethod
-    def get_activity_by_id(activity_id: str) -> Any:
-        """Return a single LearningActivity or raise DoesNotExist."""
+    def get_activity(activity_id: str) -> Optional[dict]:
+        """Get a specific learning activity by ID.
+
+        Returns the activity document or None if not found.
+        """
         if not activity_id:
             raise ValueError('activity_id is required')
+
+        try:
+            # Convert string ID to ObjectId if necessary
+            if isinstance(activity_id, str):
+                activity_id = ObjectId(activity_id)
+        except Exception:
+            # If ID is invalid, return None
+            return None
+
         with get_db_connection() as client:
             db = client['comp5241_g10']
-            activity = db.learning_activities.find_one({'_id': ObjectId(activity_id)})
-        if not activity:
-            raise ValueError('Activity not found')
+            activity = db.learning_activities.find_one({'_id': activity_id})
+
         return activity
 
     @staticmethod
-    def submit_activity(activity_id: str, student_id: str, submission_data: Optional[dict]) -> Any:
-        """Create a new ActivitySubmission for a given activity.
+    def update_activity(activity_id: str, **kwargs) -> Optional[dict]:
+        """Update fields on an existing LearningActivity.
 
-        Returns the saved ActivitySubmission instance.
+        Returns updated activity or None if not found.
         """
-        if not activity_id or not student_id:
-            raise ValueError('activity_id and student_id are required')
+        if not activity_id:
+            raise ValueError('activity_id is required')
 
-        with get_db_connection() as client:
-            db = client['comp5241_g10']
-            activity = db.learning_activities.find_one({'_id': ObjectId(activity_id)})
-        if not activity:
-            raise ValueError('Activity not found')
+        try:
+            # Convert string ID to ObjectId if necessary
+            if isinstance(activity_id, str):
+                activity_id = ObjectId(activity_id)
+        except Exception:
+            return None
 
-        # Basic checks
-        if not activity.get('is_active', True):
-            raise ValueError('Activity is closed')
-        if activity.get('due_date') and activity['due_date'] < datetime.utcnow():
-            raise ValueError('Activity is past its due date')
-
-        submission_data = {
-            'activity_id': str(activity_id),
-            'student_id': str(student_id),
-            'submission_data': submission_data or {},
-            'status': 'submitted',
-            'submitted_at': datetime.utcnow()
-        }
-        with get_db_connection() as client:
-            db = client['comp5241_g10']
-            result = db.activity_submissions.insert_one(submission_data)
-        submission_data['_id'] = result.inserted_id
-        return submission_data
-
-    @staticmethod
-    def grade_submission(submission_id: str, score: Optional[float] = None, feedback: Optional[str] = None, graded_by: Optional[str] = None) -> Any:
-        """Grade an existing submission. Returns the updated submission.
-
-        score should be numeric between 0 and 100. graded_by is the teacher id.
-        """
-        if not submission_id:
-            raise ValueError('submission_id is required')
-
-        with get_db_connection() as client:
-            db = client['comp5241_g10']
-            submission = db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
-        if not submission:
-            raise ValueError('Submission not found')
-
-        update_data = {}
-
-        if score is not None:
+        # Parse optional due_date
+        due_date = kwargs.get('due_date')
+        if isinstance(due_date, str):
             try:
-                score_val = float(score)
+                kwargs['due_date'] = datetime.fromisoformat(due_date)
             except Exception:
-                raise ValueError('score must be a number')
-            if score_val < 0 or score_val > 100:
-                raise ValueError('score must be between 0 and 100')
-            update_data['score'] = score_val
+                raise ValueError('due_date must be a datetime or ISO date string')
 
-        if feedback is not None:
-            update_data['feedback'] = str(feedback)
-
-        if graded_by:
-            update_data['graded_by'] = str(graded_by)
-
-        update_data['graded_at'] = datetime.utcnow()
-        update_data['status'] = 'graded'
+        # Add updated_at timestamp
+        kwargs['updated_at'] = datetime.utcnow()
 
         with get_db_connection() as client:
             db = client['comp5241_g10']
-            db.activity_submissions.update_one(
-                {'_id': ObjectId(submission_id)},
-                {'$set': update_data}
+            result = db.learning_activities.update_one(
+                {'_id': activity_id},
+                {'$set': kwargs}
             )
 
-        # Return updated submission
+        if result.matched_count == 0:
+            return None
+
         with get_db_connection() as client:
             db = client['comp5241_g10']
-            return db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
+            return db.learning_activities.find_one({'_id': activity_id})
 
     @staticmethod
-    def update_progress(activity_id: str, student_id: str, progress_percentage: int = 0, time_spent: int = 0) -> Any:
-        """Upsert ActivityProgress for a student and activity.
+    def delete_activity(activity_id: str, user_id: str, hard_delete: bool = False) -> bool:
+        """Delete a learning activity.
+        
+        By default, performs a soft delete (sets status to 'deleted').
+        If hard_delete=True, completely removes the activity and related data.
+        Returns True on success, False if activity not found or user not authorized.
+        
+        Args:
+            activity_id: ID of the activity to delete
+            user_id: ID of the user requesting deletion (must be the creator)
+            hard_delete: If True, permanently delete; otherwise mark as deleted
+            
+        Returns:
+            bool: True if deletion was successful, False otherwise
+        """
+        if not activity_id or not user_id:
+            raise ValueError('activity_id and user_id are required')
+            
+        try:
+            # Convert string ID to ObjectId if necessary
+            if isinstance(activity_id, str):
+                activity_id = ObjectId(activity_id)
+        except Exception:
+            return False
+            
+        # Get the activity to check ownership
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            activity = db.learning_activities.find_one({'_id': activity_id})
+            
+        # Check if activity exists and user is authorized
+        if not activity:
+            return False
+            
+        if activity.get('created_by') != user_id:
+            # Only the creator can delete the activity
+            return False
+            
+        activity_type = activity.get('activity_type')
+        
+        if hard_delete:
+            # Perform hard delete (completely remove from database)
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                
+                # Delete the activity document
+                db.learning_activities.delete_one({'_id': activity_id})
+                
+                # Delete type-specific data
+                if activity_type == 'quiz':
+                    db.quizzes.delete_one({'activity_id': str(activity_id)})
+                elif activity_type == 'poll':
+                    db.polls.delete_one({'activity_id': str(activity_id)})
+                elif activity_type == 'wordcloud':
+                    db.wordclouds.delete_one({'activity_id': str(activity_id)})
+                elif activity_type == 'shortanswer':
+                    db.shortanswers.delete_one({'activity_id': str(activity_id)})
+                elif activity_type == 'minigame':
+                    db.minigames.delete_one({'activity_id': str(activity_id)})
+                
+                # Delete related data (submissions, progress, etc.)
+                db.activity_progress.delete_many({'activity_id': str(activity_id)})
+                db.activity_submissions.delete_many({'activity_id': str(activity_id)})
+        else:
+            # Perform soft delete (mark as deleted)
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                db.learning_activities.update_one(
+                    {'_id': activity_id},
+                    {'$set': {
+                        'status': 'deleted',
+                        'deleted_at': datetime.utcnow(),
+                        'deleted_by': user_id
+                    }}
+                )
+                
+        return True
 
-        progress_percentage: 0-100
-        time_spent: minutes to add (int)
-        Returns the ActivityProgress instance.
+    @staticmethod
+    def record_activity_progress(activity_id: str, student_id: str, progress_percentage: int, time_spent: int = 0) -> Any:
+        """Record student's progress on an activity.
+
+        Adds or updates progress record with time spent (in seconds) and completion percentage.
+        Returns the progress record.
         """
         if not activity_id or not student_id:
             raise ValueError('activity_id and student_id are required')
-
-        if progress_percentage is None:
-            progress_percentage = 0
-        try:
-            progress_percentage = int(progress_percentage)
-        except Exception:
-            raise ValueError('progress_percentage must be integer 0-100')
         if progress_percentage < 0 or progress_percentage > 100:
             raise ValueError('progress_percentage must be between 0 and 100')
-
-        try:
-            time_spent = int(time_spent or 0)
-        except Exception:
-            raise ValueError('time_spent must be an integer (minutes)')
 
         # Check if progress record exists
         with get_db_connection() as client:
