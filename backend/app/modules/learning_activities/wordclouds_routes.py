@@ -105,9 +105,6 @@ def create_wordcloud():
             'wordcloud_id': str(wordcloud_data['_id'])
         }), 201
         
-    except ValidationError as e:
-        logger.error(f"Word cloud validation error: {str(e)}")
-        return jsonify({'error': 'Validation error', 'details': str(e)}), 400
     except Exception as e:
         logger.error(f"Word cloud creation error: {str(e)}")
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
@@ -180,26 +177,29 @@ def list_wordclouds():
 @jwt_required(locations=["cookies"])
 def get_wordcloud(wordcloud_id):
     try:
-        wordcloud = WordCloud.objects.get(id=wordcloud_id)
+        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        if not wordcloud:
+            return jsonify({'error': 'Word cloud not found'}), 404
+
         user_id = get_jwt_identity()
-        
+
         # Get user's submissions
-        user_submissions = [s.word for s in wordcloud.submissions if s.submitted_by == user_id]
-        
+        user_submissions = [s['word'] for s in wordcloud.get('submissions', []) if s.get('submitted_by') == user_id]
+
         return jsonify({
-            'id': str(wordcloud.id),
-            'title': wordcloud.title,
-            'prompt': wordcloud.prompt,
-            'created_by': wordcloud.created_by,
-            'is_active': wordcloud.is_active,
-            'created_at': wordcloud.created_at.isoformat(),
-            'expires_at': wordcloud.expires_at.isoformat() if wordcloud.expires_at else None,
-            'course_id': wordcloud.course_id,
-            'max_submissions_per_user': wordcloud.max_submissions_per_user,
+            'id': str(wordcloud['_id']),
+            'title': wordcloud['title'],
+            'prompt': wordcloud['prompt'],
+            'created_by': wordcloud['created_by'],
+            'is_active': wordcloud['is_active'],
+            'created_at': wordcloud['created_at'].isoformat(),
+            'expires_at': wordcloud['expires_at'].isoformat() if wordcloud.get('expires_at') else None,
+            'course_id': wordcloud['course_id'],
+            'max_submissions_per_user': wordcloud['max_submissions_per_user'],
             'user_submissions': user_submissions,
-            'submissions_remaining': wordcloud.max_submissions_per_user - len(user_submissions)
+            'submissions_remaining': wordcloud['max_submissions_per_user'] - len(user_submissions)
         }), 200
-    except DoesNotExist:
+    except Exception:
         return jsonify({'error': 'Word cloud not found'}), 404
 
 # Submit a word to the word cloud with enhanced validation
@@ -209,58 +209,61 @@ def submit_word(wordcloud_id):
     try:
         user_id = get_jwt_identity()
         data = request.get_json()
-        
+
         if not data or 'word' not in data:
             return jsonify({'error': 'Missing word submission'}), 400
-        
+
         # Validate and clean the word
         word, error = validate_word(data['word'])
         if error:
             return jsonify({'error': error}), 400
-        
-        wordcloud = WordCloud.objects.get(id=wordcloud_id)
-        
+
+        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        if not wordcloud:
+            return jsonify({'error': 'Word cloud not found'}), 404
+
         # Check if the word cloud is still active and not expired
-        if not wordcloud.is_active:
+        if not wordcloud.get('is_active', True):
             return jsonify({'error': 'Word cloud is closed'}), 400
-        
-        if wordcloud.is_expired():
+
+        if wordcloud.get('expires_at') and wordcloud['expires_at'] < datetime.utcnow():
             return jsonify({'error': 'Word cloud has expired'}), 400
-        
+
         # Check user submission limit
-        user_submissions_count = wordcloud.get_user_submissions_count(user_id)
-        if user_submissions_count >= wordcloud.max_submissions_per_user:
+        user_submissions_count = len([s for s in wordcloud.get('submissions', []) if s.get('submitted_by') == user_id])
+        if user_submissions_count >= wordcloud['max_submissions_per_user']:
             return jsonify({
-                'error': f'Maximum submission limit ({wordcloud.max_submissions_per_user}) reached'
+                'error': f'Maximum submission limit ({wordcloud["max_submissions_per_user"]}) reached'
             }), 400
-        
+
         # Check for duplicate word from the same user
-        user_words = [s.word.lower() for s in wordcloud.submissions if s.submitted_by == user_id]
+        user_words = [s['word'].lower() for s in wordcloud.get('submissions', []) if s.get('submitted_by') == user_id]
         if word in user_words:
             return jsonify({'error': 'You have already submitted this word'}), 400
-        
+
         # Create and add submission
-        submission = WordCloudSubmission(
-            word=word,
-            submitted_by=user_id
+        submission = {
+            'word': word,
+            'submitted_by': user_id,
+            'submitted_at': datetime.utcnow()
+        }
+
+        current_app.db.word_clouds.update_one(
+            {'_id': ObjectId(wordcloud_id)},
+            {'$push': {'submissions': submission}}
         )
-        
-        wordcloud.submissions.append(submission)
-        wordcloud.save()
-        
-        remaining_submissions = wordcloud.max_submissions_per_user - (user_submissions_count + 1)
-        
+
+        remaining_submissions = wordcloud['max_submissions_per_user'] - (user_submissions_count + 1)
+
         logger.info(f"Word '{word}' submitted to wordcloud {wordcloud_id} by user {user_id}")
-        
+
         return jsonify({
             'message': 'Word submitted successfully',
             'word': word,
             'submissions_remaining': remaining_submissions,
-            'total_submissions': len(wordcloud.submissions)
+            'total_submissions': len(wordcloud.get('submissions', [])) + 1
         }), 200
-        
-    except DoesNotExist:
-        return jsonify({'error': 'Word cloud not found'}), 404
+
     except Exception as e:
         logger.error(f"Error submitting word: {str(e)}")
         return jsonify({'error': 'Failed to submit word', 'details': str(e)}), 500
@@ -270,12 +273,19 @@ def submit_word(wordcloud_id):
 @jwt_required(locations=["cookies"])
 def wordcloud_results(wordcloud_id):
     try:
-        wordcloud = WordCloud.objects.get(id=wordcloud_id)
+        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        if not wordcloud:
+            return jsonify({'error': 'Word cloud not found'}), 404
+
         user_id = get_jwt_identity()
-        
+
         # Get word frequency data
-        word_frequency = wordcloud.get_word_frequency()
-        
+        submissions = wordcloud.get('submissions', [])
+        word_frequency = {}
+        for submission in submissions:
+            word = submission.get('word', '').lower()
+            word_frequency[word] = word_frequency.get(word, 0) + 1
+
         # Format results for word cloud visualization
         word_data = []
         for word, count in word_frequency.items():
@@ -284,35 +294,35 @@ def wordcloud_results(wordcloud_id):
                 'value': count,
                 'weight': count  # For word cloud sizing
             })
-        
+
         # Sort by frequency (highest first)
         word_data.sort(key=lambda x: x['value'], reverse=True)
-        
+
         # Get user's submissions
-        user_submissions = [s.word for s in wordcloud.submissions if s.submitted_by == user_id]
-        
+        user_submissions = [s['word'] for s in submissions if s.get('submitted_by') == user_id]
+
         # Analytics data
-        total_submissions = len(wordcloud.submissions)
-        unique_contributors = len(set(s.submitted_by for s in wordcloud.submissions))
-        
+        total_submissions = len(submissions)
+        unique_contributors = len(set(s.get('submitted_by') for s in submissions))
+
         # Most popular words (top 10)
         top_words = word_data[:10]
-        
+
         # Recent submissions (last 20)
         recent_submissions = sorted(
-            [{'word': s.word, 'submitted_at': s.submitted_at.isoformat()} 
-             for s in wordcloud.submissions],
+            [{'word': s['word'], 'submitted_at': s['submitted_at'].isoformat()}
+             for s in submissions if s.get('submitted_at')],
             key=lambda x: x['submitted_at'],
             reverse=True
         )[:20]
-        
+
         return jsonify({
             'wordcloud_id': wordcloud_id,
-            'title': wordcloud.title,
-            'prompt': wordcloud.prompt,
-            'created_by': wordcloud.created_by,
-            'is_active': wordcloud.is_active,
-            'is_expired': wordcloud.is_expired(),
+            'title': wordcloud['title'],
+            'prompt': wordcloud['prompt'],
+            'created_by': wordcloud['created_by'],
+            'is_active': wordcloud['is_active'],
+            'is_expired': wordcloud.get('expires_at') and wordcloud['expires_at'] < datetime.utcnow(),
             'analytics': {
                 'total_submissions': total_submissions,
                 'unique_words': len(word_frequency),
@@ -325,12 +335,10 @@ def wordcloud_results(wordcloud_id):
             'user_data': {
                 'submissions': user_submissions,
                 'submissions_count': len(user_submissions),
-                'submissions_remaining': wordcloud.max_submissions_per_user - len(user_submissions)
+                'submissions_remaining': wordcloud['max_submissions_per_user'] - len(user_submissions)
             }
         }), 200
-        
-    except DoesNotExist:
-        return jsonify({'error': 'Word cloud not found'}), 404
+
     except Exception as e:
         logger.error(f"Error getting word cloud results: {str(e)}")
         return jsonify({'error': 'Failed to get results', 'details': str(e)}), 500
@@ -342,36 +350,47 @@ def remove_word(wordcloud_id):
     try:
         user_id = get_jwt_identity()
         data = request.get_json()
-        
+
         if not data or 'word' not in data:
             return jsonify({'error': 'Missing word to remove'}), 400
-        
+
         word_to_remove = str(data['word']).strip().lower()
-        
-        wordcloud = WordCloud.objects.get(id=wordcloud_id)
-        
+
+        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        if not wordcloud:
+            return jsonify({'error': 'Word cloud not found'}), 404
+
         # Find and remove the user's submission
-        original_count = len(wordcloud.submissions)
-        wordcloud.submissions = [
-            s for s in wordcloud.submissions 
-            if not (s.submitted_by == user_id and s.word.lower() == word_to_remove)
+        submissions = wordcloud.get('submissions', [])
+        original_count = len(submissions)
+
+        # Filter out the submission to remove
+        updated_submissions = [
+            s for s in submissions
+            if not (s.get('submitted_by') == user_id and s.get('word', '').lower() == word_to_remove)
         ]
-        
-        if len(wordcloud.submissions) == original_count:
+
+        if len(updated_submissions) == original_count:
             return jsonify({'error': 'Word not found in your submissions'}), 404
-        
-        wordcloud.save()
-        
+
+        # Update the word cloud
+        current_app.db.word_clouds.update_one(
+            {'_id': ObjectId(wordcloud_id)},
+            {'$set': {'submissions': updated_submissions}}
+        )
+
+        # Calculate remaining submissions
+        user_submissions_count = len([s for s in updated_submissions if s.get('submitted_by') == user_id])
+        submissions_remaining = wordcloud['max_submissions_per_user'] - user_submissions_count
+
         logger.info(f"Word '{word_to_remove}' removed from wordcloud {wordcloud_id} by user {user_id}")
-        
+
         return jsonify({
             'message': 'Word removed successfully',
             'removed_word': word_to_remove,
-            'submissions_remaining': wordcloud.max_submissions_per_user - wordcloud.get_user_submissions_count(user_id)
+            'submissions_remaining': submissions_remaining
         }), 200
-        
-    except DoesNotExist:
-        return jsonify({'error': 'Word cloud not found'}), 404
+
     except Exception as e:
         logger.error(f"Error removing word: {str(e)}")
         return jsonify({'error': 'Failed to remove word', 'details': str(e)}), 500
@@ -381,15 +400,20 @@ def remove_word(wordcloud_id):
 @jwt_required(locations=["cookies"])
 def close_wordcloud(wordcloud_id):
     user_id = get_jwt_identity()
-    
+
     try:
-        wordcloud = WordCloud.objects.get(id=wordcloud_id)
+        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        if not wordcloud:
+            return jsonify({'error': 'Word cloud not found'}), 404
+
         # Only the creator can close the word cloud
-        if wordcloud.created_by != user_id:
+        if wordcloud['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this word cloud'}), 403
-            
-        wordcloud.is_active = False
-        wordcloud.save()
+
+        current_app.db.word_clouds.update_one(
+            {'_id': ObjectId(wordcloud_id)},
+            {'$set': {'is_active': False}}
+        )
         return jsonify({'message': 'Word cloud closed successfully'}), 200
-    except DoesNotExist:
+    except Exception:
         return jsonify({'error': 'Word cloud not found'}), 404
