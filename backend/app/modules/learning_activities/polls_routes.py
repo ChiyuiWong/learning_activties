@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from bson import ObjectId
+from config.database import get_db_connection
 
 # Define a separate blueprint for polls endpoints
 polls_bp = Blueprint('polls', __name__, url_prefix='/polls')
@@ -56,7 +57,9 @@ def create_poll():
         'expires_at': (datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None)
     }
 
-    result = current_app.db.polls.insert_one(poll_data)
+    with get_db_connection() as client:
+        db = client['comp5241_g10']
+        result = db.polls.insert_one(poll_data)
     poll_data['_id'] = result.inserted_id
 
     return jsonify({'message': 'Poll created successfully', 'poll_id': str(poll_data['_id'])}), 201
@@ -71,7 +74,9 @@ def list_polls():
         query['course_id'] = course_id
 
     # Sort by creation date (newest first)
-    polls = list(current_app.db.polls.find(query).sort('created_at', -1))
+    with get_db_connection() as client:
+        db = client['comp5241_g10']
+        polls = list(db.polls.find(query).sort('created_at', -1))
     result = []
 
     for poll in polls:
@@ -90,7 +95,9 @@ def list_polls():
 @jwt_required(locations=["cookies", "headers"])
 def get_poll(poll_id):
     try:
-        poll = current_app.db.polls.find_one({'_id': ObjectId(poll_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            poll = db.polls.find_one({'_id': ObjectId(poll_id)})
         if not poll:
             return jsonify({'error': 'Poll not found'}), 404
 
@@ -120,7 +127,9 @@ def vote_poll(poll_id):
 
     try:
         # Get poll and validate it's active
-        poll = current_app.db.polls.find_one({'_id': ObjectId(poll_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            poll = db.polls.find_one({'_id': ObjectId(poll_id)})
         if not poll:
             return jsonify({'error': 'Poll not found'}), 404
 
@@ -134,10 +143,12 @@ def vote_poll(poll_id):
             return jsonify({'error': 'Invalid option_index'}), 400
 
         # Check for existing vote
-        existing_vote = current_app.db.votes.find_one({
-            'poll_id': poll_id,
-            'student_id': user_id
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            existing_vote = db.votes.find_one({
+                'poll_id': poll_id,
+                'student_id': user_id
+            })
         if existing_vote:
             return jsonify({'error': 'You have already voted on this poll'}), 400
 
@@ -148,14 +159,18 @@ def vote_poll(poll_id):
             'option_index': option_index,
             'voted_at': datetime.utcnow()
         }
-        current_app.db.votes.insert_one(vote_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.votes.insert_one(vote_data)
 
         # Increment vote count in poll
         poll['options'][option_index]['votes'] += 1
-        current_app.db.polls.update_one(
-            {'_id': ObjectId(poll_id)},
-            {'$set': {'options': poll['options']}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.polls.update_one(
+                {'_id': ObjectId(poll_id)},
+                {'$set': {'options': poll['options']}}
+            )
 
         return jsonify({'message': 'Vote recorded successfully'}), 200
     except Exception as e:
@@ -167,7 +182,9 @@ def vote_poll(poll_id):
 def poll_results(poll_id):
     # Wrap in try/except to capture server-side errors during tests and log full traceback
     try:
-        poll = current_app.db.polls.find_one({'_id': ObjectId(poll_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            poll = db.polls.find_one({'_id': ObjectId(poll_id)})
         if not poll:
             return jsonify({'error': 'Poll not found'}), 404
 
@@ -200,7 +217,9 @@ def close_poll(poll_id):
     user_id = get_jwt_identity()
 
     try:
-        poll = current_app.db.polls.find_one({'_id': ObjectId(poll_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            poll = db.polls.find_one({'_id': ObjectId(poll_id)})
         if not poll:
             return jsonify({'error': 'Poll not found'}), 404
 
@@ -208,10 +227,12 @@ def close_poll(poll_id):
         if poll['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this poll'}), 403
 
-        current_app.db.polls.update_one(
-            {'_id': ObjectId(poll_id)},
-            {'$set': {'is_active': False}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.polls.update_one(
+                {'_id': ObjectId(poll_id)},
+                {'$set': {'is_active': False}}
+            )
         return jsonify({'message': 'Poll closed successfully'}), 200
     except Exception:
         return jsonify({'error': 'Poll not found'}), 404

@@ -11,6 +11,7 @@ import uuid
 from werkzeug.utils import secure_filename
 from flask import current_app
 from bson import ObjectId
+from config.database import get_db_connection
 
 
 class CourseService:
@@ -20,7 +21,8 @@ class CourseService:
     def create_course(title, description, course_code, instructor_id, instructor_name=None, **kwargs):
         """Create new course with comprehensive features"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Check if course code already exists
             if db.courses.find_one({'course_code': course_code}):
@@ -60,7 +62,8 @@ class CourseService:
     def get_courses_by_instructor(instructor_id, page=1, per_page=20, filters=None):
         """Get courses by instructor with pagination and filtering"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             query = {'instructor_id': instructor_id}
             
@@ -106,7 +109,8 @@ class CourseService:
     def get_course_by_id(course_id, include_stats=False):
         """Get specific course by ID with optional statistics"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             course = db.courses.find_one({'_id': ObjectId(course_id)})
             if not course:
@@ -135,7 +139,8 @@ class CourseService:
     def update_course(course_id, instructor_id, update_data):
         """Update course (only by instructor)"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             course = db.courses.find_one({'_id': ObjectId(course_id), 'instructor_id': instructor_id})
             if not course:
@@ -167,7 +172,8 @@ class CourseService:
     def delete_course(course_id, instructor_id):
         """Soft delete course (only by instructor)"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             course = db.courses.find_one({'_id': ObjectId(course_id), 'instructor_id': instructor_id})
             if not course:
@@ -186,7 +192,8 @@ class EnrollmentService:
     def enroll_student(course_id, student_id, student_name=None, student_email=None, **kwargs):
         """Enroll single student in course"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Check if course exists and has capacity
             course = db.courses.find_one({'_id': ObjectId(course_id)})
@@ -230,7 +237,8 @@ class EnrollmentService:
     def import_students_from_csv(course_id, csv_content, imported_by, filename=None):
         """Import students from CSV with duplicate prevention and error tracking"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Create import log
             batch_id = str(uuid.uuid4())
@@ -391,7 +399,8 @@ class EnrollmentService:
     def get_course_students(course_id, page=1, per_page=50, filters=None):
         """Get students enrolled in course with pagination"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             query = {'course_id': course_id}
             
@@ -435,7 +444,8 @@ class EnrollmentService:
     def export_students_csv(course_id, include_errors=False, import_log_id=None):
         """Export students or import errors to CSV"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             output = io.StringIO()
             
@@ -492,7 +502,8 @@ class MaterialService:
     def upload_material(course_id, file, title, uploaded_by, **kwargs):
         """Upload course material"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Validate course access
             course = db.courses.find_one({'_id': ObjectId(course_id), 'instructor_id': uploaded_by})
@@ -542,7 +553,8 @@ class MaterialService:
     def get_course_materials(course_id, page=1, per_page=20, filters=None, user_id=None, user_role=None):
         """Get course materials with access control"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             query = {'course_id': course_id}
             
@@ -600,7 +612,8 @@ class MaterialService:
     def download_material(material_id, user_id, ip_address=None, user_agent=None):
         """Download material with access logging"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             material = db.course_materials.find_one({'_id': ObjectId(material_id)})
             if not material:
@@ -636,7 +649,8 @@ class AnnouncementService:
     def create_announcement(course_id, title, content, created_by, created_by_name=None, **kwargs):
         """Create course announcement"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Validate course access
             course = db.courses.find_one({'_id': ObjectId(course_id), 'instructor_id': created_by})
@@ -670,7 +684,8 @@ class AnnouncementService:
     def get_course_announcements(course_id, page=1, per_page=10, user_role=None):
         """Get course announcements with filtering"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             query = {'course_id': course_id}
             
@@ -715,7 +730,8 @@ class TeacherToolsService:
     def get_dashboard_stats(instructor_id):
         """Get comprehensive dashboard statistics for teacher"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Get instructor's courses
             courses = list(db.courses.find({'instructor_id': instructor_id}))
@@ -776,7 +792,8 @@ class TeacherToolsService:
     def get_import_history(instructor_id, course_id=None, page=1, per_page=20):
         """Get import history for instructor"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             query = {'imported_by': instructor_id}
             if course_id:

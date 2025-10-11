@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from bson import ObjectId
+from config.database import get_db_connection
 import logging
 
 # Set up logging
@@ -118,7 +119,9 @@ def create_quiz():
             'created_at': datetime.utcnow()
         }
 
-        result = current_app.db.quizzes.insert_one(quiz_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.quizzes.insert_one(quiz_data)
         quiz_data['_id'] = result.inserted_id
 
         # Calculate total points
@@ -158,15 +161,19 @@ def list_quizzes():
             ]
 
         # Sort by creation date (newest first)
-        quizzes = list(current_app.db.quizzes.find(query).sort('created_at', -1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quizzes = list(db.quizzes.find(query).sort('created_at', -1))
         result = []
 
         for quiz in quizzes:
             # Get user's attempt info
-            user_attempts = list(current_app.db.quiz_attempts.find({
-                'quiz_id': str(quiz['_id']),
-                'student_id': user_id
-            }))
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                user_attempts = list(db.quiz_attempts.find({
+                    'quiz_id': str(quiz['_id']),
+                    'student_id': user_id
+                }))
 
             completed_attempts = [a for a in user_attempts if a.get('is_submitted', False)]
 
@@ -206,7 +213,9 @@ def list_quizzes():
 @jwt_required(locations=["cookies"])
 def get_quiz(quiz_id):
     try:
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
@@ -264,7 +273,9 @@ def start_quiz_attempt(quiz_id):
         user_id = get_jwt_identity()
 
         # Validate quiz exists and is available
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
@@ -275,24 +286,28 @@ def start_quiz_attempt(quiz_id):
             return jsonify({'error': 'Quiz has expired'}), 400
 
         # Check for existing incomplete attempts
-        existing_attempt = current_app.db.quiz_attempts.find_one({
-            'quiz_id': quiz_id,
-            'student_id': user_id,
-            'is_submitted': False
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            existing_attempt = db.quiz_attempts.find_one({
+                'quiz_id': quiz_id,
+                'student_id': user_id,
+                'is_submitted': False
+            })
 
         if existing_attempt:
             # Check if time limit exceeded
             started_at = existing_attempt['started_at']
             time_limit = quiz.get('time_limit')
             if time_limit and (datetime.utcnow() - started_at).total_seconds() / 60 > time_limit:
-                current_app.db.quiz_attempts.update_one(
-                    {'_id': existing_attempt['_id']},
-                    {'$set': {
-                        'is_submitted': True,
-                        'completed_at': datetime.utcnow()
-                    }}
-                )
+                with get_db_connection() as client:
+                    db = client['comp5241_g10']
+                    db.quiz_attempts.update_one(
+                        {'_id': existing_attempt['_id']},
+                        {'$set': {
+                            'is_submitted': True,
+                            'completed_at': datetime.utcnow()
+                        }}
+                    )
                 return jsonify({'error': 'Previous attempt has expired due to time limit'}), 400
 
             time_remaining = None
@@ -308,11 +323,13 @@ def start_quiz_attempt(quiz_id):
             }), 200
 
         # Check for completed attempts (some quizzes might allow multiple attempts)
-        completed_attempts_count = current_app.db.quiz_attempts.count_documents({
-            'quiz_id': quiz_id,
-            'student_id': user_id,
-            'is_submitted': True
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            completed_attempts_count = db.quiz_attempts.count_documents({
+                'quiz_id': quiz_id,
+                'student_id': user_id,
+                'is_submitted': True
+            })
 
         # For now, allow only one attempt per quiz
         if completed_attempts_count > 0:
@@ -326,7 +343,9 @@ def start_quiz_attempt(quiz_id):
             'answers': [],
             'is_submitted': False
         }
-        result = current_app.db.quiz_attempts.insert_one(attempt_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.quiz_attempts.insert_one(attempt_data)
         attempt_data['_id'] = result.inserted_id
 
         # Calculate total points
@@ -356,16 +375,20 @@ def submit_quiz(quiz_id):
         if not data or 'answers' not in data:
             return jsonify({'error': 'Missing answers in submission'}), 400
 
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
         # Find the active attempt
-        attempt = current_app.db.quiz_attempts.find_one({
-            'quiz_id': quiz_id,
-            'student_id': user_id,
-            'is_submitted': False
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            attempt = db.quiz_attempts.find_one({
+                'quiz_id': quiz_id,
+                'student_id': user_id,
+                'is_submitted': False
+            })
 
         if not attempt:
             return jsonify({'error': 'No active quiz attempt found. Please start the quiz first.'}), 400
@@ -374,13 +397,15 @@ def submit_quiz(quiz_id):
         started_at = attempt['started_at']
         time_limit = quiz.get('time_limit')
         if time_limit and (datetime.utcnow() - started_at).total_seconds() / 60 > time_limit:
-            current_app.db.quiz_attempts.update_one(
-                {'_id': attempt['_id']},
-                {'$set': {
-                    'is_submitted': True,
-                    'completed_at': datetime.utcnow()
-                }}
-            )
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                db.quiz_attempts.update_one(
+                    {'_id': attempt['_id']},
+                    {'$set': {
+                        'is_submitted': True,
+                        'completed_at': datetime.utcnow()
+                    }}
+                )
             return jsonify({'error': 'Quiz time limit exceeded'}), 400
 
         # Validate answers format
@@ -445,15 +470,17 @@ def submit_quiz(quiz_id):
         completed_at = datetime.utcnow()
         score_percentage = (earned_points / total_points * 100) if total_points > 0 else 0
 
-        current_app.db.quiz_attempts.update_one(
-            {'_id': attempt['_id']},
-            {'$set': {
-                'completed_at': completed_at,
-                'answers': answers,
-                'score': score_percentage,
-                'is_submitted': True
-            }}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.quiz_attempts.update_one(
+                {'_id': attempt['_id']},
+                {'$set': {
+                    'completed_at': completed_at,
+                    'answers': answers,
+                    'score': score_percentage,
+                    'is_submitted': True
+                }}
+            )
 
         logger.info(f"Quiz {quiz_id} submitted by user {user_id}, score: {score_percentage}%")
 
@@ -479,7 +506,9 @@ def quiz_results(quiz_id):
     user_id = get_jwt_identity()
     
     try:
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
@@ -488,10 +517,12 @@ def quiz_results(quiz_id):
             return jsonify({'error': 'You are not authorized to view these results'}), 403
 
         # Get all attempts for this quiz
-        attempts = list(current_app.db.quiz_attempts.find({
-            'quiz_id': quiz_id,
-            'completed_at': {'$ne': None}
-        }))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            attempts = list(db.quiz_attempts.find({
+                'quiz_id': quiz_id,
+                'completed_at': {'$ne': None}
+            }))
 
         results = []
         for attempt in attempts:
@@ -530,15 +561,19 @@ def my_quiz_result(quiz_id):
     user_id = get_jwt_identity()
     
     try:
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
-        attempt = current_app.db.quiz_attempts.find_one({
-            'quiz_id': quiz_id,
-            'student_id': user_id,
-            'completed_at': {'$ne': None}
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            attempt = db.quiz_attempts.find_one({
+                'quiz_id': quiz_id,
+                'student_id': user_id,
+                'completed_at': {'$ne': None}
+            })
 
         if not attempt:
             return jsonify({'error': 'You have not completed this quiz yet'}), 404
@@ -564,7 +599,9 @@ def close_quiz(quiz_id):
     user_id = get_jwt_identity()
     
     try:
-        quiz = current_app.db.quizzes.find_one({'_id': ObjectId(quiz_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            quiz = db.quizzes.find_one({'_id': ObjectId(quiz_id)})
         if not quiz:
             return jsonify({'error': 'Quiz not found'}), 404
 
@@ -572,10 +609,12 @@ def close_quiz(quiz_id):
         if quiz['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this quiz'}), 403
 
-        current_app.db.quizzes.update_one(
-            {'_id': ObjectId(quiz_id)},
-            {'$set': {'is_active': False}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.quizzes.update_one(
+                {'_id': ObjectId(quiz_id)},
+                {'$set': {'is_active': False}}
+            )
         return jsonify({'message': 'Quiz closed successfully'}), 200
     except Exception:
         return jsonify({'error': 'Quiz not found'}), 404

@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any, List, Optional
 from flask import current_app
 from bson import ObjectId
+from config.database import get_db_connection
 
 
 class LearningActivityService:
@@ -54,7 +55,9 @@ class LearningActivityService:
             'created_at': datetime.utcnow()
         }
 
-        result = current_app.db.learning_activities.insert_one(activity_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.learning_activities.insert_one(activity_data)
         activity_data['_id'] = result.inserted_id
         return activity_data
 
@@ -72,14 +75,18 @@ class LearningActivityService:
         if not include_inactive:
             query['is_active'] = True
 
-        return list(current_app.db.learning_activities.find(query).sort('created_at', -1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            return list(db.learning_activities.find(query).sort('created_at', -1))
 
     @staticmethod
     def get_activity_by_id(activity_id: str) -> Any:
         """Return a single LearningActivity or raise DoesNotExist."""
         if not activity_id:
             raise ValueError('activity_id is required')
-        activity = current_app.db.learning_activities.find_one({'_id': ObjectId(activity_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            activity = db.learning_activities.find_one({'_id': ObjectId(activity_id)})
         if not activity:
             raise ValueError('Activity not found')
         return activity
@@ -93,7 +100,9 @@ class LearningActivityService:
         if not activity_id or not student_id:
             raise ValueError('activity_id and student_id are required')
 
-        activity = current_app.db.learning_activities.find_one({'_id': ObjectId(activity_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            activity = db.learning_activities.find_one({'_id': ObjectId(activity_id)})
         if not activity:
             raise ValueError('Activity not found')
 
@@ -110,7 +119,9 @@ class LearningActivityService:
             'status': 'submitted',
             'submitted_at': datetime.utcnow()
         }
-        result = current_app.db.activity_submissions.insert_one(submission_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.activity_submissions.insert_one(submission_data)
         submission_data['_id'] = result.inserted_id
         return submission_data
 
@@ -123,7 +134,9 @@ class LearningActivityService:
         if not submission_id:
             raise ValueError('submission_id is required')
 
-        submission = current_app.db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            submission = db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
         if not submission:
             raise ValueError('Submission not found')
 
@@ -147,13 +160,17 @@ class LearningActivityService:
         update_data['graded_at'] = datetime.utcnow()
         update_data['status'] = 'graded'
 
-        current_app.db.activity_submissions.update_one(
-            {'_id': ObjectId(submission_id)},
-            {'$set': update_data}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.activity_submissions.update_one(
+                {'_id': ObjectId(submission_id)},
+                {'$set': update_data}
+            )
 
         # Return updated submission
-        return current_app.db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            return db.activity_submissions.find_one({'_id': ObjectId(submission_id)})
 
     @staticmethod
     def update_progress(activity_id: str, student_id: str, progress_percentage: int = 0, time_spent: int = 0) -> Any:
@@ -181,10 +198,12 @@ class LearningActivityService:
             raise ValueError('time_spent must be an integer (minutes)')
 
         # Check if progress record exists
-        existing_progress = current_app.db.activity_progress.find_one({
-            'activity_id': str(activity_id),
-            'student_id': str(student_id)
-        })
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            existing_progress = db.activity_progress.find_one({
+                'activity_id': str(activity_id),
+                'student_id': str(student_id)
+            })
 
         if not existing_progress:
             progress_data = {
@@ -195,7 +214,9 @@ class LearningActivityService:
                 'last_accessed': datetime.utcnow(),
                 'is_completed': (progress_percentage >= 100)
             }
-            result = current_app.db.activity_progress.insert_one(progress_data)
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                result = db.activity_progress.insert_one(progress_data)
             progress_data['_id'] = result.inserted_id
             return progress_data
         else:
@@ -208,13 +229,17 @@ class LearningActivityService:
             if progress_percentage >= 100:
                 update_data['is_completed'] = True
 
-            current_app.db.activity_progress.update_one(
-                {'_id': existing_progress['_id']},
-                {'$set': update_data}
-            )
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                db.activity_progress.update_one(
+                    {'_id': existing_progress['_id']},
+                    {'$set': update_data}
+                )
 
             # Return updated progress
-            return current_app.db.activity_progress.find_one({'_id': existing_progress['_id']})
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                return db.activity_progress.find_one({'_id': existing_progress['_id']})
 
     @staticmethod
     def get_student_progress(student_id: str, course_id: Optional[str] = None) -> Any:
@@ -226,14 +251,18 @@ class LearningActivityService:
 
         if course_id:
             # Find activity IDs for the course
-            activities = list(current_app.db.learning_activities.find({'course_id': course_id}, {'_id': 1}))
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
+                activities = list(db.learning_activities.find({'course_id': course_id}, {'_id': 1}))
             activity_ids = [str(a['_id']) for a in activities]
             if activity_ids:
                 query['activity_id'] = {'$in': activity_ids}
             else:
                 return []
 
-        progresses = list(current_app.db.activity_progress.find(query).sort('last_accessed', -1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            progresses = list(db.activity_progress.find(query).sort('last_accessed', -1))
         return progresses
 
     @staticmethod
@@ -250,16 +279,20 @@ class LearningActivityService:
         if course_id:
             activity_query['course_id'] = course_id
 
-        activities = list(current_app.db.learning_activities.find(activity_query, {'_id': 1}))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            activities = list(db.learning_activities.find(activity_query, {'_id': 1}))
         activity_ids = [str(a['_id']) for a in activities]
 
         if not activity_ids:
             return []
 
-        submissions = list(current_app.db.activity_submissions.find({
-            'activity_id': {'$in': activity_ids},
-            'status': 'submitted'
-        }).sort('submitted_at', 1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            submissions = list(db.activity_submissions.find({
+                'activity_id': {'$in': activity_ids},
+                'status': 'submitted'
+            }).sort('submitted_at', 1))
         return submissions
 
     @staticmethod
@@ -270,7 +303,9 @@ class LearningActivityService:
         if not activity_id:
             raise ValueError('activity_id is required')
 
-        submissions = list(current_app.db.activity_submissions.find({
-            'activity_id': str(activity_id)
-        }).sort('submitted_at', 1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            submissions = list(db.activity_submissions.find({
+                'activity_id': str(activity_id)
+            }).sort('submitted_at', 1))
         return submissions

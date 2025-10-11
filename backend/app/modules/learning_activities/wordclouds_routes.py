@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from bson import ObjectId
+from config.database import get_db_connection
 import logging
 import re
 
@@ -96,7 +97,9 @@ def create_wordcloud():
             'submissions': []
         }
 
-        result = current_app.db.word_clouds.insert_one(wordcloud_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.word_clouds.insert_one(wordcloud_data)
         wordcloud_data['_id'] = result.inserted_id
 
         logger.info(f"Word cloud created successfully by user {user_id}: {wordcloud_data['_id']}")
@@ -132,7 +135,9 @@ def list_wordclouds():
             ]
 
         # Sort by creation date (newest first)
-        wordclouds = list(current_app.db.word_clouds.find(query).sort('created_at', -1))
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordclouds = list(db.word_clouds.find(query).sort('created_at', -1))
         result = []
 
         for wc in wordclouds:
@@ -177,7 +182,9 @@ def list_wordclouds():
 @jwt_required(locations=["cookies"])
 def get_wordcloud(wordcloud_id):
     try:
-        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordcloud = db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
         if not wordcloud:
             return jsonify({'error': 'Word cloud not found'}), 404
 
@@ -218,7 +225,9 @@ def submit_word(wordcloud_id):
         if error:
             return jsonify({'error': error}), 400
 
-        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordcloud = db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
         if not wordcloud:
             return jsonify({'error': 'Word cloud not found'}), 404
 
@@ -248,10 +257,12 @@ def submit_word(wordcloud_id):
             'submitted_at': datetime.utcnow()
         }
 
-        current_app.db.word_clouds.update_one(
-            {'_id': ObjectId(wordcloud_id)},
-            {'$push': {'submissions': submission}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.word_clouds.update_one(
+                {'_id': ObjectId(wordcloud_id)},
+                {'$push': {'submissions': submission}}
+            )
 
         remaining_submissions = wordcloud['max_submissions_per_user'] - (user_submissions_count + 1)
 
@@ -273,7 +284,9 @@ def submit_word(wordcloud_id):
 @jwt_required(locations=["cookies"])
 def wordcloud_results(wordcloud_id):
     try:
-        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordcloud = db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
         if not wordcloud:
             return jsonify({'error': 'Word cloud not found'}), 404
 
@@ -356,7 +369,9 @@ def remove_word(wordcloud_id):
 
         word_to_remove = str(data['word']).strip().lower()
 
-        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordcloud = db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
         if not wordcloud:
             return jsonify({'error': 'Word cloud not found'}), 404
 
@@ -374,10 +389,12 @@ def remove_word(wordcloud_id):
             return jsonify({'error': 'Word not found in your submissions'}), 404
 
         # Update the word cloud
-        current_app.db.word_clouds.update_one(
-            {'_id': ObjectId(wordcloud_id)},
-            {'$set': {'submissions': updated_submissions}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.word_clouds.update_one(
+                {'_id': ObjectId(wordcloud_id)},
+                {'$set': {'submissions': updated_submissions}}
+            )
 
         # Calculate remaining submissions
         user_submissions_count = len([s for s in updated_submissions if s.get('submitted_by') == user_id])
@@ -402,7 +419,9 @@ def close_wordcloud(wordcloud_id):
     user_id = get_jwt_identity()
 
     try:
-        wordcloud = current_app.db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            wordcloud = db.word_clouds.find_one({'_id': ObjectId(wordcloud_id)})
         if not wordcloud:
             return jsonify({'error': 'Word cloud not found'}), 404
 
@@ -410,10 +429,12 @@ def close_wordcloud(wordcloud_id):
         if wordcloud['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this word cloud'}), 403
 
-        current_app.db.word_clouds.update_one(
-            {'_id': ObjectId(wordcloud_id)},
-            {'$set': {'is_active': False}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.word_clouds.update_one(
+                {'_id': ObjectId(wordcloud_id)},
+                {'$set': {'is_active': False}}
+            )
         return jsonify({'message': 'Word cloud closed successfully'}), 200
     except Exception:
         return jsonify({'error': 'Word cloud not found'}), 404

@@ -9,6 +9,7 @@ from datetime import datetime
 from flask import current_app
 import openai
 import ollama
+from config.database import get_db_connection
 import requests
 from PyPDF2 import PdfReader
 from docx import Document as DocxDocument
@@ -72,7 +73,8 @@ class GenAIService:
     def download_model(self, model_name):
         """Download an Ollama model"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             
             # Check if model already exists
             model_doc = db.ollama_models.find_one({'name': model_name})
@@ -135,7 +137,8 @@ class GenAIService:
     
     def _get_context_from_materials(self, material_ids):
         """Retrieve and combine content from course materials"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         context_texts = []
         for material_id in material_ids:
             try:
@@ -150,7 +153,8 @@ class GenAIService:
     def process_course_material(self, file_path, material_id):
         """Extract text content from uploaded course material"""
         try:
-            db = current_app.db
+            with get_db_connection() as client:
+                db = client['comp5241_g10']
             material = db.course_materials.find_one({'_id': ObjectId(material_id)})
             
             if not material:
@@ -237,7 +241,8 @@ class GenAIService:
     
     def save_chat_session(self, user_id, model_name, course_id=None, context_materials=None):
         """Save a new chat session"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         session_data = {
             'user_id': user_id,
             'course_id': course_id,
@@ -252,7 +257,8 @@ class GenAIService:
     
     def save_chat_message(self, session_id, user_id, message_type, content, metadata=None):
         """Save a chat message"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         message_data = {
             'session_id': session_id,
             'user_id': user_id,
@@ -267,12 +273,14 @@ class GenAIService:
     
     def get_chat_history(self, session_id):
         """Get chat history for a session"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         return list(db.chat_messages.find({'session_id': session_id}).sort('created_at', 1))
     
     def get_user_sessions(self, user_id):
         """Get all chat sessions for a user"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         return list(db.chat_sessions.find({'user_id': user_id}).sort('created_at', -1))
     
     def generate_text(self, prompt, user_id):
@@ -287,7 +295,8 @@ class GenAIService:
     
     def save_generation(self, user_id, prompt, content, generation_type='text'):
         """Save AI generation to database"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         generation_data = {
             'user_id': user_id,
             'prompt': prompt,
@@ -302,7 +311,8 @@ class GenAIService:
     
     def save_analysis(self, content_id, analysis_type, result, confidence=None):
         """Save AI analysis to database"""
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         analysis_data = {
             'content_id': content_id,
             'analysis_type': analysis_type,
