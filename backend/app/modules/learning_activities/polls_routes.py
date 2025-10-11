@@ -7,6 +7,7 @@ from config.database import get_db_connection
 # Define a separate blueprint for polls endpoints
 polls_bp = Blueprint('polls', __name__, url_prefix='/polls')
 
+
 # Create a poll (teacher only)
 @polls_bp.route('', methods=['POST'])
 @jwt_required(locations=["cookies", "headers"])
@@ -64,6 +65,7 @@ def create_poll():
 
     return jsonify({'message': 'Poll created successfully', 'poll_id': str(poll_data['_id'])}), 201
 
+
 # List polls (optionally filter by course)
 @polls_bp.route('', methods=['GET'])
 @jwt_required(locations=["cookies", "headers"])
@@ -90,9 +92,12 @@ def list_polls():
             'expires_at': poll['expires_at'].isoformat() if poll.get('expires_at') else None,
             'course_id': poll['course_id']
         })
-    return jsonify(result), 200# Get a specific poll
+    return jsonify(result), 200
+
+
+# Get a specific poll
 @polls_bp.route('/<poll_id>', methods=['GET'])
-@jwt_required(locations=["cookies", "headers"])
+@jwt_required(locations=["cookies"])
 def get_poll(poll_id):
     try:
         with get_db_connection() as client:
@@ -113,6 +118,7 @@ def get_poll(poll_id):
         }), 200
     except Exception:
         return jsonify({'error': 'Poll not found'}), 404
+
 
 # Vote on a poll (student only)
 @polls_bp.route('/<poll_id>/vote', methods=['POST'])
@@ -176,6 +182,7 @@ def vote_poll(poll_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+
 # Get poll results
 @polls_bp.route('/<poll_id>/results', methods=['GET'])
 @jwt_required(locations=["cookies", "headers"])
@@ -209,6 +216,7 @@ def poll_results(poll_id):
     except Exception:
         # Return a JSON 500 with minimal error detail (no server traceback leaked)
         return jsonify({'error': 'Internal server error'}), 500
+
 
 # Close/deactivate a poll (teacher only)
 @polls_bp.route('/<poll_id>/close', methods=['POST'])

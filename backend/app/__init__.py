@@ -4,7 +4,6 @@ COMP5241 Group 10 - Flask Application Factory
 from flask import Flask, render_template, redirect, request, g
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt
-from app.config.database import init_db
 from app.config.config import Config
 import os
 import logging
@@ -206,9 +205,7 @@ def create_app(config_class=Config):
         except Exception:
             # If for any reason the import fails, don't block tests; the real service will run.
             pass
-    
-    # Initialize database
-    init_db(app)
+
     
     # Register blueprints
     # from app.modules.genai.routes import genai_bp
@@ -222,10 +219,6 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(learning_bp, url_prefix='/api/learning')
     app.register_blueprint(courses_bp, url_prefix='/api/courses')
-    
-    # Register placeholder endpoints for learning activities that haven't been implemented yet
-    from app.modules.learning_activities.placeholder_endpoints import register_placeholder_endpoints
-    register_placeholder_endpoints(app)
     
     # Health check endpoint
     @app.route('/api/health')
