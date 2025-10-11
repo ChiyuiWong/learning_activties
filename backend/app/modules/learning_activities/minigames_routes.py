@@ -32,28 +32,30 @@ def create_minigame():
             return jsonify({'error': f'Invalid game_type. Must be one of: {", ".join(valid_game_types)}'}), 400
         
         # Create and save mini-game
-        minigame = MiniGame(
-            title=str(data['title']).strip(),
-            game_type=data['game_type'],
-            description=str(data.get('description', '')).strip(),
-            instructions=str(data.get('instructions', '')).strip(),
-            game_config=data.get('game_config', {}),
-            max_score=data.get('max_score', 100),
-            created_by=user_id,
-            course_id=str(data['course_id']).strip(),
-            expires_at=datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None
-        )
-        minigame.save()
+        minigame_data = {
+            'title': str(data['title']).strip(),
+            'game_type': data['game_type'],
+            'description': str(data.get('description', '')).strip(),
+            'instructions': str(data.get('instructions', '')).strip(),
+            'game_config': data.get('game_config', {}),
+            'max_score': data.get('max_score', 100),
+            'created_by': user_id,
+            'course_id': str(data['course_id']).strip(),
+            'expires_at': datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None,
+            'is_active': True,
+            'created_at': datetime.utcnow(),
+            'scores': []
+        }
+
+        result = current_app.db.mini_games.insert_one(minigame_data)
+        minigame_data['_id'] = result.inserted_id
         
-        logger.info(f"Mini-game created successfully by user {user_id}: {minigame.id}")
+        logger.info(f"Mini-game created successfully by user {user_id}: {minigame_data['_id']}")
         return jsonify({
             'message': 'Mini-game created successfully', 
-            'minigame_id': str(minigame.id)
+            'minigame_id': str(minigame_data['_id'])
         }), 201
         
-    except ValidationError as e:
-        logger.error(f"Mini-game validation error: {str(e)}")
-        return jsonify({'error': 'Validation error', 'details': str(e)}), 400
     except Exception as e:
         logger.error(f"Mini-game creation error: {str(e)}")
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
@@ -65,28 +67,28 @@ def list_minigames():
     course_id = request.args.get('course_id')
     game_type = request.args.get('game_type')
     
-    query = MiniGame.objects(is_active=True)
+    query = {'is_active': True}
     if course_id:
-        query = query.filter(course_id=course_id)
+        query['course_id'] = course_id
     if game_type:
-        query = query.filter(game_type=game_type)
+        query['game_type'] = game_type
     
     # Sort by creation date (newest first)
-    minigames = query.order_by('-created_at')
+    minigames = list(current_app.db.mini_games.find(query).sort('created_at', -1))
     result = []
     
     for game in minigames:
         result.append({
-            'id': str(game.id),
-            'title': game.title,
-            'game_type': game.game_type,
-            'description': game.description,
-            'created_by': game.created_by,
-            'is_active': game.is_active,
-            'created_at': game.created_at.isoformat(),
-            'expires_at': game.expires_at.isoformat() if game.expires_at else None,
-            'course_id': game.course_id,
-            'play_count': len(game.scores)
+            'id': str(game['_id']),
+            'title': game['title'],
+            'game_type': game['game_type'],
+            'description': game['description'],
+            'created_by': game['created_by'],
+            'is_active': game['is_active'],
+            'created_at': game['created_at'].isoformat(),
+            'expires_at': game['expires_at'].isoformat() if game.get('expires_at') else None,
+            'course_id': game['course_id'],
+            'play_count': len(game.get('scores', []))
         })
     return jsonify(result), 200
 
@@ -95,42 +97,47 @@ def list_minigames():
 @jwt_required(locations=["cookies"])
 def get_minigame(minigame_id):
     try:
-        minigame = MiniGame.objects.get(id=minigame_id)
+        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        if not minigame:
+            return jsonify({'error': 'Mini-game not found'}), 404
+            
         user_id = get_jwt_identity()
-        is_creator = minigame.created_by == user_id
+        is_creator = minigame['created_by'] == user_id
         
         # Get user's high score if any
-        user_scores = [s for s in minigame.scores if s.student_id == user_id]
-        user_high_score = max([s.score for s in user_scores]) if user_scores else None
+        scores = minigame.get('scores', [])
+        user_scores = [s for s in scores if s.get('student_id') == user_id]
+        user_high_score = max([s['score'] for s in user_scores]) if user_scores else None
         
         # Basic game data
         result = {
-            'id': str(minigame.id),
-            'title': minigame.title,
-            'game_type': minigame.game_type,
-            'description': minigame.description,
-            'instructions': minigame.instructions,
-            'created_by': minigame.created_by,
-            'is_active': minigame.is_active,
-            'created_at': minigame.created_at.isoformat(),
-            'expires_at': minigame.expires_at.isoformat() if minigame.expires_at else None,
-            'course_id': minigame.course_id,
-            'game_config': minigame.game_config,
+            'id': str(minigame['_id']),
+            'title': minigame['title'],
+            'game_type': minigame['game_type'],
+            'description': minigame['description'],
+            'instructions': minigame['instructions'],
+            'created_by': minigame['created_by'],
+            'is_active': minigame['is_active'],
+            'created_at': minigame['created_at'].isoformat(),
+            'expires_at': minigame['expires_at'].isoformat() if minigame.get('expires_at') else None,
+            'course_id': minigame['course_id'],
+            'game_config': minigame['game_config'],
             'user_high_score': user_high_score
         }
         
         # Add top scores
-        top_scores = sorted(minigame.scores, key=lambda s: s.score, reverse=True)[:10]
+        top_scores = sorted(scores, key=lambda s: s['score'], reverse=True)[:10]
         result['top_scores'] = [{
-            'student_id': score.student_id,
-            'score': score.score,
-            'time_taken': score.time_taken,
-            'achieved_at': score.achieved_at.isoformat()
+            'student_id': score['student_id'],
+            'score': score['score'],
+            'time_taken': score.get('time_taken'),
+            'achieved_at': score['achieved_at'].isoformat()
         } for score in top_scores]
             
         return jsonify(result), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Mini-game not found'}), 404
+    except Exception as e:
+        logger.error(f"Error getting mini-game: {str(e)}")
+        return jsonify({'error': 'Failed to get mini-game', 'details': str(e)}), 500
 
 # Submit a score for a mini-game
 @minigames_bp.route('/<minigame_id>/score', methods=['POST'])
@@ -143,39 +150,51 @@ def submit_score(minigame_id):
         return jsonify({'error': 'Missing or invalid score submission'}), 400
     
     try:
-        minigame = MiniGame.objects.get(id=minigame_id)
+        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        if not minigame:
+            return jsonify({'error': 'Mini-game not found'}), 404
         
         # Check if the mini-game is still active
-        if not minigame.is_active:
+        if not minigame.get('is_active', True):
             return jsonify({'error': 'This mini-game is closed'}), 400
             
         # Check if the mini-game has expired
-        if minigame.expires_at and minigame.expires_at < datetime.utcnow():
+        expires_at = minigame.get('expires_at')
+        if expires_at and expires_at < datetime.utcnow():
             return jsonify({'error': 'This mini-game has expired'}), 400
         
         # Create score submission
-        score = MiniGameScore(
-            student_id=user_id,
-            score=data['score'],
-            time_taken=data.get('time_taken')  # Optional time taken
+        score_data = {
+            'student_id': user_id,
+            'score': data['score'],
+            'time_taken': data.get('time_taken'),  # Optional time taken
+            'achieved_at': datetime.utcnow()
+        }
+        
+        scores = minigame.get('scores', [])
+        scores.append(score_data)
+        
+        # Update the mini-game in database
+        current_app.db.mini_games.update_one(
+            {'_id': ObjectId(minigame_id)},
+            {'$set': {'scores': scores}}
         )
         
-        minigame.scores.append(score)
-        minigame.save()
-        
         # Get user's high score
-        user_scores = [s.score for s in minigame.scores if s.student_id == user_id]
+        user_scores = [s['score'] for s in scores if s['student_id'] == user_id]
         user_high_score = max(user_scores)
         
         # Get global high score
-        all_scores = [s.score for s in minigame.scores]
+        all_scores = [s['score'] for s in scores]
         global_high_score = max(all_scores)
         
         # Get user rank
         ranked_students = {}
-        for s in minigame.scores:
-            if s.student_id not in ranked_students or s.score > ranked_students[s.student_id]:
-                ranked_students[s.student_id] = s.score
+        for s in scores:
+            student_id = s['student_id']
+            score_val = s['score']
+            if student_id not in ranked_students or score_val > ranked_students[student_id]:
+                ranked_students[student_id] = score_val
                 
         ranked_list = sorted(ranked_students.items(), key=lambda x: x[1], reverse=True)
         user_rank = next((i + 1 for i, (sid, _) in enumerate(ranked_list) if sid == user_id), 0)
@@ -188,9 +207,8 @@ def submit_score(minigame_id):
             'user_rank': user_rank,
             'total_players': len(ranked_students)
         }), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Mini-game not found'}), 404
     except Exception as e:
+        logger.error(f"Error submitting score: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 # Get leaderboard for a mini-game
@@ -198,18 +216,24 @@ def submit_score(minigame_id):
 @jwt_required(locations=["cookies"])
 def minigame_leaderboard(minigame_id):
     try:
-        minigame = MiniGame.objects.get(id=minigame_id)
+        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        if not minigame:
+            return jsonify({'error': 'Mini-game not found'}), 404
+            
         user_id = get_jwt_identity()
         
         # Get best score for each student
+        scores = minigame.get('scores', [])
         best_scores = {}
-        for score in minigame.scores:
-            if score.student_id not in best_scores or score.score > best_scores[score.student_id]['score']:
-                best_scores[score.student_id] = {
-                    'student_id': score.student_id,
-                    'score': score.score,
-                    'time_taken': score.time_taken,
-                    'achieved_at': score.achieved_at
+        for score in scores:
+            student_id = score['student_id']
+            score_val = score['score']
+            if student_id not in best_scores or score_val > best_scores[student_id]['score']:
+                best_scores[student_id] = {
+                    'student_id': student_id,
+                    'score': score_val,
+                    'time_taken': score.get('time_taken'),
+                    'achieved_at': score['achieved_at']
                 }
                 
         # Sort by score (highest first), then by time taken (shortest first) if available
@@ -230,13 +254,14 @@ def minigame_leaderboard(minigame_id):
             
         return jsonify({
             'minigame_id': minigame_id,
-            'title': minigame.title,
-            'game_type': minigame.game_type,
+            'title': minigame['title'],
+            'game_type': minigame['game_type'],
             'total_players': len(best_scores),
             'leaderboard': result
         }), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Mini-game not found'}), 404
+    except Exception as e:
+        logger.error(f"Error getting leaderboard: {str(e)}")
+        return jsonify({'error': 'Failed to get leaderboard', 'details': str(e)}), 500
 
 # Close/deactivate a mini-game (teacher only)
 @minigames_bp.route('/<minigame_id>/close', methods=['POST'])
@@ -245,13 +270,19 @@ def close_minigame(minigame_id):
     user_id = get_jwt_identity()
     
     try:
-        minigame = MiniGame.objects.get(id=minigame_id)
+        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        if not minigame:
+            return jsonify({'error': 'Mini-game not found'}), 404
+            
         # Only the creator can close the mini-game
-        if minigame.created_by != user_id:
+        if minigame['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this mini-game'}), 403
             
-        minigame.is_active = False
-        minigame.save()
+        current_app.db.mini_games.update_one(
+            {'_id': ObjectId(minigame_id)},
+            {'$set': {'is_active': False}}
+        )
         return jsonify({'message': 'Mini-game closed successfully'}), 200
-    except DoesNotExist:
-        return jsonify({'error': 'Mini-game not found'}), 404
+    except Exception as e:
+        logger.error(f"Error closing mini-game: {str(e)}")
+        return jsonify({'error': 'Failed to close mini-game', 'details': str(e)}), 500

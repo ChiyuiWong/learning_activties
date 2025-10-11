@@ -131,9 +131,6 @@ def create_quiz():
             'total_points': total_points
         }), 201
         
-    except ValidationError as e:
-        logger.error(f"Quiz validation error: {str(e)}")
-        return jsonify({'error': 'Validation error', 'details': str(e)}), 400
     except Exception as e:
         logger.error(f"Quiz creation error: {str(e)}")
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
@@ -344,8 +341,6 @@ def start_quiz_attempt(quiz_id):
             'total_points': total_points
         }), 201
         
-    except DoesNotExist:
-        return jsonify({'error': 'Quiz not found'}), 404
     except Exception as e:
         logger.error(f"Error starting quiz attempt: {str(e)}")
         return jsonify({'error': 'Failed to start quiz attempt', 'details': str(e)}), 500
@@ -473,8 +468,6 @@ def submit_quiz(quiz_id):
             'question_results': question_results
         }), 200
         
-    except DoesNotExist:
-        return jsonify({'error': 'Quiz not found'}), 404
     except Exception as e:
         logger.error(f"Error submitting quiz: {str(e)}")
         return jsonify({'error': 'Failed to submit quiz', 'details': str(e)}), 500
