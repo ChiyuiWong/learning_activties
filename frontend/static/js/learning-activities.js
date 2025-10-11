@@ -3,6 +3,7 @@ COMP5241 Group 10 - Learning Activities Frontend
 Complete integration with backend APIs
 */
 
+
 // Learning Activities Manager
 class LearningActivitiesManager {
     constructor(apiClient) {
@@ -13,7 +14,9 @@ class LearningActivitiesManager {
         
         this.init();
     }
-
+    showNotification(msg, state) {
+        console.log(`${msg} ${state}`)
+    }
     // Basic poll view (show poll question and options, allow teacher to view results)
     showPollInterface(poll) {
         const content = document.getElementById('activity-details-content');
@@ -79,11 +82,11 @@ class LearningActivitiesManager {
                 try {
                     const payload = { question, options: opts, course_id: 'COMP5241' };
                     const res = await this.api.post('/learning/polls', payload);
-                    showNotification('Poll created', 'success');
+                    this.showNotification('Poll created', 'success');
                     this.openActivity('poll', res.poll_id || res.id || res._id);
                 } catch (e) {
                     console.error('Create poll failed', e);
-                    showNotification('Failed to create poll', 'error');
+                    this.showNotification('Failed to create poll', 'error');
                 }
             });
         } else {
@@ -466,7 +469,7 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error(`Error opening ${type} activity:`, error);
-            showNotification(`Error opening activity: ${error.message}`, 'error');
+            this.showNotification(`Error opening activity: ${error.message}`, 'error');
         }
     }
     
@@ -511,7 +514,7 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error starting quiz:', error);
-            showNotification('Error starting quiz: ' + error.message, 'error');
+            this.showNotification('Error starting quiz: ' + error.message, 'error');
         }
     }
     
@@ -639,7 +642,7 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error submitting quiz:', error);
-            showNotification('Error submitting quiz: ' + error.message, 'error');
+            this.showNotification('Error submitting quiz: ' + error.message, 'error');
         }
     }
     
@@ -768,7 +771,7 @@ class LearningActivitiesManager {
         const word = wordInput.value.trim();
         
         if (!word) {
-            showNotification('Please enter a word', 'warning');
+            this.showNotification('Please enter a word', 'warning');
             return;
         }
         
@@ -777,7 +780,7 @@ class LearningActivitiesManager {
                 word: word
             });
             
-            showNotification('Word submitted successfully!', 'success');
+            this.showNotification('Word submitted successfully!', 'success');
             wordInput.value = '';
             
             // Reload word cloud data
@@ -785,7 +788,7 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error submitting word:', error);
-            showNotification('Error submitting word: ' + error.message, 'error');
+            this.showNotification('Error submitting word: ' + error.message, 'error');
         }
     }
     
@@ -827,7 +830,7 @@ class LearningActivitiesManager {
         const answerText = document.getElementById('answer-text').value.trim();
         
         if (!answerText) {
-            showNotification('Please enter an answer', 'warning');
+            this.showNotification('Please enter an answer', 'warning');
             return;
         }
         
@@ -836,7 +839,7 @@ class LearningActivitiesManager {
                 answer: answerText
             });
             
-            showNotification('Answer submitted successfully!', 'success');
+            this.showNotification('Answer submitted successfully!', 'success');
             
             // Show submission confirmation
             const content = document.getElementById('activity-details-content');
@@ -866,7 +869,7 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error submitting answer:', error);
-            showNotification('Error submitting answer: ' + error.message, 'error');
+            this.showNotification('Error submitting answer: ' + error.message, 'error');
         }
     }
     
@@ -945,14 +948,14 @@ class LearningActivitiesManager {
     
     async startMiniGame(gameId) {
         // This would implement the actual game logic based on game type
-        showNotification('Mini-game functionality is being developed!', 'info');
+        this.showNotification('Mini-game functionality is being developed!', 'info');
         console.log(`Starting mini-game: ${gameId}`);
     }
     
     showCreateForm(type) {
         console.log(`Showing create form for: ${type}`);
         // This would show the creation form for the specific activity type
-        showNotification(`${type} creation form is being developed!`, 'info');
+        this.showNotification(`${type} creation form is being developed!`, 'info');
     }
     
     refreshCurrentView() {
