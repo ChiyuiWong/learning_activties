@@ -9,6 +9,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from .services import GenAIService
 from bson import ObjectId
+from config.database import get_db_connection
 
 genai_bp = Blueprint('genai', __name__)
 
@@ -56,7 +57,8 @@ def list_models():
         current_app.logger.info(f"Ollama models response: {available_models}")
         
         # Get model status from database
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         db_models = {model['name']: model for model in db.ollama_models.find()}
         
         # Combine information
@@ -138,7 +140,8 @@ def list_materials():
         if course_id:
             query['course_id'] = course_id
         
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         materials = list(db.course_materials.find(query).sort('created_at', -1))
         
         materials_data = []
@@ -223,7 +226,8 @@ def upload_material():
         file.save(file_path)
         
         # Save to database
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         material_data = {
             'title': title,
             'description': description,
@@ -274,7 +278,8 @@ def delete_material(material_id):
     try:
         user_id = get_jwt_identity()
         
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         material = db.course_materials.find_one({'_id': ObjectId(material_id)})
         
         if not material:
@@ -429,7 +434,8 @@ def send_chat_message(session_id):
             }), 400
         
         # Get session
-        db = current_app.db
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
         session = db.chat_sessions.find_one({'_id': ObjectId(session_id)})
         
         if not session:

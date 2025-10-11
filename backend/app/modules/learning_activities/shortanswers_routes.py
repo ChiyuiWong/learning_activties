@@ -6,6 +6,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from bson import ObjectId
+from config.database import get_db_connection
 import logging
 
 # Set up logging
@@ -71,7 +72,9 @@ def create_shortanswer():
             'submissions': []
         }
 
-        result = current_app.db.short_answer_questions.insert_one(shortanswer_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.short_answer_questions.insert_one(shortanswer_data)
         shortanswer_data['_id'] = result.inserted_id
 
         logger.info(f"Short answer question created successfully by user {user_id}: {shortanswer_data['_id']}")
@@ -94,7 +97,9 @@ def list_shortanswers():
         query['course_id'] = course_id
 
     # Sort by creation date (newest first)
-    questions = list(current_app.db.short_answer_questions.find(query).sort('created_at', -1))
+    with get_db_connection() as client:
+        db = client['comp5241_g10']
+        questions = list(db.short_answer_questions.find(query).sort('created_at', -1))
     result = []
     user_id = get_jwt_identity()
 
@@ -133,7 +138,9 @@ def list_shortanswers():
 @jwt_required(locations=["cookies"])
 def get_shortanswer(question_id):
     try:
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
             
@@ -202,7 +209,9 @@ def submit_answer(question_id):
         if not answer:
             return jsonify({'error': 'Answer cannot be empty'}), 400
         
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
         
@@ -251,10 +260,12 @@ def submit_answer(question_id):
             is_update = False
         
         # Update the question in database
-        current_app.db.short_answer_questions.update_one(
-            {'_id': ObjectId(question_id)},
-            {'$set': {'submissions': submissions}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.short_answer_questions.update_one(
+                {'_id': ObjectId(question_id)},
+                {'$set': {'submissions': submissions}}
+            )
         
         logger.info(f"Answer {'updated' if is_update else 'submitted'} for question {question_id} by user {user_id}")
         
@@ -280,7 +291,9 @@ def provide_feedback(question_id, student_id):
         if not data:
             return jsonify({'error': 'Missing feedback data'}), 400
         
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
         
@@ -312,10 +325,12 @@ def provide_feedback(question_id, student_id):
                 return jsonify({'error': 'Invalid score format - must be a number'}), 400
         
         # Update the question in database
-        current_app.db.short_answer_questions.update_one(
-            {'_id': ObjectId(question_id)},
-            {'$set': {'submissions': submissions}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.short_answer_questions.update_one(
+                {'_id': ObjectId(question_id)},
+                {'$set': {'submissions': submissions}}
+            )
         
         logger.info(f"Feedback provided for question {question_id}, student {student_id} by user {user_id}")
         
@@ -342,7 +357,9 @@ def batch_grade(question_id):
         if not data or 'grades' not in data:
             return jsonify({'error': 'Missing grades data'}), 400
         
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
         
@@ -400,10 +417,12 @@ def batch_grade(question_id):
                 failed_grades.append({'error': str(e), 'data': grade_data})
         
         # Update the question in database
-        current_app.db.short_answer_questions.update_one(
-            {'_id': ObjectId(question_id)},
-            {'$set': {'submissions': submissions}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.short_answer_questions.update_one(
+                {'_id': ObjectId(question_id)},
+                {'$set': {'submissions': submissions}}
+            )
         
         logger.info(f"Batch grading completed for question {question_id}: {len(successful_grades)} successful, {len(failed_grades)} failed")
         
@@ -425,7 +444,9 @@ def batch_grade(question_id):
 def get_grading_stats(question_id):
     try:
         user_id = get_jwt_identity()
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
         
@@ -486,7 +507,9 @@ def close_shortanswer(question_id):
     user_id = get_jwt_identity()
     
     try:
-        question = current_app.db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            question = db.short_answer_questions.find_one({'_id': ObjectId(question_id)})
         if not question:
             return jsonify({'error': 'Short answer question not found'}), 404
             
@@ -494,10 +517,12 @@ def close_shortanswer(question_id):
         if question['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this question'}), 403
             
-        current_app.db.short_answer_questions.update_one(
-            {'_id': ObjectId(question_id)},
-            {'$set': {'is_active': False}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.short_answer_questions.update_one(
+                {'_id': ObjectId(question_id)},
+                {'$set': {'is_active': False}}
+            )
         return jsonify({'message': 'Short answer question closed successfully'}), 200
     except Exception as e:
         logger.error(f"Error closing short answer question: {str(e)}")

@@ -7,6 +7,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
 from bson import ObjectId
 import logging
+from config.database import get_db_connection
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -47,7 +48,9 @@ def create_minigame():
             'scores': []
         }
 
-        result = current_app.db.mini_games.insert_one(minigame_data)
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            result = db.mini_games.insert_one(minigame_data)
         minigame_data['_id'] = result.inserted_id
         
         logger.info(f"Mini-game created successfully by user {user_id}: {minigame_data['_id']}")
@@ -74,7 +77,9 @@ def list_minigames():
         query['game_type'] = game_type
     
     # Sort by creation date (newest first)
-    minigames = list(current_app.db.mini_games.find(query).sort('created_at', -1))
+    with get_db_connection() as client:
+        db = client['comp5241_g10']
+        minigames = list(db.mini_games.find(query).sort('created_at', -1))
     result = []
     
     for game in minigames:
@@ -97,7 +102,9 @@ def list_minigames():
 @jwt_required(locations=["cookies"])
 def get_minigame(minigame_id):
     try:
-        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            minigame = db.mini_games.find_one({'_id': ObjectId(minigame_id)})
         if not minigame:
             return jsonify({'error': 'Mini-game not found'}), 404
             
@@ -150,7 +157,9 @@ def submit_score(minigame_id):
         return jsonify({'error': 'Missing or invalid score submission'}), 400
     
     try:
-        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            minigame = db.mini_games.find_one({'_id': ObjectId(minigame_id)})
         if not minigame:
             return jsonify({'error': 'Mini-game not found'}), 404
         
@@ -175,10 +184,12 @@ def submit_score(minigame_id):
         scores.append(score_data)
         
         # Update the mini-game in database
-        current_app.db.mini_games.update_one(
-            {'_id': ObjectId(minigame_id)},
-            {'$set': {'scores': scores}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.mini_games.update_one(
+                {'_id': ObjectId(minigame_id)},
+                {'$set': {'scores': scores}}
+            )
         
         # Get user's high score
         user_scores = [s['score'] for s in scores if s['student_id'] == user_id]
@@ -216,7 +227,9 @@ def submit_score(minigame_id):
 @jwt_required(locations=["cookies"])
 def minigame_leaderboard(minigame_id):
     try:
-        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            minigame = db.mini_games.find_one({'_id': ObjectId(minigame_id)})
         if not minigame:
             return jsonify({'error': 'Mini-game not found'}), 404
             
@@ -270,7 +283,9 @@ def close_minigame(minigame_id):
     user_id = get_jwt_identity()
     
     try:
-        minigame = current_app.db.mini_games.find_one({'_id': ObjectId(minigame_id)})
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            minigame = db.mini_games.find_one({'_id': ObjectId(minigame_id)})
         if not minigame:
             return jsonify({'error': 'Mini-game not found'}), 404
             
@@ -278,10 +293,12 @@ def close_minigame(minigame_id):
         if minigame['created_by'] != user_id:
             return jsonify({'error': 'Unauthorized: only the creator can close this mini-game'}), 403
             
-        current_app.db.mini_games.update_one(
-            {'_id': ObjectId(minigame_id)},
-            {'$set': {'is_active': False}}
-        )
+        with get_db_connection() as client:
+            db = client['comp5241_g10']
+            db.mini_games.update_one(
+                {'_id': ObjectId(minigame_id)},
+                {'$set': {'is_active': False}}
+            )
         return jsonify({'message': 'Mini-game closed successfully'}), 200
     except Exception as e:
         logger.error(f"Error closing mini-game: {str(e)}")
