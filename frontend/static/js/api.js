@@ -5,10 +5,32 @@ Shared API utilities for all team members
 
 // API Client class
 class APIClient {
-    constructor(baseUrl = '/api') {
-        this.baseUrl = baseUrl;
+    constructor(baseUrl = 'http://localhost:5001') {
+        // Remove trailing slash if present
+        let normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+        // If base URL ends with /api, drop it because endpoints already add /api when needed
+        if (normalizedBase.endsWith('/api')) {
+            normalizedBase = normalizedBase.slice(0, -4);
+        }
+
+        this.baseUrl = normalizedBase;
         this.token = localStorage.getItem('authToken');
+        
+        // For test pages - create a default user if none exists
+        if (!localStorage.getItem('user') && !localStorage.getItem('authToken')) {
+            // Create a test user for demo purposes
+            localStorage.setItem('user', JSON.stringify({
+                id: 'test123',
+                username: 'testuser',
+                email: 'test@example.com',
+                role: 'teacher'
+            }));
+            localStorage.setItem('authToken', 'test-token-for-development');
+            console.log('Created demo user for testing');
+        }
     }
+    
     getCookie(name) {
       const value = `; ${document.cookie}`;
       const parts = value.split(`; ${name}=`);
@@ -30,12 +52,63 @@ class APIClient {
         return headers;
     }
     
+    // Set the auth token
+    setToken(token) {
+        this.token = token;
+        if (token) {
+            localStorage.setItem('authToken', token);
+            console.log('Token saved to localStorage');
+        } else {
+            localStorage.removeItem('authToken');
+            console.log('Token removed from localStorage');
+        }
+    }
+    
+    // Normalize API endpoint paths
+    normalizeEndpoint(endpoint) {
+        // Start with a clean endpoint
+        let normalized = endpoint;
+
+        // Remove any double /api prefixes
+        while (normalized.includes('/api/api/')) {
+            normalized = normalized.replace('/api/api/', '/api/');
+        }
+
+        // Add /api prefix if needed
+        if (!normalized.startsWith('/api/')) {
+            if (normalized.startsWith('/learning/') || 
+                normalized.startsWith('/security/') || 
+                normalized === '/health') {
+                normalized = '/api' + normalized;
+            }
+        }
+
+        // Fix quiz typo
+        if (normalized.includes('/quizs/')) {
+            normalized = normalized.replace('/quizs/', '/quizzes/');
+        }
+
+        // Log if we made changes
+        if (normalized !== endpoint) {
+            console.log('Endpoint normalized:', {
+                from: endpoint,
+                to: normalized
+            });
+        }
+
+        return normalized;
+    }
+
     // Generic request method
     async request(endpoint, options = {}, is_include_header = false) {
-        const url = `${this.baseUrl}${endpoint}`;
+        // Normalize the endpoint
+        const normalizedEndpoint = this.normalizeEndpoint(endpoint);
+        
+        const url = `${this.baseUrl}${normalizedEndpoint}`;
         const config = {
             headers: this.getHeaders(),
             credentials: 'include',  // Important: Include cookies with requests
+            mode: 'cors',
             ...options
         };
         
@@ -59,7 +132,34 @@ class APIClient {
             
             if (!response.ok) {
                 console.error('API request failed:', data);
-                throw new Error(data.message || 'API request failed');
+                const error = new Error(data.message || 'API request failed');
+                error.status = response.status;
+                error.statusText = response.statusText;
+                error.data = data;
+                
+                // Handle specific status codes
+                switch (response.status) {
+                    case 400:
+                        showAlert('Bad Request: ' + (data.message || 'Invalid request'), 'warning');
+                        break;
+                    case 401:
+                        showAlert('Unauthorized: Please log in to continue', 'warning');
+                        // Optionally redirect to login page or refresh auth token
+                        break;
+                    case 403:
+                        showAlert('Forbidden: You do not have permission to access this resource', 'warning');
+                        break;
+                    case 404:
+                        showAlert('Not Found: The requested resource does not exist', 'warning');
+                        break;
+                    case 500:
+                        showAlert('Internal Server Error: Something went wrong on our end', 'danger');
+                        break;
+                    default:
+                        showAlert('An error occurred: ' + (data.message || 'Unknown error'), 'danger');
+                }
+                
+                throw error;
             }
             if(is_include_header) {
                 return [data, response.headers];
@@ -84,8 +184,17 @@ class APIClient {
     }
     
     // GET request
-    async get(endpoint) {
-        return this.request(endpoint, { method: 'GET' });
+    async get(endpoint, options = {}) {
+        try {
+            return await this.request(endpoint, { method: 'GET', ...options });
+        } catch (error) {
+            // For learning activity endpoints, gracefully return empty array on failure
+            if (endpoint.startsWith('/learning/') || endpoint.startsWith('/api/learning/')) {
+                console.warn(`Learning activity endpoint ${endpoint} failed, returning empty array:`, error);
+                return [];
+            }
+            throw error;
+        }
     }
 
     

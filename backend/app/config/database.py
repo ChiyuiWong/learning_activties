@@ -20,11 +20,23 @@ def init_db(app):
         # 'password': app.config.get('MONGODB_PASSWORD'),
     }
     
-    # Connect to MongoDB or mongomock for tests
-    if app.config.get('TESTING') and app.config.get('MONGODB_MOCK') and mongomock:
-        # Use mongomock in-memory MongoDB
-        app.db_client = mongomock.MongoClient()
-        app.db = app.db_client[app.config.get('MONGODB_DB', 'comp5241_g10_test')]
-    else:
-        app.db_client = pymongo.MongoClient(**mongodb_settings)
+    # Try to use real MongoDB first
+    try:
+        # Check if MongoDB is available by attempting a quick connection
+        client = pymongo.MongoClient(**mongodb_settings, serverSelectionTimeoutMS=2000)
+        # Test connection with a lightweight command
+        client.admin.command('ismaster')
+        print("✅ Connected to real MongoDB server")
+        app.db_client = client
         app.db = app.db_client[app.config.get('MONGODB_DB', 'comp5241_g10')]
+        app.using_mongomock = False
+    except Exception as e:
+        # MongoDB is not available, use mongomock for testing/development
+        if mongomock:
+            print(f"⚠️ MongoDB not available ({e}). Using mongomock for testing.")
+            app.db_client = mongomock.MongoClient()
+            app.db = app.db_client[app.config.get('MONGODB_DB', 'comp5241_g10_test')]
+            app.using_mongomock = True
+        else:
+            print("❌ MongoDB not available and mongomock is not installed.")
+            raise

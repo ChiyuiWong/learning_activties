@@ -57,15 +57,28 @@ class AuthManager {
             this.currentUser = null;
             
             // Clear stored token
-            api.setToken(null);
+            if (api.setToken) {
+                api.setToken(null);
+            } else {
+                localStorage.removeItem('authToken');
+                api.token = null;
+                console.log('Token cleared from localStorage');
+            }
             
             // Update UI
-            this.updateUI();
+            if (typeof this.updateUI === 'function') {
+                this.updateUI();
+            }
             
-            // Show login modal
-            showLoginModal();
+            // Show login modal if the function exists
+            if (typeof showLoginModal === 'function') {
+                showLoginModal();
+            }
             
-            showAlert('You have been logged out.', 'info');
+            // Show alert if the function exists
+            if (typeof showAlert === 'function') {
+                showAlert('You have been logged out.', 'info');
+            }
         }
     }
     

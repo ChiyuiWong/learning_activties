@@ -14,12 +14,38 @@ const app = {
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
     bindEventListeners();
-    showSection('dashboard');
+    
+    // Check for URL parameters to navigate to specific sections
+    const urlParams = new URLSearchParams(window.location.search);
+    const section = urlParams.get('section');
+    const view = urlParams.get('view');
+    
+    if (section) {
+        showSection(section);
+        // If we're showing activities and a view is specified, show that view
+        if (section === 'activities' && view) {
+            setTimeout(() => {
+                const viewButton = document.querySelector(`[data-activity-view="${view}"]`);
+                if (viewButton) {
+                    viewButton.click();
+                }
+            }, 300);
+        }
+    } else {
+        showSection('dashboard');
+    }
 });
 
 // Initialize application
 async function initializeApp() {
     console.log('Initializing COMP5241 LMS Application...');
+    
+    // Initialize API client
+    const apiClient = new APIClient('http://localhost:5001');
+    
+    // Initialize Learning Activities Manager
+    window.learningActivities = new LearningActivitiesManager(apiClient);
+    console.log('Learning Activities Manager initialized globally');
     
     // Development mode - bypass authentication
     const devMode = true; // Set to false to re-enable authentication
@@ -39,9 +65,9 @@ async function initializeApp() {
             console.log('User logged in:', app.currentUser);
             updateUserInterface();
             if (typeof learningActivities !== 'undefined') {
-                setTimeout(() => {
-                    learningActivities.setUserRole(app.currentUser.role);
-                }, 500);
+                // Set user role in learning activities manager
+                learningActivities.userRole = app.currentUser.role;
+                console.log('User role set in Learning Activities:', app.currentUser.role);
             }
         } catch (error) {
             console.error('Error parsing user info:', error);
