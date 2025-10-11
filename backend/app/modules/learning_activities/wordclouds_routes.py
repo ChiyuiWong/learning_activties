@@ -2,12 +2,10 @@
 COMP5241 Group 10 - Word Cloud Routes
 API endpoints for word cloud functionality
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from mongoengine.errors import NotUniqueError, ValidationError, DoesNotExist
-from mongoengine import Q
-from .activities import WordCloud, WordCloudSubmission
 from datetime import datetime
+from bson import ObjectId
 import logging
 import re
 
@@ -86,20 +84,25 @@ def create_wordcloud():
             return jsonify({'error': 'Validation failed', 'details': validation_errors}), 400
         
         # Create and save word cloud
-        wordcloud = WordCloud(
-            title=str(data['title']).strip(),
-            prompt=str(data['prompt']).strip(),
-            created_by=user_id,
-            course_id=str(data['course_id']).strip(),
-            max_submissions_per_user=data.get('max_submissions_per_user', 3),
-            expires_at=datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None
-        )
-        wordcloud.save()
-        
-        logger.info(f"Word cloud created successfully by user {user_id}: {wordcloud.id}")
+        wordcloud_data = {
+            'title': str(data['title']).strip(),
+            'prompt': str(data['prompt']).strip(),
+            'created_by': user_id,
+            'course_id': str(data['course_id']).strip(),
+            'max_submissions_per_user': data.get('max_submissions_per_user', 3),
+            'expires_at': datetime.fromisoformat(data['expires_at']) if data.get('expires_at') else None,
+            'is_active': True,
+            'created_at': datetime.utcnow(),
+            'submissions': []
+        }
+
+        result = current_app.db.word_clouds.insert_one(wordcloud_data)
+        wordcloud_data['_id'] = result.inserted_id
+
+        logger.info(f"Word cloud created successfully by user {user_id}: {wordcloud_data['_id']}")
         return jsonify({
-            'message': 'Word cloud created successfully', 
-            'wordcloud_id': str(wordcloud.id)
+            'message': 'Word cloud created successfully',
+            'wordcloud_id': str(wordcloud_data['_id'])
         }), 201
         
     except ValidationError as e:
@@ -119,39 +122,49 @@ def list_wordclouds():
         include_expired = request.args.get('include_expired', 'false').lower() == 'true'
         
         # Build query
-        query = WordCloud.objects(is_active=True)
+        query = {'is_active': True}
         if course_id:
-            query = query.filter(course_id=course_id)
-        
+            query['course_id'] = course_id
+
         # Filter expired word clouds unless specifically requested
         if not include_expired:
-            query = query.filter(
-                Q(expires_at=None) | Q(expires_at__gt=datetime.utcnow())
-            )
-        
+            now = datetime.utcnow()
+            query['$or'] = [
+                {'expires_at': None},
+                {'expires_at': {'$gt': now}}
+            ]
+
         # Sort by creation date (newest first)
-        wordclouds = query.order_by('-created_at')
+        wordclouds = list(current_app.db.word_clouds.find(query).sort('created_at', -1))
         result = []
-        
+
         for wc in wordclouds:
-            user_submissions_count = wc.get_user_submissions_count(user_id)
-            
+            # Count user submissions
+            user_submissions_count = len([s for s in wc.get('submissions', []) if s.get('submitted_by') == user_id])
+
+            # Get word frequency
+            submissions = wc.get('submissions', [])
+            word_freq = {}
+            for submission in submissions:
+                word = submission.get('word', '').lower()
+                word_freq[word] = word_freq.get(word, 0) + 1
+
             wc_data = {
-                'id': str(wc.id),
-                'title': wc.title,
-                'prompt': wc.prompt,
-                'submission_count': len(wc.submissions),
-                'unique_words': len(wc.get_word_frequency()),
-                'created_by': wc.created_by,
-                'is_active': wc.is_active,
-                'created_at': wc.created_at.isoformat(),
-                'expires_at': wc.expires_at.isoformat() if wc.expires_at else None,
-                'course_id': wc.course_id,
-                'max_submissions_per_user': wc.max_submissions_per_user,
-                'is_expired': wc.is_expired(),
+                'id': str(wc['_id']),
+                'title': wc['title'],
+                'prompt': wc['prompt'],
+                'submission_count': len(submissions),
+                'unique_words': len(word_freq),
+                'created_by': wc['created_by'],
+                'is_active': wc['is_active'],
+                'created_at': wc['created_at'].isoformat(),
+                'expires_at': wc['expires_at'].isoformat() if wc.get('expires_at') else None,
+                'course_id': wc['course_id'],
+                'max_submissions_per_user': wc['max_submissions_per_user'],
+                'is_expired': wc.get('expires_at') and wc['expires_at'] < datetime.utcnow(),
                 'user_stats': {
                     'submissions_count': user_submissions_count,
-                    'submissions_remaining': max(0, wc.max_submissions_per_user - user_submissions_count)
+                    'submissions_remaining': max(0, wc['max_submissions_per_user'] - user_submissions_count)
                 }
             }
             result.append(wc_data)
