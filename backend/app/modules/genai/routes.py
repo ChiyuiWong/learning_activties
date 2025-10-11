@@ -8,7 +8,7 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from .services import GenAIService
-from .models import CourseMaterial, ChatSession, ChatMessage, OllamaModel
+from bson import ObjectId
 
 genai_bp = Blueprint('genai', __name__)
 
@@ -56,7 +56,8 @@ def list_models():
         current_app.logger.info(f"Ollama models response: {available_models}")
         
         # Get model status from database
-        db_models = {model.name: model for model in OllamaModel.objects()}
+        db = current_app.db
+        db_models = {model['name']: model for model in db.ollama_models.find()}
         
         # Combine information
         models_info = []
@@ -73,9 +74,9 @@ def list_models():
                 'name': model_name,
                 'size': model.get('size', ''),
                 'modified_at': model.get('modified_at', ''),
-                'is_downloaded': db_model.is_downloaded if db_model else True,  # Assume downloaded if in Ollama
-                'download_progress': db_model.download_progress if db_model else 100,
-                'last_used': db_model.last_used.isoformat() if db_model and db_model.last_used else None
+                'is_downloaded': db_model.get('is_downloaded', True) if db_model else True,  # Assume downloaded if in Ollama
+                'download_progress': db_model.get('download_progress', 100) if db_model else 100,
+                'last_used': db_model.get('last_used').isoformat() if db_model and db_model.get('last_used') else None
             }
             models_info.append(model_info)
         
@@ -137,22 +138,23 @@ def list_materials():
         if course_id:
             query['course_id'] = course_id
         
-        materials = CourseMaterial.objects(**query).order_by('-created_at')
+        db = current_app.db
+        materials = list(db.course_materials.find(query).sort('created_at', -1))
         
         materials_data = []
         for material in materials:
             materials_data.append({
-                'id': str(material.id),
-                'title': material.title,
-                'description': material.description,
-                'file_name': material.file_name,
-                'file_type': material.file_type,
-                'file_size': material.file_size,
-                'course_id': material.course_id,
-                'uploaded_by': material.uploaded_by,
-                'is_processed': material.is_processed,
-                'created_at': material.created_at.isoformat(),
-                'updated_at': material.updated_at.isoformat()
+                'id': str(material['_id']),
+                'title': material['title'],
+                'description': material.get('description', ''),
+                'file_name': material['file_name'],
+                'file_type': material['file_type'],
+                'file_size': material['file_size'],
+                'course_id': material['course_id'],
+                'uploaded_by': material['uploaded_by'],
+                'is_processed': material.get('is_processed', False),
+                'created_at': material['created_at'].isoformat(),
+                'updated_at': material.get('updated_at', material['created_at']).isoformat()
             })
         
         return jsonify({
@@ -221,33 +223,40 @@ def upload_material():
         file.save(file_path)
         
         # Save to database
-        material = CourseMaterial(
-            title=title,
-            description=description,
-            file_name=unique_filename,
-            file_path=file_path,
-            file_type=file_ext,
-            file_size=os.path.getsize(file_path),
-            course_id=course_id,
-            uploaded_by=user_id
-        )
-        material.save()
+        db = current_app.db
+        material_data = {
+            'title': title,
+            'description': description,
+            'file_name': unique_filename,
+            'file_path': file_path,
+            'file_type': file_ext,
+            'file_size': os.path.getsize(file_path),
+            'course_id': course_id,
+            'uploaded_by': user_id,
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        result = db.course_materials.insert_one(material_data)
+        material_id = result.inserted_id
         
         # Process the file to extract text content
         try:
-            get_genai_service().process_course_material(file_path, str(material.id))
+            get_genai_service().process_course_material(file_path, str(material_id))
         except Exception as e:
             current_app.logger.warning(f"Failed to process material immediately: {e}")
+        
+        # Get the updated material
+        material = db.course_materials.find_one({'_id': material_id})
         
         return jsonify({
             'success': True,
             'material': {
-                'id': str(material.id),
-                'title': material.title,
-                'file_name': material.file_name,
-                'file_type': material.file_type,
-                'file_size': material.file_size,
-                'is_processed': material.is_processed
+                'id': str(material['_id']),
+                'title': material['title'],
+                'file_name': material['file_name'],
+                'file_type': material['file_type'],
+                'file_size': material['file_size'],
+                'is_processed': material.get('is_processed', False)
             }
         })
     except Exception as e:
@@ -265,31 +274,33 @@ def delete_material(material_id):
     try:
         user_id = get_jwt_identity()
         
-        material = CourseMaterial.objects.get(id=material_id)
+        db = current_app.db
+        material = db.course_materials.find_one({'_id': ObjectId(material_id)})
+        
+        if not material:
+            return jsonify({
+                'success': False,
+                'error': 'Material not found'
+            }), 404
         
         # Check if user owns this material or is admin
-        if material.uploaded_by != user_id:
+        if material['uploaded_by'] != user_id:
             return jsonify({
                 'success': False,
                 'error': 'Permission denied'
             }), 403
         
         # Delete file
-        if os.path.exists(material.file_path):
-            os.remove(material.file_path)
+        if os.path.exists(material['file_path']):
+            os.remove(material['file_path'])
         
         # Delete from database
-        material.delete()
+        db.course_materials.delete_one({'_id': ObjectId(material_id)})
         
         return jsonify({
             'success': True,
             'message': 'Material deleted successfully'
         })
-    except CourseMaterial.DoesNotExist:
-        return jsonify({
-            'success': False,
-            'error': 'Material not found'
-        }), 404
     except Exception as e:
         current_app.logger.error(f"Failed to delete material: {e}")
         return jsonify({
@@ -310,13 +321,13 @@ def list_chat_sessions():
         sessions_data = []
         for session in sessions:
             sessions_data.append({
-                'id': str(session.id),
-                'session_name': session.session_name,
-                'model_name': session.model_name,
-                'course_id': session.course_id,
-                'context_materials': session.context_materials,
-                'created_at': session.created_at.isoformat(),
-                'updated_at': session.updated_at.isoformat()
+                'id': str(session['_id']),
+                'session_name': session.get('session_name'),
+                'model_name': session['model_name'],
+                'course_id': session.get('course_id'),
+                'context_materials': session.get('context_materials', []),
+                'created_at': session['created_at'].isoformat(),
+                'updated_at': session.get('updated_at', session['created_at']).isoformat()
             })
         
         return jsonify({
@@ -359,10 +370,10 @@ def create_chat_session():
         return jsonify({
             'success': True,
             'session': {
-                'id': str(session.id),
-                'model_name': session.model_name,
-                'course_id': session.course_id,
-                'context_materials': session.context_materials
+                'id': str(session['_id']),
+                'model_name': session['model_name'],
+                'course_id': session.get('course_id'),
+                'context_materials': session.get('context_materials', [])
             }
         })
     except Exception as e:
@@ -383,11 +394,11 @@ def get_chat_history(session_id):
         messages_data = []
         for message in messages:
             messages_data.append({
-                'id': str(message.id),
-                'message_type': message.message_type,
-                'content': message.content,
-                'metadata': message.metadata,
-                'created_at': message.created_at.isoformat()
+                'id': str(message['_id']),
+                'message_type': message['message_type'],
+                'content': message['content'],
+                'metadata': message.get('metadata', {}),
+                'created_at': message['created_at'].isoformat()
             })
         
         return jsonify({
@@ -418,7 +429,14 @@ def send_chat_message(session_id):
             }), 400
         
         # Get session
-        session = ChatSession.objects.get(id=session_id)
+        db = current_app.db
+        session = db.chat_sessions.find_one({'_id': ObjectId(session_id)})
+        
+        if not session:
+            return jsonify({
+                'success': False,
+                'error': 'Chat session not found'
+            }), 404
         
         # Save user message
         user_message = get_genai_service().save_chat_message(
@@ -430,9 +448,9 @@ def send_chat_message(session_id):
         
         # Generate AI response
         ai_response = get_genai_service().chat_with_model(
-            model_name=session.model_name,
+            model_name=session['model_name'],
             prompt=message,
-            context_materials=session.context_materials,
+            context_materials=session.get('context_materials', []),
             session_id=session_id
         )
         
@@ -445,27 +463,21 @@ def send_chat_message(session_id):
         )
         
         # Update session timestamp
-        session.updated_at = datetime.utcnow()
-        session.save()
+        db.chat_sessions.update_one({'_id': ObjectId(session_id)}, {'$set': {'updated_at': datetime.utcnow()}})
         
         return jsonify({
             'success': True,
             'user_message': {
-                'id': str(user_message.id),
-                'content': user_message.content,
-                'created_at': user_message.created_at.isoformat()
+                'id': str(user_message['_id']),
+                'content': user_message['content'],
+                'created_at': user_message['created_at'].isoformat()
             },
             'ai_response': {
-                'id': str(ai_message.id),
-                'content': ai_message.content,
-                'created_at': ai_message.created_at.isoformat()
+                'id': str(ai_message['_id']),
+                'content': ai_message['content'],
+                'created_at': ai_message['created_at'].isoformat()
             }
         })
-    except ChatSession.DoesNotExist:
-        return jsonify({
-            'success': False,
-            'error': 'Chat session not found'
-        }), 404
     except Exception as e:
         current_app.logger.error(f"Failed to send chat message: {e}")
         return jsonify({

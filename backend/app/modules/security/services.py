@@ -11,7 +11,6 @@ from flask_jwt_extended import create_access_token
 import bcrypt
 
 from config.database import get_db_connection
-from .models import User, UserSession, SecurityAuditLog
 import pymongo
 import datetime
 import os
