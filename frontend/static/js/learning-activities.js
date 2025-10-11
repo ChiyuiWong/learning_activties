@@ -404,24 +404,6 @@ class LearningActivitiesManager {
                     </div>
                 `;
 
-            case 'minigame':
-                return `
-                    <h6 class="border-bottom pb-2">Mini Game Settings</h6>
-                    <div class="mb-3">
-                        <label class="form-label">Game Type*</label>
-                        <select class="form-select" name="game_type" required>
-                            <option value="matching">Matching</option>
-                            <option value="sorting">Sorting</option>
-                            <option value="memory">Memory</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Game Configuration</label>
-                        <textarea class="form-control" name="game_config"
-                                  placeholder="Enter game configuration in JSON format..."></textarea>
-                    </div>
-                `;
-
             default:
                 return `<div class="alert alert-info">No additional settings required for this type.</div>`;
         }
@@ -629,7 +611,8 @@ class LearningActivitiesManager {
                 course_id: 'COMP5241', // TODO: Get from current course context
                 instructions: formData.get('instructions'),
                 max_score: parseInt(formData.get('max_score')) || 100,
-                time_limit: parseInt(formData.get('time_limit')) || null,
+                // Convert time limit from seconds to minutes for backend
+                time_limit: this.convertSecondsToMinutes(formData.get('time_limit')),
                 start_date: formData.get('start_date') || null,
                 due_date: formData.get('due_date') || null,
                 end_date: formData.get('end_date') || null,
@@ -660,7 +643,7 @@ class LearningActivitiesManager {
                         return;
                     }
                     
-                    // Add quiz settings
+                    // Add quiz settings to metadata
                     data.metadata.shuffle_questions = form.querySelector('#shuffle_questions')?.checked || false;
                     data.metadata.show_results = form.querySelector('#show_results')?.checked || false;
                     data.metadata.passing_score = parseInt(formData.get('passing_score') || 60);
@@ -701,19 +684,12 @@ class LearningActivitiesManager {
                     data.metadata.max_length = parseInt(formData.get('max_length'));
                     data.metadata.rubric = formData.get('rubric');
                     break;
-                    
-                case 'minigame':
-                    data.metadata.game_type = formData.get('game_type');
-                    try {
-                        const gameConfigStr = formData.get('game_config');
-                        data.metadata.game_config = gameConfigStr ? JSON.parse(gameConfigStr) : {};
-                    } catch (e) {
-                        throw new Error('Invalid game configuration JSON');
-                    }
-                    break;
             }
 
             console.log('Creating activity:', type, data);
+            
+            // Add a note about time limit conversion
+            console.log('Note: Time limit has been converted from seconds to minutes for backend compatibility');
             
             // Use the unified activity creation endpoint
             const response = await this.api.post('/learning/activities/', data);
@@ -899,14 +875,12 @@ class LearningActivitiesManager {
             const quizzes = await this.api.get(`/learning/quizzes/?course_id=${courseId}`);
             const wordclouds = await this.api.get(`/learning/wordclouds/?course_id=${courseId}`);
             const shortanswers = await this.api.get(`/learning/shortanswers/?course_id=${courseId}`);
-            const minigames = await this.api.get(`/learning/minigames/?course_id=${courseId}`);
             const polls = await this.api.get(`/learning/polls/?course_id=${courseId}`);
             
             console.log('Activity counts loaded:', { 
                 quizzes: quizzes.length,
                 wordclouds: wordclouds.length,
                 shortanswers: shortanswers.length,
-                minigames: minigames.length,
                 polls: polls.length
             });
             
@@ -926,12 +900,11 @@ class LearningActivitiesManager {
             updateCount('wordcloud-count', wordclouds, 'active');
             updateCount('poll-count', polls, 'active');
             updateCount('shortanswer-count', shortanswers, 'questions');
-            updateCount('minigame-count', minigames, 'games');
             
         } catch (error) {
             console.error('Error loading activity counts:', error);
             // Set error states
-            ['quiz-count', 'wordcloud-count', 'shortanswer-count', 'minigame-count'].forEach(id => {
+            ['quiz-count', 'wordcloud-count', 'shortanswer-count'].forEach(id => {
                 document.getElementById(id).textContent = 'Error loading';
             });
         }
@@ -976,16 +949,15 @@ class LearningActivitiesManager {
             }
             
             // Load all other activity types
-            let [quizzes, wordclouds, shortanswers, minigames] = [[], [], [], []];
+            let [quizzes, wordclouds, shortanswers] = [[], [], []];
             
             try {
-                [quizzes, wordclouds, shortanswers, minigames] = await Promise.all([
+                [quizzes, wordclouds, shortanswers] = await Promise.all([
                     this.api.get(`/learning/quizzes/?course_id=${courseId}`),
                     this.api.get(`/learning/wordclouds/?course_id=${courseId}`),
-                    this.api.get(`/learning/shortanswers/?course_id=${courseId}`),
-                    this.api.get(`/learning/minigames/?course_id=${courseId}`)
+                    this.api.get(`/learning/shortanswers/?course_id=${courseId}`)
                 ]);
-                console.log('Other activities loaded:', { quizzes, wordclouds, shortanswers, minigames });
+                console.log('Other activities loaded:', { quizzes, wordclouds, shortanswers });
             } catch (err) {
                 console.warn('Error fetching some activities:', err);
             }
@@ -994,8 +966,7 @@ class LearningActivitiesManager {
                 ...quizzes.map(q => ({...q, type: 'quiz', icon: '📝', color: 'primary'})),
                 ...wordclouds.map(w => ({...w, type: 'wordcloud', icon: '☁️', color: 'success'})),
                 ...shortanswers.map(s => ({...s, type: 'shortanswer', icon: '📄', color: 'info'})),
-                ...minigames.map(m => ({...m, type: 'minigame', icon: '🎮', color: 'warning'}))
-                ,...polls.map(p => ({...p, type: 'poll', icon: '📊', color: 'secondary'}))
+                ...polls.map(p => ({...p, type: 'poll', icon: '📊', color: 'secondary'}))
             ];
             
             if (activities.length === 0) {
@@ -1101,7 +1072,6 @@ class LearningActivitiesManager {
             quiz: { name: 'Quizzes', icon: '📝' },
             wordcloud: { name: 'Word Clouds', icon: '☁️' },
             shortanswer: { name: 'Short Answers', icon: '📄' },
-            minigame: { name: 'Mini Games', icon: '🎮' },
             poll: { name: 'Polls', icon: '📊' }
         };
         return typeMap[type] || { name: 'Unknown', icon: '❓' };
@@ -1170,7 +1140,6 @@ class LearningActivitiesManager {
             quiz: 'primary',
             wordcloud: 'success', 
             shortanswer: 'info',
-            minigame: 'warning',
             poll: 'secondary'
         };
         const color = colorMap[type] || 'secondary';
@@ -1187,7 +1156,7 @@ class LearningActivitiesManager {
                                 ${activity.expires_at ? `Expires: ${new Date(activity.expires_at).toLocaleDateString()}` : 'No deadline'}
                             </small>
                             <button class="btn btn-${color}" onclick="learningActivities.openActivity('${type}', '${activity.id || activity._id}')">
-                                ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : type === 'poll' ? 'View Poll' : 'Play Game'}
+                                ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : type === 'poll' ? 'View Poll' : 'View Activity'}
                             </button>
                         </div>
                     </div>
@@ -1214,11 +1183,6 @@ class LearningActivitiesManager {
                 const submissionCount2 = activity.submissions ? activity.submissions.length : 0;
                 return `<small class="text-muted d-block">Max length: ${maxLength} chars • Submissions: ${submissionCount2}</small>`;
             
-            case 'minigame':
-                const maxScore = activity.max_score || 100;
-                const gameType = activity.game_type || 'Unknown';
-                return `<small class="text-muted d-block">Type: ${gameType} • Max score: ${maxScore}</small>`;
-            
             default:
                 return '';
         }
@@ -1242,9 +1206,6 @@ class LearningActivitiesManager {
                     break;
                 case 'shortanswer':
                     this.showShortAnswerInterface(activity);
-                    break;
-                case 'minigame':
-                    this.showMiniGameInterface(activity);
                     break;
             }
             
@@ -1654,84 +1615,11 @@ class LearningActivitiesManager {
         }
     }
     
-    showMiniGameInterface(game) {
-        const content = document.getElementById('activity-details-content');
-        
-        content.innerHTML = `
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">🎮 ${game.title}</h5>
-                    <p class="mb-0 text-muted">${game.description}</p>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6>Instructions:</h6>
-                            <p>${game.instructions || 'Follow the game prompts to play.'}</p>
-                            
-                            <div class="alert alert-warning">
-                                <strong>Game Type:</strong> ${game.game_type}<br>
-                                <strong>Maximum Score:</strong> ${game.max_score} points
-                            </div>
-                            
-                            <button class="btn btn-warning btn-lg" onclick="learningActivities.startMiniGame('${game.id || game._id}')">
-                                Start Game
-                            </button>
-                        </div>
-                        <div class="col-md-4">
-                            <h6>Leaderboard</h6>
-                            <div id="game-leaderboard">
-                                <p class="text-muted">Loading leaderboard...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        // Load leaderboard
-        this.loadGameLeaderboard(game.id || game._id);
-    }
+    // Mini-game interface functionality removed
     
-    async loadGameLeaderboard(gameId) {
-        try {
-            const leaderboard = await this.api.get(`/learning/minigames/${gameId}/leaderboard`);
-            
-            const container = document.getElementById('game-leaderboard');
-            
-            if (!leaderboard || leaderboard.length === 0) {
-                container.innerHTML = '<p class="text-muted">No scores yet. Be the first to play!</p>';
-                return;
-            }
-            
-            let html = '<ol class="list-group list-group-numbered">';
-            leaderboard.slice(0, 5).forEach(entry => {
-                html += `
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div class="ms-2 me-auto">
-                            <div class="fw-bold">${entry.student_id}</div>
-                            ${entry.time_taken ? `${entry.time_taken.toFixed(1)}s` : ''}
-                        </div>
-                        <span class="badge bg-primary rounded-pill">${entry.score}</span>
-                    </li>
-                `;
-            });
-            html += '</ol>';
-            
-            container.innerHTML = html;
-            
-        } catch (error) {
-            console.error('Error loading leaderboard:', error);
-            document.getElementById('game-leaderboard').innerHTML = 
-                '<p class="text-muted">Error loading leaderboard</p>';
-        }
-    }
+    // Game leaderboard functionality removed
     
-    async startMiniGame(gameId) {
-        // This would implement the actual game logic based on game type
-        this.showNotification('Mini-game functionality is being developed!', 'info');
-        console.log(`Starting mini-game: ${gameId}`);
-    }
+    // Start mini-game functionality removed
     
     showCreateForm(type) {
         // If type is quiz, redirect to the quiz creation page
@@ -1764,6 +1652,22 @@ class LearningActivitiesManager {
         document.querySelectorAll('[data-role="teacher"]').forEach(el => {
             el.style.display = role === 'teacher' ? 'block' : 'none';
         });
+    }
+    
+    /**
+     * Helper function to convert time from seconds to minutes
+     * Frontend stores time in seconds, but backend expects minutes
+     * @param {string|number} timeInSeconds - Time value in seconds
+     * @returns {number|null} - Time value in minutes, rounded up, or null if no time provided
+     */
+    convertSecondsToMinutes(timeInSeconds) {
+        if (!timeInSeconds) return null;
+        
+        const seconds = parseInt(timeInSeconds);
+        if (isNaN(seconds) || seconds <= 0) return null;
+        
+        // Convert to minutes and round up to ensure minimum time is met
+        return Math.ceil(seconds / 60);
     }
 }
 
