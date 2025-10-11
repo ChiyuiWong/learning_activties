@@ -2,12 +2,10 @@
 COMP5241 Group 10 - Short Answer Routes
 API endpoints for short answer question functionality
 """
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from mongoengine.errors import NotUniqueError, ValidationError, DoesNotExist
-from mongoengine import Q
-from .activities import ShortAnswerQuestion, ShortAnswerSubmission
 from datetime import datetime
+from bson import ObjectId
 import logging
 
 # Set up logging
