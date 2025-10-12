@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - COMP5241 Group 10 LMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="static/css/main.css" rel="stylesheet">
+    <link href="static/css/components.css" rel="stylesheet">
+    <style>
+        /* Custom styles for AI Assistant */
+        #chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            margin-bottom: 15px;
+        }
+
+        .message-user {
+            margin-left: auto;
+        }
+
+        .message-ai {
+            margin-right: auto;
+        }
+
+        #chat-sessions-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .model-card {
+            transition: all 0.3s ease;
+        }
+
+        .model-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .genai-view {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .material-item {
+            transition: background-color 0.2s ease;
+        }
+
+        .material-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .chat-input-container {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            padding: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .model-badge {
+            font-size: 0.85rem;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background-color: #28a745;
+        }
+
+        .status-offline {
+            background-color: #dc3545;
+        }
+
+        .sidebar {
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+
+        .main-content {
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="./">
+                <i class="bi bi-robot"></i> AI Assistant
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="teacher-dashboard.html">
+                            <i class="bi bi-speedometer2"></i> Teacher Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="student-dashboard.html">
+                            <i class="bi bi-mortarboard"></i> Student Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./">
+                            <i class="bi bi-house"></i> Home
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="container-fluid mt-3"></div>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <!-- Sidebar Navigation -->
+            <div class="col-md-2 sidebar">
+                <div class="card sticky-top" style="top: 20px;">
+                    <div class="card-header bg-gradient text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <h6 class="mb-0"><i class="bi bi-list"></i> Navigation</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <button class="list-group-item list-group-item-action active" data-genai-view="chat">
+                            <i class="bi bi-chat-dots"></i> Chat Assistant
+                        </button>
+                        <button class="list-group-item list-group-item-action" data-genai-view="models">
+                            <i class="bi bi-cpu"></i> AI Models
+                        </button>
+                        <button class="list-group-item list-group-item-action" data-genai-view="materials">
+                            <i class="bi bi-files"></i> Course Materials
+                        </button>
+                        <button class="list-group-item list-group-item-action" data-genai-view="help">
+                            <i class="bi bi-question-circle"></i> Help & Guide
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Chat Sessions List (visible in chat view) -->
+                <div class="card mt-3" id="sessions-sidebar">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="bi bi-clock-history"></i> Recent Chats</h6>
+                    </div>
+                    <div class="list-group list-group-flush" id="chat-sessions-list">
+                        <div class="p-3 text-center text-muted">
+                            <small>No chat sessions yet</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-md-10 main-content">
+                <!-- Chat View -->
+                <div id="genai-chat" class="genai-view">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-chat-dots"></i> AI Chat Assistant
+                                    </h5>
+                                    <small class="text-muted" id="chat-model-info">Select a model to start chatting</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <select class="form-select form-select-sm" id="model-select" style="max-width: 250px;">
+                                            <option value="">Select AI Model...</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary" id="new-chat-btn">
+                                            <i class="bi bi-plus-circle"></i> New Chat
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" id="clear-chat-btn">
+                                            <i class="bi bi-trash"></i> Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <!-- Chat Messages Area -->
+                            <div id="chat-messages">
+                                <div class="text-center text-muted mt-5">
+                                    <i class="bi bi-chat-dots" style="font-size: 3rem;"></i>
+                                    <h5 class="mt-3">Welcome to AI Assistant</h5>
+                                    <p>Select a model above and start a conversation</p>
+                                    <div class="mt-4">
+                                        <p class="small text-start" style="max-width: 500px; margin: 0 auto;">
+                                            <strong>Quick Tips:</strong><br>
+                                            • Press <kbd>Ctrl</kbd> + <kbd>Enter</kbd> to send messages<br>
+                                            • Select course materials for context-aware answers<br>
+                                            • Create new sessions for different topics
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Chat Input Area -->
+                            <div class="chat-input-container">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="input-group">
+                                            <textarea 
+                                                class="form-control" 
+                                                id="message-input" 
+                                                rows="2" 
+                                                placeholder="Type your message here... (Ctrl+Enter to send)"
+                                            ></textarea>
+                                            <button class="btn btn-primary" id="send-message-btn" disabled>
+                                                <i class="bi bi-send"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Models View -->
+                <div id="genai-models" class="genai-view d-none">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-cpu"></i> AI Models Management
+                                    </h5>
+                                    <small class="text-muted">Download and manage AI models</small>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-sm btn-outline-primary" id="refresh-models-btn">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Download Model Form -->
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Download New Model:</strong> Enter the model name (e.g., llama2, mistral, codellama)
+                            </div>
+                            <div class="row mb-4">
+                                <div class="col-md-8">
+                                    <div class="input-group">
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            id="model-search" 
+                                            placeholder="Enter model name (e.g., llama2, mistral, codellama)"
+                                        >
+                                        <button class="btn btn-primary" id="download-model-btn">
+                                            <i class="bi bi-download"></i> Download Model
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Popular Models Info -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h6>Popular Models:</h6>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="badge bg-primary">llama2 - General purpose</span>
+                                        <span class="badge bg-success">mistral - Fast & efficient</span>
+                                        <span class="badge bg-info">codellama - Code specialist</span>
+                                        <span class="badge bg-warning">vicuna - Detailed explanations</span>
+                                        <span class="badge bg-secondary">orca-mini - Lightweight</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <hr>
+
+                            <!-- Models List -->
+                            <h6 class="mb-3">Available Models:</h6>
+                            <div id="models-table">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materials View -->
+                <div id="genai-materials" class="genai-view d-none">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-files"></i> Course Materials
+                                    </h5>
+                                    <small class="text-muted">Upload materials for context-aware AI responses</small>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button class="btn btn-sm btn-primary" id="upload-material-btn">
+                                        <i class="bi bi-upload"></i> Upload Material
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <!-- Upload Info -->
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> 
+                                <strong>Supported Formats:</strong> PDF, DOCX, TXT, PPTX (Max 16MB)
+                                <br>
+                                <small>Uploaded materials will be processed and can be used as context for AI conversations.</small>
+                            </div>
+
+                            <!-- Materials List -->
+                            <div id="materials-table">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Help View -->
+                <div id="genai-help" class="genai-view d-none">
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="bi bi-question-circle"></i> Help & Guide
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <h5>Getting Started with AI Assistant</h5>
+                            
+                            <div class="accordion" id="helpAccordion">
+                                <!-- Setup -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#setup">
+                                            <i class="bi bi-gear me-2"></i> Setup & Prerequisites
+                                        </button>
+                                    </h2>
+                                    <div id="setup" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                        <div class="accordion-body">
+                                            <h6>Prerequisites:</h6>
+                                            <ol>
+                                                <li><strong>Install Ollama:</strong> Visit <a href="https://ollama.ai" target="_blank">ollama.ai</a> and install for your OS</li>
+                                                <li><strong>Start Ollama Service:</strong> Run <code>ollama serve</code> in your terminal</li>
+                                                <li><strong>Download Models:</strong> Use the Models tab to download AI models</li>
+                                            </ol>
+                                            <div class="alert alert-warning mt-3">
+                                                <i class="bi bi-exclamation-triangle"></i> 
+                                                Make sure Ollama is running before using the AI Assistant!
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Features -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#features">
+                                            <i class="bi bi-star me-2"></i> Features
+                                        </button>
+                                    </h2>
+                                    <div id="features" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                        <div class="accordion-body">
+                                            <h6>What you can do:</h6>
+                                            <ul>
+                                                <li><strong>Chat with AI:</strong> Real-time conversations with various AI models</li>
+                                                <li><strong>Context-Aware Responses:</strong> Upload course materials for relevant answers</li>
+                                                <li><strong>Multiple Sessions:</strong> Organize conversations by topic</li>
+                                                <li><strong>Model Selection:</strong> Choose from different AI models for different tasks</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Usage -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#usage">
+                                            <i class="bi bi-book me-2"></i> How to Use
+                                        </button>
+                                    </h2>
+                                    <div id="usage" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                        <div class="accordion-body">
+                                            <h6>For Teachers:</h6>
+                                            <ol>
+                                                <li>Go to <strong>Course Materials</strong> tab</li>
+                                                <li>Click <strong>Upload Material</strong></li>
+                                                <li>Fill in details and upload your file</li>
+                                                <li>Wait for processing to complete</li>
+                                                <li>Use materials in chat for context-aware responses</li>
+                                            </ol>
+
+                                            <h6 class="mt-4">For Students:</h6>
+                                            <ol>
+                                                <li>Go to <strong>AI Models</strong> tab</li>
+                                                <li>Select or download a model</li>
+                                                <li>Return to <strong>Chat Assistant</strong></li>
+                                                <li>Type your question and press Enter or Ctrl+Enter</li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Troubleshooting -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#troubleshoot">
+                                            <i class="bi bi-tools me-2"></i> Troubleshooting
+                                        </button>
+                                    </h2>
+                                    <div id="troubleshoot" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                        <div class="accordion-body">
+                                            <h6>Common Issues:</h6>
+                                            <dl>
+                                                <dt>"No models available"</dt>
+                                                <dd>• Ensure Ollama is running: <code>ollama serve</code><br>
+                                                    • Download a model from the Models tab</dd>
+
+                                                <dt>"Failed to load models"</dt>
+                                                <dd>• Check if Ollama service is running<br>
+                                                    • Verify Ollama is accessible at port 11434</dd>
+
+                                                <dt>"Material upload failed"</dt>
+                                                <dd>• Check file size (max 16MB)<br>
+                                                    • Ensure file type is supported (PDF, DOCX, TXT, PPTX)<br>
+                                                    • Verify you have teacher permissions</dd>
+
+                                                <dt>"Chat not responding"</dt>
+                                                <dd>• Ensure a model is selected<br>
+                                                    • Check Ollama service status<br>
+                                                    • Verify model is downloaded</dd>
+                                            </dl>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Keyboard Shortcuts -->
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#shortcuts">
+                                            <i class="bi bi-keyboard me-2"></i> Keyboard Shortcuts
+                                        </button>
+                                    </h2>
+                                    <div id="shortcuts" class="accordion-collapse collapse" data-bs-parent="#helpAccordion">
+                                        <div class="accordion-body">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Action</th>
+                                                        <th>Shortcut</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Send Message</td>
+                                                        <td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>New Line</td>
+                                                        <td><kbd>Shift</kbd> + <kbd>Enter</kbd></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Resources -->
+                            <div class="mt-4">
+                                <h6>Additional Resources:</h6>
+                                <ul>
+                                    <li><a href="https://ollama.ai" target="_blank">Ollama Official Website</a></li>
+                                    <li><a href="https://github.com/ollama/ollama" target="_blank">Ollama GitHub Repository</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- API Client -->
+    <script src="static/js/api.js"></script>
+    
+
+    
+    <!-- GenAI Module -->
+    <script src="static/js/genai.js"></script>
+
+    <!-- Initialize GenAI -->
+    <script>
+        // Initialize GenAI when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup app object for API calls FIRST
+            window.app = {
+                apiBaseUrl: '/api'  // Use relative URL for better compatibility
+            };
+
+            // Show alert helper
+            window.showAlert = function(message, type = 'info') {
+                const alertContainer = document.getElementById('alertContainer');
+                const alertId = 'alert-' + Date.now();
+                const alertHTML = `
+                    <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                        ${message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+                
+                // Auto-dismiss after 5 seconds
+                setTimeout(() => {
+                    const alert = document.getElementById(alertId);
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            };
+
+            // Check if auth is disabled (development mode)
+            const devMode = true; // Set to false to re-enable authentication
+            
+            if (devMode) {
+                // Create fake user info for development
+                if (!localStorage.getItem('userInfo')) {
+                    localStorage.setItem('userInfo', JSON.stringify({
+                        username: 'dev_user',
+                        role: 'teacher'
+                    }));
+                }
+                console.log('🔓 DEVELOPMENT MODE: Authentication bypassed');
+                GenAI.init();
+                return;
+            }
+            
+            // Check authentication
+            const userInfo = localStorage.getItem('userInfo');
+            if (!userInfo) {
+                // Try to authenticate with cookies first
+                fetch('/api/security/profile', {
+                    credentials: 'include'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Not authenticated');
+                    return response.json();
+                })
+                .then(profile => {
+                    // Save user info and reload
+                    const userData = {
+                        username: profile.username,
+                        role: profile.role || 'student'
+                    };
+                    localStorage.setItem('userInfo', JSON.stringify(userData));
+                    window.location.reload();
+                })
+                .catch(() => {
+                    window.location.href = 'login.html';
+                });
+                return;
+            }
+            
+            // Initialize GenAI module AFTER app is defined
+            GenAI.init();
+        });
+    </script>
+</body>
+</html>
+

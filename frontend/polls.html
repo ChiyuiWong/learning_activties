@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Learning Activities</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="      <!-- Poll List -->
+      <div id="pollList" class="poll-list">
+        <p class="text-center text-muted">Loading polls...</p>
+      </div>
+    </div>
+    
+    <!-- Quizzes Tab -->
+    <div class="tab-pane fade" id="quizzes" role="tabpanel">
+      <h3 class="mb-4">Quizzes</h3>
+      
+      <!-- Create Quiz Form (for teachers) -->
+      <div id="createQuizForm" class="form-container hidden">
+        <h4 class="mb-3">Create New Quiz</h4>
+        <div class="mb-3">
+          <label for="quizTitle" class="form-label">Quiz Title:</label>
+          <input type="text" id="quizTitle" class="form-control" placeholder="Enter quiz title">
+        </div>
+        <div class="mb-3">
+          <label for="quizDescription" class="form-label">Description:</label>
+          <textarea id="quizDescription" class="form-control" placeholder="Enter quiz description"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="quizCourseId" class="form-label">Course ID:</label>
+          <input type="text" id="quizCourseId" class="form-control" placeholder="Enter course ID">
+        </div>
+        <div class="mb-3">
+          <label for="quizTimeLimit" class="form-label">Time Limit (minutes, optional):</label>
+          <input type="number" id="quizTimeLimit" class="form-control" placeholder="Enter time limit">
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label">Questions:</label>
+          <div id="questionsContainer">
+            <div class="card mb-3 question-card">
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label">Question Text:</label>
+                  <input type="text" class="form-control question-text" placeholder="Enter question text">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Question Type:</label>
+                  <select class="form-select question-type">
+                    <option value="multiple_choice">Multiple Choice (Single Answer)</option>
+                    <option value="multiple_select">Multiple Select (Multiple Answers)</option>
+                    <option value="true_false">True/False</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Points:</label>
+                  <input type="number" class="form-control question-points" value="1">
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Options:</label>
+                  <div class="question-options">
+                    <div class="input-group mb-2">
+                      <div class="input-group-text">
+                        <input class="form-check-input option-correct" type="checkbox">
+                      </div>
+                      <input type="text" class="form-control option-text" placeholder="Option text">
+                      <button class="btn btn-outline-danger" onclick="removeQuizOption(this)">Remove</button>
+                    </div>
+                    <div class="input-group mb-2">
+                      <div class="input-group-text">
+                        <input class="form-check-input option-correct" type="checkbox">
+                      </div>
+                      <input type="text" class="form-control option-text" placeholder="Option text">
+                      <button class="btn btn-outline-danger" onclick="removeQuizOption(this)">Remove</button>
+                    </div>
+                  </div>
+                  <button onclick="addQuizOption(this)" class="btn btn-outline-primary btn-sm mt-2">+ Add Option</button>
+                </div>
+                <button class="btn btn-outline-danger btn-sm" onclick="removeQuestion(this)">Remove Question</button>
+              </div>
+            </div>
+          </div>
+          <button onclick="addQuestion()" class="btn btn-outline-primary mt-2">+ Add Question</button>
+        </div>
+        <button onclick="createQuiz()" class="btn btn-success">Create Quiz</button>
+        <div id="createQuizError" class="text-danger mt-2"></div>
+      </div>
+      
+      <!-- Quiz List -->
+      <div id="quizList" class="quiz-list">
+        <p class="text-center text-muted">Loading quizzes...</p>
+      </div>
+    </div>
+    
+    <!-- Word Clouds Tab -->
+    <div class="tab-pane fade" id="wordclouds" role="tabpanel">
+      <h3 class="mb-4">Word Clouds</h3>
+      
+      <!-- Create Word Cloud Form (for teachers) -->
+      <div id="createWordCloudForm" class="form-container hidden">
+        <h4 class="mb-3">Create New Word Cloud</h4>
+        <div class="mb-3">
+          <label for="wordcloudTitle" class="form-label">Title:</label>
+          <input type="text" id="wordcloudTitle" class="form-control" placeholder="Enter word cloud title">
+        </div>
+        <div class="mb-3">
+          <label for="wordcloudPrompt" class="form-label">Prompt:</label>
+          <textarea id="wordcloudPrompt" class="form-control" placeholder="Enter prompt for students"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="wordcloudCourseId" class="form-label">Course ID:</label>
+          <input type="text" id="wordcloudCourseId" class="form-control" placeholder="Enter course ID">
+        </div>
+        <div class="mb-3">
+          <label for="wordcloudMaxSubmissions" class="form-label">Max words per student:</label>
+          <input type="number" id="wordcloudMaxSubmissions" class="form-control" value="3">
+        </div>
+        <button onclick="createWordCloud()" class="btn btn-success">Create Word Cloud</button>
+        <div id="createWordCloudError" class="text-danger mt-2"></div>
+      </div>
+      
+      <!-- Word Cloud List -->
+      <div id="wordCloudList" class="wordcloud-list">
+        <p class="text-center text-muted">Loading word clouds...</p>
+      </div>
+    </div>
+    
+    <!-- Short Answers Tab -->
+    <div class="tab-pane fade" id="shortanswers" role="tabpanel">
+      <h3 class="mb-4">Short Answer Questions</h3>
+      
+      <!-- Create Short Answer Form (for teachers) -->
+      <div id="createShortAnswerForm" class="form-container hidden">
+        <h4 class="mb-3">Create New Short Answer Question</h4>
+        <div class="mb-3">
+          <label for="shortAnswerQuestion" class="form-label">Question:</label>
+          <textarea id="shortAnswerQuestion" class="form-control" placeholder="Enter question text"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="shortAnswerHint" class="form-label">Answer Hint (optional):</label>
+          <input type="text" id="shortAnswerHint" class="form-control" placeholder="Enter hint for students">
+        </div>
+        <div class="mb-3">
+          <label for="shortAnswerExample" class="form-label">Example Answer (for teacher only):</label>
+          <textarea id="shortAnswerExample" class="form-control" placeholder="Enter example answer"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="shortAnswerCourseId" class="form-label">Course ID:</label>
+          <input type="text" id="shortAnswerCourseId" class="form-control" placeholder="Enter course ID">
+        </div>
+        <div class="mb-3">
+          <label for="shortAnswerMaxLength" class="form-label">Maximum Answer Length:</label>
+          <input type="number" id="shortAnswerMaxLength" class="form-control" value="1000">
+        </div>
+        <button onclick="createShortAnswer()" class="btn btn-success">Create Question</button>
+        <div id="createShortAnswerError" class="text-danger mt-2"></div>
+      </div>
+      
+      <!-- Short Answer List -->
+      <div id="shortAnswerList" class="shortanswer-list">
+        <p class="text-center text-muted">Loading short answer questions...</p>
+      </div>
+    </div>
+    
+    <!-- Mini-Games Tab -->
+    <div class="tab-pane fade" id="minigames" role="tabpanel">
+      <h3 class="mb-4">Mini-Games</h3>
+      
+      <!-- Create Mini-Game Form (for teachers) -->
+      <div id="createMiniGameForm" class="form-container hidden">
+        <h4 class="mb-3">Create New Mini-Game</h4>
+        <div class="mb-3">
+          <label for="minigameTitle" class="form-label">Title:</label>
+          <input type="text" id="minigameTitle" class="form-control" placeholder="Enter mini-game title">
+        </div>
+        <div class="mb-3">
+          <label for="minigameType" class="form-label">Game Type:</label>
+          <select id="minigameType" class="form-select">
+            <option value="matching">Matching Pairs</option>
+            <option value="sorting">Sorting/Categorization</option>
+            <option value="sequence">Sequence Arrangement</option>
+            <option value="memory">Memory Game</option>
+            <option value="custom">Custom Configuration</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="minigameDescription" class="form-label">Description:</label>
+          <textarea id="minigameDescription" class="form-control" placeholder="Enter game description"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="minigameInstructions" class="form-label">Instructions:</label>
+          <textarea id="minigameInstructions" class="form-control" placeholder="Enter game instructions"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="minigameCourseId" class="form-label">Course ID:</label>
+          <input type="text" id="minigameCourseId" class="form-control" placeholder="Enter course ID">
+        </div>
+        <div class="mb-3">
+          <label for="minigameConfig" class="form-label">Game Configuration (JSON):</label>
+          <textarea id="minigameConfig" class="form-control" placeholder="Enter game configuration in JSON format"></textarea>
+          <small class="form-text text-muted">Format depends on the game type. See documentation for details.</small>
+        </div>
+        <button onclick="createMiniGame()" class="btn btn-success">Create Mini-Game</button>
+        <div id="createMiniGameError" class="text-danger mt-2"></div>
+      </div>
+      
+      <!-- Mini-Game List -->
+      <div id="miniGameList" class="minigame-list">
+        <p class="text-center text-muted">Loading mini-games...</p>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    .card {
+      margin-bottom: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .card-header {
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #eaecef;
+    }
+    .result-item {
+      margin: 10px 0;
+    }
+    .progress {
+      height: 25px;
+      margin-top: 5px;
+    }
+    .options-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .form-container {
+      background-color: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    .hidden {
+      display: none;
+    }
+    .activity-card {
+      height: 100%;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .activity-card:hover {
+      transform: translateY(-5px);
+    }
+    .activity-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+    .nav-pills .nav-link.active {
+      background-color: #0d6efd;
+    }
+    .tab-content {
+      padding: 20px 0;
+    }
+    .word-badge {
+      display: inline-block;
+      padding: 5px 10px;
+      margin: 5px;
+      border-radius: 15px;
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      font-size: 0.9rem;
+    }
+    .word-cloud-container {
+      min-height: 300px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .mini-game-container {
+      min-height: 400px;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .quiz-option {
+      padding: 10px 15px;
+      margin: 5px 0;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .quiz-option:hover {
+      background-color: #f8f9fa;
+    }
+    .quiz-option.selected {
+      background-color: #cfe2ff;
+      border-color: #0d6efd;
+    }
+    .quiz-option.correct {
+      background-color: #d1e7dd;
+      border-color: #198754;
+    }
+    .quiz-option.incorrect {
+      background-color: #f8d7da;
+      border-color: #dc3545;
+    }
+  </style>
+</head>
+<body class="container py-4">
+  <div class="row">
+    <div class="col-md-12">
+      <h1 class="mb-4 text-center">Interactive Learning Activities</h1>
+      
+      <!-- Alert messages -->
+      <div id="alertContainer" class="mb-3"></div>
+      
+      <!-- Login Form -->
+      <div id="loginForm" class="form-container">
+        <h3 class="mb-3">Login</h3>
+        <div class="mb-3">
+          <label for="username" class="form-label">Username:</label>
+          <input type="text" id="username" class="form-control" placeholder="Enter username">
+        </div>
+        <div class="mb-3">
+          <label for="password" class="form-label">Password:</label>
+          <input type="password" id="password" class="form-control" placeholder="Enter password">
+        </div>
+        <div class="mb-3 form-check">
+          <input type="checkbox" id="isTeacher" class="form-check-input">
+          <label class="form-check-label" for="isTeacher">I am a teacher</label>
+        </div>
+        <button onclick="login()" class="btn btn-primary">Login</button>
+        <div id="loginError" class="text-danger mt-2"></div>
+      </div>
+
+      <!-- User info and logout -->
+      <div id="userInfo" class="d-flex justify-content-between align-items-center mb-4 hidden">
+        <h5 class="mb-0">Welcome, <span id="userDisplay"></span>!</h5>
+        <button onclick="logout()" class="btn btn-outline-secondary btn-sm">Logout</button>
+      </div>
+      
+      <!-- Activity selector -->
+      <div id="activitySelector" class="mb-4 hidden">
+        <ul class="nav nav-pills nav-fill mb-4" id="activitiesTab" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+              <i class="bi bi-grid-3x3-gap"></i> Dashboard
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="polls-tab" data-bs-toggle="tab" data-bs-target="#polls" type="button" role="tab">
+              <i class="bi bi-bar-chart"></i> Polls
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="quizzes-tab" data-bs-toggle="tab" data-bs-target="#quizzes" type="button" role="tab">
+              <i class="bi bi-question-circle"></i> Quizzes
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="wordclouds-tab" data-bs-toggle="tab" data-bs-target="#wordclouds" type="button" role="tab">
+              <i class="bi bi-cloud"></i> Word Clouds
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="shortanswers-tab" data-bs-toggle="tab" data-bs-target="#shortanswers" type="button" role="tab">
+              <i class="bi bi-pencil-square"></i> Short Answers
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button class="nav-link" id="minigames-tab" data-bs-toggle="tab" data-bs-target="#minigames" type="button" role="tab">
+              <i class="bi bi-controller"></i> Mini-Games
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Tab content container -->
+      <div class="tab-content" id="activitiesTabContent">
+        <!-- Dashboard Tab -->
+        <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+          <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
+            <!-- Poll Activity Card -->
+            <div class="col">
+              <div class="card activity-card h-100" onclick="document.getElementById('polls-tab').click()">
+                <div class="card-body text-center">
+                  <i class="bi bi-bar-chart activity-icon text-primary"></i>
+                  <h5 class="card-title">Interactive Polls</h5>
+                  <p class="card-text">Quick polls with instant results visualization</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                  <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); document.getElementById('polls-tab').click()">
+                    Open <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quiz Activity Card -->
+            <div class="col">
+              <div class="card activity-card h-100" onclick="document.getElementById('quizzes-tab').click()">
+                <div class="card-body text-center">
+                  <i class="bi bi-question-circle activity-icon text-success"></i>
+                  <h5 class="card-title">Quizzes</h5>
+                  <p class="card-text">Multiple-choice quizzes with automatic scoring</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                  <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); document.getElementById('quizzes-tab').click()">
+                    Open <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Word Cloud Activity Card -->
+            <div class="col">
+              <div class="card activity-card h-100" onclick="document.getElementById('wordclouds-tab').click()">
+                <div class="card-body text-center">
+                  <i class="bi bi-cloud activity-icon text-info"></i>
+                  <h5 class="card-title">Word Clouds</h5>
+                  <p class="card-text">Collaborative word clouds for group brainstorming</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                  <button class="btn btn-sm btn-info text-white" onclick="event.stopPropagation(); document.getElementById('wordclouds-tab').click()">
+                    Open <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Short Answer Activity Card -->
+            <div class="col">
+              <div class="card activity-card h-100" onclick="document.getElementById('shortanswers-tab').click()">
+                <div class="card-body text-center">
+                  <i class="bi bi-pencil-square activity-icon text-warning"></i>
+                  <h5 class="card-title">Short Answers</h5>
+                  <p class="card-text">Free-text responses with teacher feedback</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                  <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); document.getElementById('shortanswers-tab').click()">
+                    Open <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Mini Game Activity Card -->
+            <div class="col">
+              <div class="card activity-card h-100" onclick="document.getElementById('minigames-tab').click()">
+                <div class="card-body text-center">
+                  <i class="bi bi-controller activity-icon text-danger"></i>
+                  <h5 class="card-title">Mini-Games</h5>
+                  <p class="card-text">Interactive games for learning reinforcement</p>
+                </div>
+                <div class="card-footer bg-transparent border-0 text-end">
+                  <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); document.getElementById('minigames-tab').click()">
+                    Open <i class="bi bi-arrow-right"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Recent Activities</h5>
+            </div>
+            <div class="card-body">
+              <div id="recentActivities">
+                <p class="text-center text-muted">Loading recent activities...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Polls Tab -->
+        <div class="tab-pane fade" id="polls" role="tabpanel">
+          <h3 class="mb-4">Interactive Polls</h3>
+          
+          <!-- Create Poll Form (for teachers) -->
+          <div id="createPollForm" class="form-container hidden">
+            <h3 class="mb-3">Create New Poll</h3>
+        <div class="mb-3">
+          <label for="pollQuestion" class="form-label">Question:</label>
+          <input type="text" id="pollQuestion" class="form-control" placeholder="Enter your poll question">
+        </div>
+        <div class="mb-3">
+          <label for="courseId" class="form-label">Course ID:</label>
+          <input type="text" id="courseId" class="form-control" placeholder="Enter course ID">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Options:</label>
+          <div id="optionsContainer">
+            <div class="input-group mb-2">
+              <input type="text" class="form-control option-input" placeholder="Option 1">
+              <button class="btn btn-outline-danger" onclick="removeOption(this)">Remove</button>
+            </div>
+            <div class="input-group mb-2">
+              <input type="text" class="form-control option-input" placeholder="Option 2">
+              <button class="btn btn-outline-danger" onclick="removeOption(this)">Remove</button>
+            </div>
+          </div>
+          <button onclick="addOption()" class="btn btn-outline-primary btn-sm mt-2">+ Add Option</button>
+        </div>
+        <button onclick="createPoll()" class="btn btn-success">Create Poll</button>
+        <div id="createPollError" class="text-danger mt-2"></div>
+      </div>
+
+      <!-- Polls List -->
+      <div id="pollsSection" class="mb-4 hidden">
+        <h3 class="mb-3">Active Polls</h3>
+        <div id="pollsContainer"></div>
+        <div id="loadingPolls" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div id="noPollsMessage" class="alert alert-info hidden">
+          No active polls available.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    <script>
+    let JWT_TOKEN = localStorage.getItem('jwt_token') || '';
+    let userRole = localStorage.getItem('user_role') || '';
+    let username = localStorage.getItem('username') || '';
+
+    // Initialize UI on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      if (JWT_TOKEN && username) {
+        document.getElementById('loginForm').classList.add('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('activitySelector').classList.remove('hidden');
+        document.getElementById('userDisplay').textContent = username;
+        
+        if (userRole === 'teacher') {
+          document.getElementById('createPollForm').classList.remove('hidden');
+          document.getElementById('createQuizForm').classList.remove('hidden');
+          document.getElementById('createWordCloudForm').classList.remove('hidden');
+          document.getElementById('createShortAnswerForm').classList.remove('hidden');
+          document.getElementById('createMiniGameForm').classList.remove('hidden');
+        }
+        
+        loadDashboard();
+        loadPolls();
+      }
+    });
+    
+    // Load dashboard with recent activities
+    async function loadDashboard() {
+      if (!JWT_TOKEN) {
+        return;
+      }
+      
+      const recentActivitiesContainer = document.getElementById('recentActivities');
+      recentActivitiesContainer.innerHTML = '<p class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></p>';
+      
+      try {
+        const response = await fetch('/api/learning/activities', {
+          headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load activities');
+        }
+        
+        const data = await response.json();
+        
+        // Display activities
+        let activitiesHtml = '<div class="list-group">';
+        
+        // Load the most recent activities from each type
+        // This is a placeholder - in a real implementation, you would fetch actual recent activities
+        activitiesHtml += `
+          <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> Select an activity type from the tabs above to get started.
+          </div>
+        `;
+        
+        activitiesHtml += '</div>';
+        recentActivitiesContainer.innerHTML = activitiesHtml;
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+        recentActivitiesContainer.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> Failed to load recent activities. Please try again later.
+          </div>
+        `;
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const isTeacher = document.getElementById('isTeacher').checked;
+      
+      console.log('Login attempt:', { username, isTeacher });
+      
+      if (!username || !password) {
+        showError('loginError', 'Please enter both username and password');
+        return;
+      }
+      
+      document.getElementById('loginError').textContent = '';
+      
+      try {
+        // Get current server URL (works both on localhost and when deployed)
+        const serverUrl = window.location.origin;
+        console.log('Server URL:', serverUrl);
+        
+        const response = await fetch(`${serverUrl}/api/security/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        console.log('Login response status:', response.status);
+        const data = await response.json();
+        console.log('Login response data:', data);
+        
+        if (!response.ok) {
+          showError('loginError', data.error || data.message || 'Login failed');
+          console.error('Login failed:', data);
+          return;
+        }
+        
+        if (data.access_token) {
+          JWT_TOKEN = data.access_token;
+          userRole = data.role || (isTeacher ? 'teacher' : 'student');
+          
+          // Save to localStorage
+          localStorage.setItem('jwt_token', JWT_TOKEN);
+          localStorage.setItem('user_role', userRole);
+          localStorage.setItem('username', username);
+          
+          // Update UI
+          document.getElementById('loginForm').classList.add('hidden');
+          document.getElementById('userInfo').classList.remove('hidden');
+          document.getElementById('activitySelector').classList.remove('hidden');
+          document.getElementById('userDisplay').textContent = username;
+          
+          if (userRole === 'teacher') {
+            document.getElementById('createPollForm').classList.remove('hidden');
+            document.getElementById('createQuizForm').classList.remove('hidden');
+            document.getElementById('createWordCloudForm').classList.remove('hidden');
+            document.getElementById('createShortAnswerForm').classList.remove('hidden');
+            document.getElementById('createMiniGameForm').classList.remove('hidden');
+          }
+          
+          showAlert('Success', 'You have been logged in successfully!', 'success');
+          loadDashboard();
+          loadPolls();
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showError('loginError', 'Connection error. Please try again later.');
+      }
+    }
+
+    function logout() {
+      JWT_TOKEN = null;
+      userRole = 'student';
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('username');
+      
+      // Update UI
+      document.getElementById('loginForm').classList.remove('hidden');
+      document.getElementById('userInfo').classList.add('hidden');
+      document.getElementById('createPollForm').classList.add('hidden');
+      document.getElementById('pollsSection').classList.add('hidden');
+      
+      showAlert('Logged out', 'You have been logged out successfully.', 'info');
+    }
+
+    // Load polls
+    async function loadPolls() {
+      if (!JWT_TOKEN) return;
+      
+      document.getElementById('loadingPolls').classList.remove('hidden');
+      document.getElementById('noPollsMessage').classList.add('hidden');
+      document.getElementById('pollsContainer').innerHTML = '';
+      
+      try {
+        const response = await fetch('/api/learning/polls', {
+          headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load polls');
+        }
+        
+        const polls = await response.json();
+        document.getElementById('loadingPolls').classList.add('hidden');
+        
+        if (!polls || polls.length === 0) {
+          document.getElementById('noPollsMessage').classList.remove('hidden');
+          return;
+        }
+        
+        const pollsContainer = document.getElementById('pollsContainer');
+        polls.forEach(poll => {
+          const pollCard = document.createElement('div');
+          pollCard.className = "card mb-3";
+          pollCard.innerHTML = `
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">${poll.question}</h5>
+              <span class="badge bg-primary">${poll.course_id || 'N/A'}</span>
+            </div>
+            <div class="card-body">
+              <div class="options-container">
+                ${poll.options.map((opt, idx) => `
+                  <button class="btn btn-outline-primary option-btn" 
+                    data-poll-id="${poll._id || poll.id}" 
+                    data-option-idx="${idx}">
+                    ${opt.text || opt}
+                  </button>
+                `).join('')}
+              </div>
+              <button class="btn btn-link mt-3 show-results-btn" 
+                data-poll-id="${poll._id || poll.id}">
+                Show Results
+              </button>
+              <div class="results-container mt-3 hidden" id="results-${poll._id || poll.id}"></div>
+            </div>
+          `;
+          
+          pollsContainer.appendChild(pollCard);
+        });
+        
+        // Add event listeners
+        document.querySelectorAll('.option-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            vote(this.dataset.pollId, this.dataset.optionIdx);
+          });
+        });
+        
+        document.querySelectorAll('.show-results-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const resultsContainer = document.getElementById(`results-${this.dataset.pollId}`);
+            if (resultsContainer.classList.contains('hidden')) {
+              showResults(this.dataset.pollId);
+              this.textContent = 'Hide Results';
+            } else {
+              resultsContainer.classList.add('hidden');
+              this.textContent = 'Show Results';
+            }
+          });
+        });
+        
+      } catch (error) {
+        console.error('Error loading polls:', error);
+        document.getElementById('loadingPolls').classList.add('hidden');
+        showAlert('Error', 'Failed to load polls. Please try again later.', 'danger');
+      }
+    }
+
+    function addOption() {
+      const container = document.getElementById('optionsContainer');
+      const newOption = document.createElement('div');
+      newOption.className = 'input-group mb-2';
+      newOption.innerHTML = `
+        <input type="text" class="form-control option-input" placeholder="Option ${container.children.length + 1}">
+        <button class="btn btn-outline-danger" onclick="removeOption(this)">Remove</button>
+      `;
+      container.appendChild(newOption);
+    }
+    
+    function removeOption(button) {
+      const optionsContainer = document.getElementById('optionsContainer');
+      if (optionsContainer.children.length > 2) {
+        button.parentElement.remove();
+        // Update placeholders
+        const inputs = optionsContainer.querySelectorAll('.option-input');
+        inputs.forEach((input, index) => {
+          input.placeholder = `Option ${index + 1}`;
+        });
+      } else {
+        showAlert('Cannot Remove', 'A poll must have at least 2 options', 'warning');
+      }
+    }
+
+    async function createPoll() {
+      if (!JWT_TOKEN) {
+        showAlert('Authentication Required', 'Please login first', 'warning');
+        return;
+      }
+
+      const question = document.getElementById('pollQuestion').value.trim();
+      const courseId = document.getElementById('courseId').value.trim();
+      const optionInputs = document.querySelectorAll('#optionsContainer .option-input');
+      const options = Array.from(optionInputs)
+        .map(input => input.value.trim())
+        .filter(val => val !== '');
+
+      if (!question) {
+        showError('createPollError', 'Please provide a question');
+        return;
+      }
+      
+      if (!courseId) {
+        showError('createPollError', 'Please provide a course ID');
+        return;
+      }
+
+      if (options.length < 2) {
+        showError('createPollError', 'Please provide at least 2 options');
+        return;
+      }
+
+      document.getElementById('createPollError').textContent = '';
+      
+      try {
+        const response = await fetch('/api/learning/polls', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + JWT_TOKEN,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            question,
+            options,
+            course_id: courseId
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          showError('createPollError', data.message || 'Failed to create poll');
+          return;
+        }
+
+        // Reset form
+        document.getElementById('pollQuestion').value = '';
+        document.getElementById('courseId').value = '';
+        document.getElementById('optionsContainer').innerHTML = `
+          <div class="input-group mb-2">
+            <input type="text" class="form-control option-input" placeholder="Option 1">
+            <button class="btn btn-outline-danger" onclick="removeOption(this)">Remove</button>
+          </div>
+          <div class="input-group mb-2">
+            <input type="text" class="form-control option-input" placeholder="Option 2">
+            <button class="btn btn-outline-danger" onclick="removeOption(this)">Remove</button>
+          </div>
+        `;
+        
+        showAlert('Success', 'Poll created successfully!', 'success');
+        loadPolls();
+      } catch (error) {
+        console.error('Error creating poll:', error);
+        showError('createPollError', 'Connection error. Please try again later.');
+      }
+    }
+
+    // Vote function
+    async function vote(pollId, optionIdx) {
+      if (!JWT_TOKEN) {
+        showAlert('Authentication Required', 'Please login first', 'warning');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/learning/polls/${pollId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + JWT_TOKEN,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ option_index: parseInt(optionIdx) })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+          showAlert('Error', data.error || 'Failed to record vote', 'danger');
+          return;
+        }
+        
+        showAlert('Success', data.message || 'Vote recorded successfully!', 'success');
+        showResults(pollId);
+        
+        // Find the results button and update text
+        const resultsBtn = document.querySelector(`.show-results-btn[data-poll-id="${pollId}"]`);
+        if (resultsBtn) {
+          resultsBtn.textContent = 'Hide Results';
+        }
+      } catch (error) {
+        console.error('Error voting:', error);
+        showAlert('Error', 'Connection error. Please try again later.', 'danger');
+      }
+    }
+
+    // Show results
+    async function showResults(pollId) {
+      if (!JWT_TOKEN) {
+        showAlert('Authentication Required', 'Please login first', 'warning');
+        return;
+      }
+
+      const resultsContainer = document.getElementById(`results-${pollId}`);
+      resultsContainer.innerHTML = `
+        <div class="text-center">
+          <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <span class="ms-2">Loading results...</span>
+        </div>
+      `;
+      resultsContainer.classList.remove('hidden');
+
+      try {
+        const response = await fetch(`/api/learning/polls/${pollId}/results`, {
+          headers: { 'Authorization': 'Bearer ' + JWT_TOKEN }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to load results');
+        }
+        
+        const data = await response.json();
+        
+        if (!data.results || data.results.length === 0) {
+          resultsContainer.innerHTML = `
+            <div class="alert alert-info">
+              No votes recorded yet.
+            </div>
+          `;
+          return;
+        }
+        
+        let resultsHTML = '<h6 class="mb-3">Poll Results:</h6>';
+        
+        data.results.forEach(result => {
+          const percentage = result.percentage || (result.votes / data.total_votes * 100) || 0;
+          
+          resultsHTML += `
+            <div class="result-item">
+              <div class="d-flex justify-content-between">
+                <span>${result.text || result.option}:</span>
+                <span><strong>${result.votes}</strong> votes (${percentage.toFixed(1)}%)</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar bg-${getProgressBarColor(percentage)}" 
+                     role="progressbar" 
+                     style="width: ${percentage}%" 
+                     aria-valuenow="${result.votes}" 
+                     aria-valuemin="0" 
+                     aria-valuemax="${data.total_votes}">
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        
+        resultsHTML += `
+          <div class="text-muted mt-3">
+            <strong>Total votes:</strong> ${data.total_votes} | 
+            <strong>Last updated:</strong> ${new Date().toLocaleTimeString()}
+          </div>
+        `;
+        
+        resultsContainer.innerHTML = resultsHTML;
+      } catch (error) {
+        console.error('Error showing results:', error);
+        resultsContainer.innerHTML = `
+          <div class="alert alert-danger">
+            Failed to load results. Please try again later.
+          </div>
+        `;
+      }
+    }
+
+    // Helper functions
+    function showAlert(title, message, type = 'info') {
+      const alertContainer = document.getElementById('alertContainer');
+      const alertId = 'alert-' + Date.now();
+      
+      const alertHTML = `
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+          <strong>${title}:</strong> ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      `;
+      
+      alertContainer.innerHTML += alertHTML;
+      
+      // Auto-dismiss after 5 seconds
+      setTimeout(() => {
+        const alertElement = document.getElementById(alertId);
+        if (alertElement) {
+          alertElement.classList.remove('show');
+          setTimeout(() => alertElement.remove(), 300);
+        }
+      }, 5000);
+    }
+    
+    function showError(elementId, message) {
+      document.getElementById(elementId).textContent = message;
+    }
+    
+    function getProgressBarColor(percentage) {
+      if (percentage >= 60) return 'success';
+      if (percentage >= 30) return 'info';
+      return 'warning';
+    }
+  </script>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+/*
+COMP5241 Group 10 - Component Styles
+Joyce's responsibility for UI design
+*/
+
+/* Component-specific styles for different modules */
+
+/* GenAI Components (Ting's module) */
+.genai-chat-container {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 1rem;
+    background-color: white;
+}
+
+.genai-message {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-radius: 6px;
+}
+
+.genai-message.user {
+    background-color: #e3f2fd;
+    margin-left: 2rem;
+}
+
+.genai-message.ai {
+    background-color: #f5f5f5;
+    margin-right: 2rem;
+}
+
+/* Security Components (Sunny's module) */
+.security-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 4px;
+}
+
+.security-badge.verified {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.security-badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.security-badge.blocked {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Course Components (Keith's module) */
+.course-card {
+    transition: transform 0.2s;
+}
+
+.course-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.course-progress {
+    height: 8px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.course-progress-bar {
+    height: 100%;
+    background-color: var(--success-color);
+    transition: width 0.3s ease;
+}
+
+.course-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+}
+
+.course-stat {
+    text-align: center;
+    flex: 1;
+}
+
+.course-stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.course-stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Learning Activity Components (Charlie's module) */
+.activity-card {
+    border-left: 4px solid var(--warning-color);
+}
+
+.activity-card.quiz {
+    border-left-color: var(--info-color);
+}
+
+.activity-card.assignment {
+    border-left-color: var(--warning-color);
+}
+
+.activity-card.project {
+    border-left-color: var(--success-color);
+}
+
+.activity-card.discussion {
+    border-left-color: var(--primary-color);
+}
+
+.activity-status {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.activity-status.not-started {
+    background-color: #f8f9fa;
+    color: #6c757d;
+}
+
+.activity-status.in-progress {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.activity-status.completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.activity-status.overdue {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Admin Components (Sunny's module) */
+.admin-stat-card {
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.admin-stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.admin-stat-label {
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+.admin-action-log {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.admin-action-item {
+    border-bottom: 1px solid #e9ecef;
+    padding: 0.5rem;
+}
+
+.admin-action-item:last-child {
+    border-bottom: none;
+}
+
+.admin-action-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Data Tables */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table th {
+    background-color: var(--light-color);
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.data-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Form Components */
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+}
+
+.form-control-lg {
+    padding: 0.75rem 1rem;
+    font-size: 1.1rem;
+}
+
+.form-control-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Navigation Breadcrumb */
+.breadcrumb {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #6c757d;
+}
+
+/* Loading States */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive Components */
+@media (max-width: 768px) {
+    .course-stats {
+        flex-direction: column;
+    }
+    
+    .admin-stat-card {
+        padding: 1rem;
+    }
+    
+    .admin-stat-number {
+        font-size: 2rem;
+    }
+    
+    .data-table {
+        font-size: 0.9rem;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 0.5rem;
+    }
+}
+
+/* Learning Activities Components (Charlie's module) */
+.activity-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.create-option-card {
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.create-option-card:hover {
+    transform: translateY(-2px);
+    border-color: #007bff;
+    box-shadow: 0 4px 12px rgba(0,123,255,0.2);
+}
+
+.word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    padding: 20px;
+}
+
+.word-item {
+    display: inline-block;
+    padding: 4px 8px;
+    margin: 3px;
+    background: linear-gradient(45deg, #007bff, #6f42c1);
+    color: white;
+    border-radius: 15px;
+    font-weight: 500;
+    transition: transform 0.2s ease;
+}
+
+.word-item:hover {
+    transform: scale(1.1);
+}
+
+.question-container {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+}
+
+.activity-stats {
+    font-size: 0.85rem;
+}
+
+.activity-view {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Quiz Interface Styles */
+.quiz-timer {
+    font-size: 1rem;
+    padding: 8px 12px;
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+/* Game Styles */
+.game-container {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    color: white;
+}
+
+/* Login Page Components */
+.login-page .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #245854 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+.login-page .btn-primary:hover {
+    background: linear-gradient(135deg, #245854 0%, var(--primary-color, #2D5A57) 100%) !important;
+    border-color: #245854 !important;
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(45, 90, 87, 0.3);
+}
+
+.login-page .btn-primary:focus,
+.login-page .btn-primary:active {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #1a403d 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+    box-shadow: 0 0 0 0.25rem rgba(45, 90, 87, 0.25) !important;
+}
+
+.login-page .btn-outline-primary {
+    color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+}
+
+.login-page .btn-outline-primary:hover,
+.login-page .btn-outline-primary:focus,
+.login-page .btn-outline-primary:active {
+    background-color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+/* Role toggle buttons in login page */
+.login-page .role-toggle .btn-check:checked + .btn {
+    background-color: var(--primary-color, #2D5A57) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+/* Success modal button */
+.login-page .modal .btn-primary {
+    background: linear-gradient(135deg, var(--primary-color, #2D5A57) 0%, #245854 100%) !important;
+    border-color: var(--primary-color, #2D5A57) !important;
+    color: white !important;
+}
+
+/* Responsive Design for Learning Activities */
+@media (max-width: 768px) {
+    .activity-icon {
+        font-size: 2rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.375rem !important;
+        margin-bottom: 0.25rem;
+    }
+}

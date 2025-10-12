@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Poll - COMP5241 LMS</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="static/css/main.css">
+    <link rel="stylesheet" href="static/css/components.css">
+    <link rel="stylesheet" href="static/css/notifications.css">
+    <!-- Server Status Indicator -->
+    <style>
+        .server-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 9999;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status-online {
+            background-color: #d4f7d4;
+            color: #0a6b0a;
+            border: 1px solid #0a6b0a;
+        }
+        .status-offline {
+            background-color: #f7d4d4;
+            color: #6b0a0a;
+            border: 1px solid #6b0a0a;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .indicator-online {
+            background-color: #0a6b0a;
+        }
+        .indicator-offline {
+            background-color: #6b0a0a;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <span class="fw-bold">COMP5241 LMS</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">
+                            Back to Dashboard
+                        </a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <span id="user-name">User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="#" id="nav-profile">Profile</a></li>
+                            <li><a class="dropdown-item" href="#" id="nav-settings">Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" id="nav-logout">Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Server Status Indicator -->
+    <div id="server-status" class="server-status">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span id="status-text">Checking server...</span>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-secondary text-white rounded-top-4 border-0 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="bi bi-bar-chart-fill fs-4 text-white"></i>
+                            </div>
+                            <h4 class="mb-0 fw-semibold">Create Poll</h4>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        <form id="poll-form">
+                            <!-- Basic Info -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2">Poll Question</h5>
+                                <div class="mb-3">
+                                    <label for="question" class="form-label">Question*</label>
+                                    <input type="text" class="form-control" id="question" name="question" required>
+                                    <small class="form-text text-muted">This is the main poll question that students will answer.</small>
+                                </div>
+                            </div>
+
+                            <!-- Options -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2">Poll Options</h5>
+                                <div id="poll-options">
+                                    <div class="mb-2 poll-option">
+                                        <div class="input-group">
+                                            <span class="input-group-text">1</span>
+                                            <input type="text" class="form-control" name="options[]" placeholder="Option 1" required>
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.poll-option').remove(); renumberOptions();" disabled>
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 poll-option">
+                                        <div class="input-group">
+                                            <span class="input-group-text">2</span>
+                                            <input type="text" class="form-control" name="options[]" placeholder="Option 2" required>
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.poll-option').remove(); renumberOptions();" disabled>
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2 poll-option">
+                                        <div class="input-group">
+                                            <span class="input-group-text">3</span>
+                                            <input type="text" class="form-control" name="options[]" placeholder="Option 3">
+                                            <button type="button" class="btn btn-outline-danger" onclick="this.closest('.poll-option').remove(); renumberOptions();">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-secondary mt-2" onclick="addPollOption()">
+                                    <i class="bi bi-plus-circle"></i> Add Option
+                                </button>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="form-text text-muted">At least 2 options are required. You can add up to 10 options.</small>
+                                    <span id="option-counter" class="badge bg-danger">0/2 required options</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Poll Settings -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2">Poll Settings</h5>
+                                <div class="mb-3 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="is-anonymous" name="is_anonymous" checked>
+                                    <label class="form-check-label" for="is-anonymous">Anonymous Voting</label>
+                                    <small class="form-text text-muted d-block">When enabled, votes will not be linked to student identities.</small>
+                                </div>
+                                <div class="mb-3 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="show-results" name="show_results" checked>
+                                    <label class="form-check-label" for="show-results">Show Results to Students</label>
+                                    <small class="form-text text-muted d-block">Allow students to see poll results after voting.</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Schedule -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2">Schedule</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="start_date" class="form-label">Start Date</label>
+                                            <input type="datetime-local" class="form-control" id="start_date" name="start_date">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="expires_at" class="form-label">End Date</label>
+                                            <input type="datetime-local" class="form-control" id="expires_at" name="expires_at">
+                                            <small class="form-text text-muted">Leave blank to keep poll open indefinitely.</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Advanced Settings -->
+                            <div class="mb-4">
+                                <h5 class="border-bottom pb-2">Advanced Settings</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="status" class="form-label">Status</label>
+                                            <select class="form-select" id="status" name="status">
+                                                <option value="draft">Draft</option>
+                                                <option value="published" selected>Published</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="visibility" class="form-label">Visibility</label>
+                                            <select class="form-select" id="visibility" name="visibility">
+                                                <option value="public" selected>Public</option>
+                                                <option value="private">Private</option>
+                                                <option value="group">Group</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="tags" class="form-label">Tags (comma-separated)</label>
+                                    <input type="text" class="form-control" id="tags" name="tags" placeholder="e.g., opinion, feedback, survey">
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-secondary rounded-3 px-4 py-2 fw-medium">
+                                    <i class="bi bi-bar-chart me-2"></i>Create Poll
+                                </button>
+                                <a href="index.html" class="btn btn-outline-secondary rounded-3 px-4 py-2">
+                                    Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom Scripts -->
+    <script src="static/js/api.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize API client
+            const api = new APIClient('http://localhost:5001');
+            console.log('Test Poll page initialized with API client');
+
+            // Add test mode indicator and server status
+            document.body.insertAdjacentHTML('beforeend', `
+                <div style="position: fixed; bottom: 10px; right: 10px; background: #ffc107; color: #000; padding: 5px 10px; border-radius: 4px; font-size: 12px; z-index: 9999;">TEST MODE</div>
+                <div id="server-status" style="position: fixed; bottom: 40px; right: 10px; background: #6c757d; color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 12px; z-index: 9999;">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    Checking server...
+                </div>
+            `);
+            
+            // Check server status
+            (async function checkServer() {
+                const serverStatus = document.getElementById('server-status');
+                try {
+                    const response = await fetch('http://localhost:5001/api/health');
+                    if (response.ok) {
+                        serverStatus.innerHTML = '<span class="text-success">●</span> Server online';
+                        serverStatus.style.background = '#198754';
+                    } else {
+                        serverStatus.innerHTML = '<span class="text-warning">●</span> Server issues';
+                        serverStatus.style.background = '#fd7e14';
+                    }
+                } catch (error) {
+                    serverStatus.innerHTML = '<span class="text-danger">●</span> Server offline';
+                    serverStatus.style.background = '#dc3545';
+                    console.error('Server check failed:', error);
+                }
+            })();
+            
+            // Add real-time form field validation
+            const questionField = document.getElementById('question');
+            questionField.addEventListener('input', function() {
+                if (this.value.trim().length > 0) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            });
+            
+            // Add validation for options
+            function validateOptions() {
+                const options = Array.from(document.querySelectorAll('input[name="options[]"]'))
+                    .map(input => input.value.trim())
+                    .filter(value => value !== '');
+                const validCount = options.length >= 2;
+                const optionCounter = document.getElementById('option-counter');
+                if (optionCounter) {
+                    optionCounter.textContent = `${options.length}/2 required options`;
+                    optionCounter.className = validCount ? 'badge bg-success' : 'badge bg-danger';
+                }
+                return validCount;
+            }
+            
+            // Initial validation
+            validateOptions();
+            
+            // Delegate event listener for option inputs
+            document.getElementById('poll-options').addEventListener('input', function(e) {
+                if (e.target.matches('input[name="options[]"]')) {
+                    if (e.target.value.trim().length > 0) {
+                        e.target.classList.remove('is-invalid');
+                        e.target.classList.add('is-valid');
+                    } else {
+                        e.target.classList.remove('is-valid');
+                        e.target.classList.add('is-invalid');
+                    }
+                    validateOptions();
+                }
+            });
+
+            // Debug info
+            console.log('API base URL:', api.baseUrl);
+
+
+            // Handle form submission
+            const form = document.getElementById('poll-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('Poll form submitted');
+                
+                try {
+                    // Perform client-side validation
+                    const question = form.querySelector('#question').value.trim();
+                    if (!question) {
+                        throw new Error('Poll question is required');
+                    }
+                    
+                    // Check if we have enough options
+                    const optionInputs = Array.from(form.querySelectorAll('input[name="options[]"]'))
+                        .map(input => input.value.trim())
+                        .filter(value => value !== '');
+                        
+                    console.log('Poll options:', optionInputs);
+                    
+                    if (optionInputs.length < 2) {
+                        throw new Error('At least 2 valid options are required');
+                    }
+                
+                    // Show loading state
+                    const submitBtn = form.querySelector('button[type="submit"]');
+                    const originalBtnText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Creating...';
+                    submitBtn.disabled = true;
+                    
+                    // Show progress notification
+                    showNotification('Creating poll...', 'info');
+                    
+                    // Gather form data
+                    const formData = new FormData(form);
+                    const options = Array.from(formData.getAll('options[]')).filter(opt => opt.trim() !== '');
+                    
+                    // Validate at least 2 options
+                    if (options.length < 2) {
+                        throw new Error('At least 2 poll options are required');
+                    }
+                    
+                    const data = {
+                        question: formData.get('question'),
+                        options: options,
+                        course_id: 'COMP5241', // TODO: Get from current course context
+                        is_anonymous: formData.get('is_anonymous') === 'on',
+                        show_results: formData.get('show_results') === 'on',
+                        start_date: formData.get('start_date') || null,
+                        expires_at: formData.get('expires_at') || null,
+                        status: formData.get('status'),
+                        visibility: formData.get('visibility'),
+                        tags: formData.get('tags') ? formData.get('tags').split(',').map(tag => tag.trim()) : []
+                    };
+                    
+                    // Send to API
+                    console.log('Sending poll data to API:', data);
+                    const response = await api.post('/api/learning/polls/', data);
+                    
+                    // Log response for debugging
+                    console.log('API Response:', response);
+                    
+                    // Show success message with poll ID
+                    showNotification(`Poll created successfully! ID: ${response.poll_id}`, 'success');
+                    
+                    // Show success screen instead of immediate redirect
+                    const formContainer = form.closest('.card');
+                    formContainer.innerHTML = `
+                        <div class="card-header bg-success text-white rounded-top-4 border-0 py-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-check-lg fs-4 text-white"></i>
+                                </div>
+                                <h4 class="mb-0 fw-semibold">Poll Created Successfully</h4>
+                            </div>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <div class="py-4">
+                                <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 80px; height: 80px;">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                                </div>
+                                <h4 class="mb-3">Your poll has been created!</h4>
+                                <p class="text-muted">The poll "${data.question}" is now ready for your students to participate.</p>
+                                <p class="mb-4">Poll ID: <span class="badge bg-secondary">${response.poll_id}</span></p>
+                                
+                                <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+                                    <a href="index.html?section=activities&view=my-activities" class="btn btn-primary px-4">
+                                        <i class="bi bi-list-check me-2"></i>View All Activities
+                                    </a>
+                                    <a href="test_poll.html" class="btn btn-outline-secondary px-4">
+                                        <i class="bi bi-plus-circle me-2"></i>Create Another Poll
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add detailed log 
+                    console.log('Poll creation workflow completed successfully');
+                    
+                } catch (error) {
+                    console.error('Error creating poll:', error);
+                    
+                    // Add detailed error information for debugging
+                    let errorMessage = error.message || 'Unknown error';
+                    if (error.response) {
+                        console.error('Error response:', error.response);
+                        errorMessage += ' - Server returned: ' + (error.response.statusText || error.response.status);
+                    }
+                    
+                    showNotification('Error creating poll: ' + errorMessage, 'danger');
+                    
+                    // Highlight form fields with errors
+                    if (errorMessage.includes('question')) {
+                        const questionField = form.querySelector('#question');
+                        questionField.classList.add('is-invalid');
+                        questionField.focus();
+                    }
+                    
+                    if (errorMessage.includes('option')) {
+                        const optionFields = form.querySelectorAll('input[name="options[]"]');
+                        optionFields.forEach(field => {
+                            if (!field.value.trim()) {
+                                field.classList.add('is-invalid');
+                            }
+                        });
+                    }
+                    
+                    // Reset button state
+                    const submitButton = form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.innerHTML = originalBtnText || '<i class="bi bi-bar-chart me-2"></i>Create Poll';
+                        submitButton.disabled = false;
+                    }
+                    
+                    // Show diagnostic information in development mode
+                    console.log('Server status check: Try connecting to http://localhost:5001/api/health');
+                    console.log('MongoDB status check: Please verify MongoDB is running on the default port');
+                }
+            });
+
+            // Logout handler
+            document.getElementById('nav-logout').addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+            });
+        });
+        
+        // Add a new poll option
+        function addPollOption() {
+            const container = document.getElementById('poll-options');
+            const optionsCount = container.querySelectorAll('.poll-option').length;
+            
+            // Limit to 10 options max
+            if (optionsCount >= 10) {
+                showNotification('Maximum of 10 options allowed', 'warning');
+                return;
+            }
+            
+            const newOption = document.createElement('div');
+            newOption.className = 'mb-2 poll-option';
+            newOption.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text">${optionsCount + 1}</span>
+                    <input type="text" class="form-control" name="options[]" placeholder="Option ${optionsCount + 1}" required>
+                    <button type="button" class="btn btn-outline-danger" onclick="this.closest('.poll-option').remove(); renumberOptions();">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+                <div class="invalid-feedback">This option cannot be empty</div>
+            `;
+            
+            container.appendChild(newOption);
+            
+            // Focus the new input
+            const newInput = newOption.querySelector('input');
+            if (newInput) {
+                newInput.focus();
+                
+                // Automatically validate when user leaves this field
+                newInput.addEventListener('blur', function() {
+                    if (this.value.trim() === '') {
+                        this.classList.add('is-invalid');
+                    } else {
+                        this.classList.remove('is-invalid');
+                        this.classList.add('is-valid');
+                    }
+                    validateOptions();
+                });
+            }
+            
+            // Update option counter
+            validateOptions();
+        }
+        
+        // Renumber options after deletion
+        function renumberOptions() {
+            const container = document.getElementById('poll-options');
+            const options = container.querySelectorAll('.poll-option');
+            
+            // Ensure at least 2 options remain and disable delete buttons if needed
+            if (options.length <= 2) {
+                options.forEach(option => {
+                    const deleteBtn = option.querySelector('button');
+                    if (deleteBtn) {
+                        deleteBtn.disabled = true;
+                    }
+                });
+            } else {
+                options.forEach(option => {
+                    const deleteBtn = option.querySelector('button');
+                    if (deleteBtn) {
+                        deleteBtn.disabled = false;
+                    }
+                });
+            }
+            
+            // Update numbering
+            options.forEach((option, index) => {
+                const numberSpan = option.querySelector('.input-group-text');
+                const input = option.querySelector('input');
+                if (numberSpan) {
+                    numberSpan.textContent = index + 1;
+                }
+                if (input && input.placeholder.startsWith('Option ')) {
+                    input.placeholder = `Option ${index + 1}`;
+                }
+            });
+            
+            // Update validation status
+            validateOptions();
+            
+            // Show notification if options are below minimum
+            if (options.length < 2) {
+                showNotification('At least 2 poll options are required', 'warning');
+            }
+        }
+
+        // Notification helper function
+        function showNotification(message, type = 'info') {
+            const toastContainer = document.querySelector('.toast-container');
+            
+            const toastEl = document.createElement('div');
+            toastEl.className = `toast align-items-center border-0 bg-${type} text-white`;
+            toastEl.setAttribute('role', 'alert');
+            toastEl.setAttribute('aria-live', 'assertive');
+            toastEl.setAttribute('aria-atomic', 'true');
+            
+            toastEl.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toastEl);
+            
+            const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+            toast.show();
+            
+            // Remove toast from DOM after it's hidden
+            toastEl.addEventListener('hidden.bs.toast', function () {
+                toastEl.remove();
+            });
+        }
+
+        function updateUserInterface() {
+            // Get user info from localStorage
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                // Update user name in navbar
+                const userNameElement = document.getElementById('user-name');
+                if (userNameElement) {
+                    userNameElement.textContent = user.username || 'User';
+                }
+            }
+        }
+        
+        // Check server status
+        function checkServerStatus() {
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const statusContainer = document.getElementById('server-status');
+            
+            fetch('http://localhost:5001/api/health')
+                .then(response => {
+                    if (response.ok) {
+                        statusIndicator.className = 'status-indicator indicator-online';
+                        statusText.textContent = 'Server Online';
+                        statusContainer.className = 'server-status status-online';
+                    } else {
+                        statusIndicator.className = 'status-indicator indicator-offline';
+                        statusText.textContent = 'Server Error';
+                        statusContainer.className = 'server-status status-offline';
+                    }
+                })
+                .catch(error => {
+                    console.error('Server status check failed:', error);
+                    statusIndicator.className = 'status-indicator indicator-offline';
+                    statusText.textContent = 'Server Offline';
+                    statusContainer.className = 'server-status status-offline';
+                });
+        }
+        
+        // Check server status immediately and every 10 seconds
+        checkServerStatus();
+        setInterval(checkServerStatus, 10000);
+
+        // API Patch for endpoint fixes
+        (function() {
+            console.log('API endpoint patch applied');
+            
+            // Add /api prefix to endpoints if needed
+            const originalRequest = api.request;
+            
+            api.request = async function(endpoint, options = {}, is_include_header = false) {
+                // Make sure all learning activity endpoints have the /api prefix
+                if (endpoint.startsWith('/learning/') && !endpoint.startsWith('/api/learning/')) {
+                    endpoint = '/api' + endpoint;
+                    console.log('API endpoint patched to:', endpoint);
+                }
+                
+                // Fix for health check endpoint
+                if (endpoint === '/health') {
+                    endpoint = '/api/health';
+                    console.log('API endpoint patched to:', endpoint);
+                }
+                
+                // Fix for security endpoints
+                if (endpoint.startsWith('/security/') && !endpoint.startsWith('/api/security/')) {
+                    endpoint = '/api' + endpoint;
+                    console.log('API endpoint patched to:', endpoint);
+                }
+                
+                // Fix the quiz typo (quizs -> quizzes)
+                if (endpoint.includes('/learning/quizs/') || endpoint.includes('/api/learning/quizs/')) {
+                    endpoint = endpoint.replace('quizs', 'quizzes');
+                    console.log('Quiz endpoint fixed:', endpoint);
+                }
+                
+                return originalRequest.call(this, endpoint, options, is_include_header);
+            };
+        })();
+    </script>
+</body>
+</html>
