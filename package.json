@@ -1,0 +1,12 @@
+{
+  "name": "comp5241-g10-poll-system",
+  "version": "1.0.0",
+  "description": "COMP5241 Group 10 Poll System",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:ui": "npx playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.37.0"
+  }
+}
