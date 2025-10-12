@@ -1,17 +1,3 @@
-# COMP5241 Group 10 - Learning Management System
-
-## Project Overview
-This is a Learning Management System (LMS) developed by Group 10 for COMP5241. The system is built with Python 3.11, Flask backend, MongoDB database, and a responsive frontend.
-
-## Team Members & Responsibilities
-
-| Member      | Responsibilities                          | Modules                                                         |
-|-------------|-------------------------------------------|-----------------------------------------------------------------|
-| **Ting**    | GenAI integration and AI-powered features | `/backend/app/modules/genai/`                                   |
-| **Sunny**   | Security, authentication, and admin panel | `/backend/app/modules/security/`, `/backend/app/modules/admin/` |
-| **Joyce**   | UI/UX design and frontend development     | `/frontend/`                                                    |
-| **Charlie** | Learning activities and student progress  | `/backend/app/modules/learning_activities/`                     |
-| **Keith**   | Course management and teacher tools       | `/backend/app/modules/courses/`                                 |
 
 ## Technology Stack
 
@@ -365,5 +351,6 @@ uv add --dev package-name  # for development dependencies
 For detailed UV usage instructions, see [UV_GUIDE.md](UV_GUIDE.md).
 
 ## License
+
 
 This project is for educational purposes as part of COMP5241 coursework.
