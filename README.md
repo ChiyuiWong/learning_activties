@@ -1,17 +1,4 @@
-# COMP5241 Group 10 - Learning Management System
 
-## Project Overview
-This is a Learning Management System (LMS) developed by Group 10 for COMP5241. The system is built with Python 3.11, Flask backend, MongoDB database, and a responsive frontend.
-
-## Team Members & Responsibilities
-
-| Member      | Responsibilities                          | Modules                                                         |
-|-------------|-------------------------------------------|-----------------------------------------------------------------|
-| **Ting**    | GenAI integration and AI-powered features | `/backend/app/modules/genai/`                                   |
-| **Sunny**   | Security, authentication, and admin panel | `/backend/app/modules/security/`, `/backend/app/modules/admin/` |
-| **Joyce**   | UI/UX design and frontend development     | `/frontend/`                                                    |
-| **Charlie** | Learning activities and student progress  | `/backend/app/modules/learning_activities/`                     |
-| **Keith**   | Course management and teacher tools       | `/backend/app/modules/courses/`                                 |
 
 ## Technology Stack
 
@@ -176,11 +163,11 @@ The frontend will be available at `http://localhost:3000`
    ```
 
 2. **Work on your assigned module**:
-   - Ting: Implement GenAI features in `/backend/app/modules/genai/`
-   - Sunny: Implement security in `/backend/app/modules/security/` and `/backend/app/modules/admin/`
-   - Joyce: Design UI/UX in `/frontend/`
-   - Charlie: Implement learning activities in `/backend/app/modules/learning_activities/`
-   - Keith: Implement course management in `/backend/app/modules/courses/`
+   -  Implement GenAI features in `/backend/app/modules/genai/`
+   -  Implement security in `/backend/app/modules/security/` and `/backend/app/modules/admin/`
+   -  Design UI/UX in `/frontend/`
+   -  Implement learning activities in `/backend/app/modules/learning_activities/`
+   -  Implement course management in `/backend/app/modules/courses/`
 
 3. **Test your changes**:
    ```bash
@@ -291,25 +278,25 @@ gunicorn -w 4 -b 0.0.0.0:5000 app:app
 
 For detailed setup instructions, see [GENAI_SETUP.md](GENAI_SETUP.md)
 
-### Security Module (Sunny)
+### Security Module 
 - Location: `/backend/app/modules/security/` and `/backend/app/modules/admin/`
 - Features: Authentication, authorization, user management, admin panel
 - Dependencies: Flask-JWT-Extended, bcrypt
 - TODO: Implement login/logout, user registration, admin features
 
-### UI/Frontend (Joyce)
+### UI/Frontend 
 - Location: `/frontend/`
 - Features: Responsive design, user interface
 - Dependencies: Bootstrap 5 (customizable)
 - TODO: Design and implement user-friendly interface
 
-### Courses Module (Keith)
+### Courses Module 
 - Location: `/backend/app/modules/courses/`
 - Features: Course creation, enrollment, course management
 - Dependencies: MongoEngine
 - TODO: Implement course CRUD operations, enrollment system
 
-### Learning Activities Module (Charlie)
+### Learning Activities Module 
 - Location: `/backend/app/modules/learning_activities/`
 - Features: Activities, assignments, progress tracking
 - Dependencies: MongoEngine
@@ -366,4 +353,4 @@ For detailed UV usage instructions, see [UV_GUIDE.md](UV_GUIDE.md).
 
 ## License
 
-This project is for educational purposes as part of COMP5241 coursework.
+
