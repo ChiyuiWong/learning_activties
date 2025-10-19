@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta name="translate" content="no">
     <title>COMP5241 Group 10 - Learning Management System</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -15,8 +17,19 @@
     <link rel="stylesheet" href="static/css/components.css">
     <link rel="stylesheet" href="static/css/notifications.css">
     <link rel="stylesheet" href="static/css/quiz.css">
+    <style>
+        .notranslate {
+            translate: no !important;
+        }
+        .word-item {
+            translate: no !important;
+        }
+        .word-cloud {
+            translate: no !important;
+        }
+    </style>
 </head>
-<body>
+<body class="notranslate">
     <!-- Navigation Header -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
         <div class="container-fluid">
@@ -68,6 +81,13 @@
                         </ul>
                     </li>
                 </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-light me-2" href="/login.html">
+                            <i class="bi bi-person-circle"></i> Login
+                        </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -75,6 +95,24 @@
     <!-- Alert Container -->
     <div id="alertContainer" class="container-fluid mt-3">
         <!-- Alerts will be dynamically inserted here -->
+    </div>
+    
+    <!-- Authentication Status Banner -->
+    <div class="container-fluid">
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle"></i>
+            <strong>Authentication Notice:</strong> This system requires login to use learning activity features.
+            <a href="/login.html" class="alert-link">Click here to login</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-key"></i>
+            <strong>Demo Accounts:</strong> 
+            Teacher: <code>teacher1 / password123</code> | 
+            Student: <code>student1 / password123</code> | 
+            Any Username: <code>any_username / demo</code>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     </div>
 
     <!-- Main Content Area -->
@@ -199,196 +237,14 @@
 
                     <!-- Learning Activities Section (Charlie's responsibility) -->
                     <div id="activities-section" class="content-section d-none">
-                        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
-                            <div class="mb-3 mb-md-0">
-                                <h2 class="mb-0 fw-bold">Learning Activities</h2>
-                                <p class="text-muted mb-0">Interactive learning experiences</p>
-                            </div>
-                            <div class="btn-group shadow-sm" role="group">
-                                <button type="button" class="btn btn-outline-primary active" data-activity-view="overview">
-                                    Overview
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" data-activity-view="my-activities">
-                                    My Activities
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" data-activity-view="create" data-role="teacher">
-                                    Create New
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Activities Overview -->
-                        <div id="activities-overview" class="activity-view">
-                            <div class="row g-4">
-                                <div class="col-lg-3 col-md-6">
-                                    <div class="card activity-card quiz-card h-100 border-0 shadow-sm rounded-4">
-                                        <div class="card-body text-center p-4">
-                                            <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                            </div>
-                                            <h5 class="card-title fw-semibold mb-3">Quizzes</h5>
-                                            <p class="card-text text-muted small mb-3">Interactive multiple-choice and fill-in-the-blank quizzes</p>
-                                            <div class="activity-stats mb-3">
-                                                <div class="bg-light rounded-pill px-3 py-1">
-                                                    <small class="text-muted fw-medium" id="quiz-count">Loading...</small>
-                                                </div>
-                                            </div>
-                                            <button class="btn btn-primary rounded-pill px-4 fw-medium" data-activity-type="quiz">
-                                                View Quizzes
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6">
-                                    <div class="card activity-card wordcloud-card h-100 border-0 shadow-sm rounded-4">
-                                        <div class="card-body text-center p-4">
-                                            <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                            </div>
-                                            <h5 class="card-title fw-semibold mb-3">Word Clouds</h5>
-                                            <p class="card-text text-muted small mb-3">Collaborative word collection with real-time visualization</p>
-                                            <div class="activity-stats mb-3">
-                                                <div class="bg-light rounded-pill px-3 py-1">
-                                                    <small class="text-muted fw-medium" id="wordcloud-count">Loading...</small>
-                                                </div>
-                                            </div>
-                                            <button class="btn btn-success rounded-pill px-4 fw-medium" data-activity-type="wordcloud">
-                                                View Word Clouds
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6">
-                                    <div class="card activity-card poll-card h-100 border-0 shadow-sm rounded-4">
-                                        <div class="card-body text-center p-4">
-                                            <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                            </div>
-                                            <h5 class="card-title fw-semibold mb-3">Polls</h5>
-                                            <p class="card-text text-muted small mb-3">Live polls to collect student opinions and votes</p>
-                                            <div class="activity-stats mb-3">
-                                                <div class="bg-light rounded-pill px-3 py-1">
-                                                    <small class="text-muted fw-medium" id="poll-count">Loading...</small>
-                                                </div>
-                                            </div>
-                                            <button class="btn btn-secondary rounded-pill px-4 fw-medium" data-activity-type="poll">
-                                                View Polls
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-lg-3 col-md-6">
-                                    <div class="card activity-card shortanswer-card h-100 border-0 shadow-sm rounded-4">
-                                        <div class="card-body text-center p-4">
-                                            <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
-                                            </div>
-                                            <h5 class="card-title fw-semibold mb-3">Short Answers</h5>
-                                            <p class="card-text text-muted small mb-3">Essay-style questions with teacher feedback</p>
-                                            <div class="activity-stats mb-3">
-                                                <div class="bg-light rounded-pill px-3 py-1">
-                                                    <small class="text-muted fw-medium" id="shortanswer-count">Loading...</small>
-                                                </div>
-                                            </div>
-                                            <button class="btn btn-info rounded-pill px-4 fw-medium" data-activity-type="shortanswer">
-                                                View Questions
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Mini Games section removed -->
-                            </div>
-                        </div>
-
-                        <!-- My Activities View -->
-                        <div id="my-activities" class="activity-view d-none">
-                            <div class="card border-0 shadow-sm rounded-4">
-                                <div class="card-header bg-primary text-white rounded-top-4 border-0 py-3">
-                                    <h5 class="mb-0 fw-semibold">My Learning Activities</h5>
-                                </div>
-                                <div class="card-body p-4">
-                                    <div id="my-activities-content">
+                        <!-- Role-based content will be dynamically loaded here -->
+                        <div id="role-based-activities-content">
+                            <!-- Content will be dynamically generated based on user role -->
                                         <div class="text-center py-5">
                                             <div class="spinner-border text-primary mb-3" role="status">
                                                 <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                            <p class="text-muted mb-0">Loading your activities...</p>
-                                        </div>
-                                    </div>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Create New Activity View -->
-                        <div id="create-activity" class="activity-view d-none">
-                            <div class="card border-0 shadow-sm rounded-4">
-                                <div class="card-header bg-success text-white rounded-top-4 border-0 py-3">
-                                    <h5 class="mb-0 fw-semibold">Create New Learning Activity</h5>
-                                </div>
-                                <div class="card-body p-4">
-                                    <div class="row g-4">
-                                        <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="quiz" style="cursor: pointer;" onclick="window.location.href='test_quiz.html'">
-                                                <div class="card-body text-center p-4">
-                                                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
-                                                        <i class="bi bi-question-circle fs-4 text-primary"></i>
-                                                    </div>
-                                                    <h6 class="fw-semibold mb-2">Create Quiz</h6>
-                                                    <p class="small text-muted mb-0">Multiple choice, true/false, or multiple select questions</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="wordcloud" style="cursor: pointer;" onclick="window.location.href='test_wordcloud.html'">
-                                                <div class="card-body text-center p-4">
-                                                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
-                                                        <i class="bi bi-cloud fs-4 text-success"></i>
-                                                    </div>
-                                                    <h6 class="fw-semibold mb-2">Create Word Cloud</h6>
-                                                    <p class="small text-muted mb-0">Collect words from students on a specific topic</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="shortanswer" style="cursor: pointer;" onclick="window.location.href='test_shortanswer.html'">
-                                                <div class="card-body text-center p-4">
-                                                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
-                                                        <i class="bi bi-file-text fs-4 text-info"></i>
-                                                    </div>
-                                                    <h6 class="fw-semibold mb-2">Create Short Answer</h6>
-                                                    <p class="small text-muted mb-0">Essay-style questions with personalized feedback</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <!-- Mini Game creation option removed -->
-                                        <div class="col-md-6">
-                                            <div class="card create-option-card border-0 shadow-sm rounded-4 h-100" data-create-type="poll" style="cursor: pointer;" onclick="window.location.href='test_poll.html'">
-                                                <div class="card-body text-center p-4">
-                                                    <div class="bg-secondary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 50px; height: 50px;">
-                                                        <i class="bi bi-bar-chart-fill fs-4 text-secondary"></i>
-                                                    </div>
-                                                    <h6 class="fw-semibold mb-2">Create Poll</h6>
-                                                    <p class="small text-muted mb-0">Create live polls with multiple options and real-time voting</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Activity Details View -->
-                        <div id="activity-details" class="activity-view d-none">
-                            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-3">
-                                <button class="btn btn-outline-secondary rounded-pill px-4" id="back-to-activities">
-                                    Back to Activities
-                                </button>
-                                <div class="btn-group shadow-sm">
-                                    <button class="btn btn-outline-primary" id="refresh-activity">
-                                        Refresh
-                                    </button>
-                                </div>
-                            </div>
-                            <div id="activity-details-content" class="card border-0 shadow-sm rounded-4">
-                                <div class="card-body p-4">
-                                    <!-- Dynamic content will be loaded here -->
-                                </div>
+                                <p class="text-muted">Loading activities based on your role...</p>
                             </div>
                         </div>
                     </div>
@@ -607,5 +463,363 @@
     <script src="static/js/api.js"></script>
     <script src="static/js/learning-activities.js"></script>
     <script src="static/js/genai.js"></script>
+    
+    <!-- Additional event handlers for activity buttons -->
+    <script>
+    // Disable browser translation
+    document.documentElement.setAttribute('translate', 'no');
+    document.documentElement.setAttribute('class', 'notranslate');
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Setting up activity button handlers...');
+        
+        // Update user interface with current login info
+        updateUserDisplayName();
+        
+        // Listen for user updates from test pages
+        window.addEventListener('message', function(event) {
+            if (event.data && event.data.type === 'updateUser') {
+                console.log('Received user update:', event.data);
+                // Update localStorage
+                localStorage.setItem('username', event.data.username);
+                localStorage.setItem('user_role', event.data.role);
+                // Update display
+                updateUserDisplayName();
+                // Refresh role-based interface if visible
+                const activitiesSection = document.getElementById('activities-section');
+                if (activitiesSection && !activitiesSection.classList.contains('d-none')) {
+                    window.initializeRoleBasedActivities();
+                }
+            }
+        });
+        
+        // Initialize role-based interface when Activities section is clicked
+        setTimeout(() => {
+            const activitiesLink = document.querySelector('[data-section="activities"]');
+            if (activitiesLink) {
+                activitiesLink.addEventListener('click', function() {
+                    console.log('Activities section clicked, initializing role-based interface...');
+                    setTimeout(() => {
+                        window.initializeRoleBasedActivities();
+                    }, 300);
+                });
+            }
+        }, 500);
+        
+        // Auto-initialize if Activities section is already visible
+        setTimeout(() => {
+            const activitiesSection = document.getElementById('activities-section');
+            if (activitiesSection && !activitiesSection.classList.contains('d-none')) {
+                console.log('Activities section is already visible, auto-initializing...');
+                window.initializeRoleBasedActivities();
+            }
+        }, 1000);
+        
+        // Also initialize when Activities section becomes visible
+        document.addEventListener('click', function(e) {
+            if (e.target.matches('[data-section="activities"]')) {
+                console.log('Activities section clicked, initializing...');
+                setTimeout(() => {
+                    window.initializeRoleBasedActivities();
+                }, 100);
+            }
+        });
+    });
+    
+    // Role-based activities interface functions
+    window.initializeRoleBasedActivities = function() {
+        console.log('🚀 Initializing role-based activities interface...');
+        
+        // Check if container exists
+        const container = document.getElementById('role-based-activities-content');
+        if (!container) {
+            console.error('❌ Container role-based-activities-content not found!');
+            return;
+        }
+        console.log('✅ Container found:', container);
+        
+        // Get user role from localStorage, userInfo, or login status
+        const userRole = getUserRole();
+        console.log('👤 Current user role:', userRole);
+        
+        // Generate role-specific interface
+        if (userRole === null) {
+            console.log('❓ User not logged in, showing login prompt...');
+            generateLoginPrompt(container);
+        } else if (userRole === 'teacher') {
+            console.log('🎓 Loading teacher-only interface...');
+            generateTeacherOnlyInterface(container);
+        } else if (userRole === 'student') {
+            console.log('🎒 Loading student-only interface...');
+            generateStudentOnlyInterface(container);
+                    } else {
+            console.log('❓ Unknown role, showing login prompt...');
+            generateLoginPrompt(container);
+        }
+        
+        console.log('✅ Role-based activities interface initialization complete!');
+    }
+    
+    // Generate teacher-only interface
+    function generateTeacherOnlyInterface(container) {
+        container.innerHTML = 
+            '<div class="container-fluid">' +
+                '<div class="text-center mb-5">' +
+                    '<h2 class="mb-3 fw-bold">Learning Activities</h2>' +
+                    '<p class="text-muted">Welcome, Teacher! Access your management tools below.</p>' +
+                    '<div class="badge bg-success fs-6 px-3 py-2">Teacher Mode</div>' +
+                '</div>' +
+                
+                '<div class="row justify-content-center">' +
+                    '<div class="col-lg-8">' +
+                        '<div class="row g-4">' +
+                            // 只显示Teacher管理按钮
+                            '<div class="col-md-6 offset-md-3">' +
+                                '<div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">' +
+                                    '<div class="card-body text-white p-4 d-flex flex-column text-center">' +
+                                        '<div class="mb-3">' +
+                                            '<i class="bi bi-person-gear display-1"></i>' +
+                                        '</div>' +
+                                        '<h4 class="card-title fw-bold mb-3">Teacher Management</h4>' +
+                                        '<p class="card-text mb-4">Manage learning activities, view student submissions, create quizzes and grading</p>' +
+                                        '<div class="mt-auto">' +
+                                            '<a href="teacher-activities.html" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold">' +
+                                                '<i class="bi bi-arrow-right-circle"></i> Enter Teacher Management' +
+                                            '</a>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        
+                        // Teacher功能说明
+                        '<div class="row mt-5">' +
+                            '<div class="col-12">' +
+                                '<div class="card border-0 shadow-sm rounded-4">' +
+                                    '<div class="card-body p-4">' +
+                                        '<h5 class="card-title mb-3 text-center"><i class="bi bi-info-circle text-primary"></i> Teacher Features</h5>' +
+                                        '<div class="row">' +
+                                            '<div class="col-md-6">' +
+                                                '<ul class="list-unstyled">' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> Create and manage polls</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> Create and manage quizzes</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> Create and manage word cloud activities</li>' +
+                                                '</ul>' +
+                                            '</div>' +
+                                            '<div class="col-md-6">' +
+                                                '<ul class="list-unstyled">' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> Create and manage short answers</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> View student submissions and grading</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-success"></i> Analytics and reporting</li>' +
+                                                '</ul>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+    }
+    
+    // Generate student-only interface
+    function generateStudentOnlyInterface(container) {
+        container.innerHTML = 
+            '<div class="container-fluid">' +
+                '<div class="text-center mb-5">' +
+                    '<h2 class="mb-3 fw-bold">Learning Activities</h2>' +
+                    '<p class="text-muted">Welcome, Student! Access your learning activities below.</p>' +
+                    '<div class="badge bg-primary fs-6 px-3 py-2">Student Mode</div>' +
+                '</div>' +
+                
+                '<div class="row justify-content-center">' +
+                    '<div class="col-lg-8">' +
+                        '<div class="row g-4">' +
+                            // 只显示Student活动按钮
+                            '<div class="col-md-6 offset-md-3">' +
+                                '<div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);">' +
+                                    '<div class="card-body text-white p-4 d-flex flex-column text-center">' +
+                                        '<div class="mb-3">' +
+                                            '<i class="bi bi-person-check display-1"></i>' +
+                                        '</div>' +
+                                        '<h4 class="card-title fw-bold mb-3">Student Activities</h4>' +
+                                        '<p class="card-text mb-4">Participate in learning activities, submit assignments, answer quizzes and surveys</p>' +
+                                        '<div class="mt-auto">' +
+                                            '<a href="student-activities.html" class="btn btn-light btn-lg rounded-pill px-4 fw-semibold">' +
+                                                '<i class="bi bi-arrow-right-circle"></i> Enter Student Activities' +
+                                            '</a>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        
+                        // Student功能说明
+                        '<div class="row mt-5">' +
+                            '<div class="col-12">' +
+                                '<div class="card border-0 shadow-sm rounded-4">' +
+                                    '<div class="card-body p-4">' +
+                                        '<h5 class="card-title mb-3 text-center"><i class="bi bi-info-circle text-primary"></i> Student Features</h5>' +
+                                        '<div class="row">' +
+                                            '<div class="col-md-6">' +
+                                                '<ul class="list-unstyled">' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> Participate in poll voting</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> Participate in quiz answering</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> Submit word cloud vocabulary</li>' +
+                                                '</ul>' +
+                                            '</div>' +
+                                            '<div class="col-md-6">' +
+                                                '<ul class="list-unstyled">' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> Answer short questions</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> View activity results</li>' +
+                                                    '<li class="mb-2"><i class="bi bi-check-circle text-primary"></i> Track your progress</li>' +
+                                                '</ul>' +
+                                            '</div>' +
+                                        '</div>' +
+                                    '</div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+    }
+    
+    // Generate login prompt for users without role
+    function generateLoginPrompt(container) {
+        container.innerHTML = 
+            '<div class="container-fluid">' +
+                '<div class="text-center py-5">' +
+                    '<div class="mb-4">' +
+                        '<i class="bi bi-person-circle text-muted" style="font-size: 4rem;"></i>' +
+                    '</div>' +
+                    '<h2 class="mb-3 fw-bold">Please Login First</h2>' +
+                    '<p class="text-muted mb-4">You need to login to access learning activities.</p>' +
+                    
+                    '<div class="row justify-content-center">' +
+                        '<div class="col-md-6">' +
+                            '<div class="alert alert-info">' +
+                                '<h6><i class="bi bi-info-circle"></i> Demo Accounts</h6>' +
+                                '<p class="mb-2"><strong>Teacher:</strong> <code>teacher1 / password123</code></p>' +
+                                '<p class="mb-0"><strong>Student:</strong> <code>student1 / password123</code></p>' +
+                            '</div>' +
+                            '<a href="/login.html" class="btn btn-primary btn-lg rounded-pill px-4">' +
+                                '<i class="bi bi-box-arrow-in-right"></i> Go to Login' +
+                            '</a>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+    }
+    
+    function getUserRole() {
+        console.log('🔍 Getting user role...');
+        
+        // Try to get role from localStorage
+        let role = localStorage.getItem('user_role');
+        console.log('📝 Role from localStorage:', role);
+        
+        // If no role found, try to get from userInfo
+        if (!role) {
+            const userInfo = localStorage.getItem('userInfo');
+            console.log('📝 UserInfo from localStorage:', userInfo);
+            if (userInfo) {
+                try {
+                    const parsed = JSON.parse(userInfo);
+                    role = parsed.role;
+                    console.log('📝 Role from userInfo:', role);
+                    // Also save to user_role for future use
+                    if (role) {
+                        localStorage.setItem('user_role', role);
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse userInfo:', e);
+                }
+            }
+        }
+        
+        // If still no role, try to get from username pattern
+        if (!role) {
+            const username = localStorage.getItem('username');
+            console.log('📝 Username from localStorage:', username);
+            if (username) {
+                const lowerUsername = username.toLowerCase();
+                // Check for teacher patterns
+                if (lowerUsername.includes('teacher') || 
+                    lowerUsername.includes('prof') || 
+                    lowerUsername.includes('dr.') ||
+                    lowerUsername.includes('instructor') ||
+                    lowerUsername.includes('faculty')) {
+                    role = 'teacher';
+                    console.log('📝 Role inferred from username: teacher');
+                } 
+                // Check for student patterns
+                else if (lowerUsername.includes('student') || 
+                         lowerUsername.includes('alice') ||
+                         lowerUsername.includes('bob') ||
+                         lowerUsername.includes('charlie') ||
+                         lowerUsername.includes('wang') ||
+                         lowerUsername.includes('chen') ||
+                         lowerUsername.includes('li')) {
+                    role = 'student';
+                    console.log('📝 Role inferred from username: student');
+                }
+                // Check if username starts with common teacher prefixes
+                else if (lowerUsername.startsWith('prof.') || 
+                         lowerUsername.startsWith('dr.') ||
+                         lowerUsername.startsWith('teacher')) {
+                    role = 'teacher';
+                    console.log('📝 Role inferred from username prefix: teacher');
+                }
+            }
+        }
+        
+        // Check if user is logged in (has access token)
+        const hasToken = localStorage.getItem('access_token');
+        console.log('🔑 Access token exists:', !!hasToken);
+        
+        if (!hasToken) {
+            console.log('❌ No access token found, user not logged in');
+            return null; // Return null if not logged in
+        }
+        
+        // Default to student if logged in but no specific role found
+        const finalRole = role || 'student';
+        console.log('✅ Final role determined:', finalRole);
+        return finalRole;
+    }
+    
+    // Update user display name in navbar
+    function updateUserDisplayName() {
+        const userNameEl = document.getElementById('user-name');
+        if (userNameEl) {
+            // Try to get username from localStorage
+            let displayName = localStorage.getItem('username');
+            
+            // If no username, try to get from userInfo
+            if (!displayName) {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    try {
+                        const parsed = JSON.parse(userInfo);
+                        displayName = parsed.name || parsed.username;
+                    } catch (e) {
+                        console.warn('Failed to parse userInfo for display name:', e);
+                    }
+                }
+            }
+            
+            // Update the display
+            if (displayName) {
+                userNameEl.textContent = displayName;
+                console.log('✅ Updated display name to:', displayName);
+            } else {
+                userNameEl.textContent = 'User';
+                console.log('⚠️ No username found, using default');
+            }
+        }
+    }
+    </script>
 </body>
 </html>

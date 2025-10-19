@@ -228,33 +228,46 @@ async function handleLogin(event) {
     spinner.classList.remove('d-none');
 
     try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        // For demo purposes, accept any credentials
-        const userData = {
-            username: username,
-            role: username.includes('prof') || username.includes('dr') ? 'teacher' : 'student',
-            name: getDisplayName(username)
-        };
+        // 调用真正的后端登录API
+        const response = await fetch('/api/security/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: mapDemoUsername(username), // 映射演示用户名到真实用户名
+                password: 'password123' // 统一使用这个密码
+            })
+        });
 
-        // Store user info
-        localStorage.setItem('userInfo', JSON.stringify(userData));
+        if (!response.ok) {
+            throw new Error('Login failed');
+        }
+
+        const loginData = await response.json();
+        console.log('Login successful:', loginData);
+
+        // 获取显示名称
+        const displayName = getDisplayName(username) || loginData.name || loginData.username;
         
-        // Store auth token for API requests
-        localStorage.setItem('authToken', 'test-token-for-development');
+        // 保存登录信息（使用教师管理页面期望的格式）
+        localStorage.setItem('access_token', loginData.access_token);
+        localStorage.setItem('username', displayName);  // 使用显示名称
+        localStorage.setItem('user_role', loginData.role);
+        localStorage.setItem('user_name', displayName);
         
-        // Store user data in format expected by our test pages
-        localStorage.setItem('user', JSON.stringify({
-            id: username,
-            username: username,
-            role: userData.role
+        // 兼容旧格式（如果其他页面需要）
+        localStorage.setItem('userInfo', JSON.stringify({
+            username: displayName,
+            role: loginData.role,
+            name: displayName,
+            actual_username: loginData.username  // 保存真实用户名用于后端API
         }));
         
         // Show success modal
         showSuccessModal();
         
-        // Redirect after modal is shown
+        // 登录成功后统一跳转到主页
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 2000);
@@ -268,6 +281,12 @@ async function handleLogin(event) {
         signinText.textContent = 'Sign In';
         spinner.classList.add('d-none');
     }
+}
+
+// 映射演示用户名到真实的后端用户名
+function mapDemoUsername(demoUsername) {
+    // 现在直接使用真实的用户名，不需要映射
+    return demoUsername;
 }
 
 function getDisplayName(username) {
@@ -405,16 +424,39 @@ function checkExistingLogin() {
     if (userInfo && authToken) {
         try {
             const userData = JSON.parse(userInfo);
-            showAlert(`Welcome back, ${userData.name || userData.username}! Redirecting...`, 'info');
-            setTimeout(() => {
-                window.location.href = 'index.html';
-            }, 1500);
+            // Don't auto-redirect - let user choose to login again or go back
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                const existingUserDiv = document.createElement('div');
+                existingUserDiv.className = 'alert alert-info mb-3';
+                existingUserDiv.innerHTML = `
+                    <h6><i class="bi bi-person-check"></i> 已登录用户</h6>
+                    <p>您已经以 <strong>${userData.name || userData.username}</strong> 的身份登录</p>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="window.location.href='index.html'">
+                            <i class="bi bi-house"></i> 返回主页
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="logout()">
+                            <i class="bi bi-box-arrow-right"></i> 切换账户
+                        </button>
+                    </div>
+                `;
+                loginForm.parentNode.insertBefore(existingUserDiv, loginForm);
+            }
         } catch (error) {
             localStorage.removeItem('userInfo');
             localStorage.removeItem('authToken');
             localStorage.removeItem('user');
         }
     }
+}
+
+// Logout function for switching accounts
+function logout() {
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    location.reload(); // Refresh the login page
 }
 
 // Handle browser back button and cleanup

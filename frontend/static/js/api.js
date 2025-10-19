@@ -5,7 +5,12 @@ Shared API utilities for all team members
 
 // API Client class
 class APIClient {
-    constructor(baseUrl = 'http://localhost:5001') {
+    constructor(baseUrl = null) {
+        // Auto-detect base URL to match current origin and avoid CORS issues
+        if (!baseUrl) {
+            baseUrl = `${window.location.protocol}//${window.location.host}`;
+        }
+        
         // Remove trailing slash if present
         let normalizedBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
 
@@ -42,6 +47,15 @@ class APIClient {
         const headers = {
             'Content-Type': 'application/json'
         };
+        
+        // Add JWT token if it exists
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+            console.log('Adding JWT token to request headers');
+        } else {
+            console.log('No JWT token found in localStorage');
+        }
         
         // Add CSRF token if it exists
         const csrfToken = this.getCookie('csrf_access_token');
@@ -115,6 +129,7 @@ class APIClient {
         try {
             showLoading(true);
             console.log(`Making API request to: ${url}`);
+            console.log('Request headers:', config.headers);
             const response = await fetch(url, config);
             
             // Try to parse JSON response, but handle non-JSON responses gracefully
@@ -137,27 +152,30 @@ class APIClient {
                 error.statusText = response.statusText;
                 error.data = data;
                 
-                // Handle specific status codes
+                // Handle specific status codes - log to console only, no user notifications
                 switch (response.status) {
                     case 400:
-                        showAlert('Bad Request: ' + (data.message || 'Invalid request'), 'warning');
+                        console.warn('Bad Request:', data.message || 'Invalid request');
                         break;
                     case 401:
-                        showAlert('Unauthorized: Please log in to continue', 'warning');
-                        // Optionally redirect to login page or refresh auth token
+                        // Expected when not logged in - just log silently
+                        console.debug('Authentication required for:', endpoint);
                         break;
                     case 403:
-                        showAlert('Forbidden: You do not have permission to access this resource', 'warning');
+                        console.warn('Access forbidden for:', endpoint);
                         break;
                     case 404:
-                        showAlert('Not Found: The requested resource does not exist', 'warning');
+                        console.warn('Resource not found:', endpoint);
                         break;
                     case 500:
-                        showAlert('Internal Server Error: Something went wrong on our end', 'danger');
+                        console.error('Server error for:', endpoint, data.message);
                         break;
                     default:
-                        showAlert('An error occurred: ' + (data.message || 'Unknown error'), 'danger');
+                        console.warn('Request failed:', response.status, endpoint, data.message || 'Unknown error');
+                        break;
                 }
+                
+                // Don't show any popup notifications for API errors
                 
                 throw error;
             }
@@ -171,10 +189,10 @@ class APIClient {
             // Network-level errors (like connection refused, timeout, etc.)
             if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
                 console.error('Network connection issue - server might be down or unreachable');
-                showAlert('Failed to connect to the server. Please check if the backend is running.', 'danger');
+                // Don't show popup for network errors - just log to console
             } else {
-                // Other API errors
-                showAlert(error.message || 'An unknown error occurred', 'danger');
+                // Other API errors - log to console only
+                console.error('API error:', error.message || 'An unknown error occurred');
             }
             
             throw error;
@@ -188,9 +206,52 @@ class APIClient {
         try {
             return await this.request(endpoint, { method: 'GET', ...options });
         } catch (error) {
-            // For learning activity endpoints, gracefully return empty array on failure
+            // For learning activity endpoints, gracefully handle failures
             if (endpoint.startsWith('/learning/') || endpoint.startsWith('/api/learning/')) {
-                console.warn(`Learning activity endpoint ${endpoint} failed, returning empty array:`, error);
+                console.warn(`Learning activity endpoint ${endpoint} failed:`, error);
+                
+                // For list endpoints (ending with / or ?), return empty array
+                if (endpoint.includes('?') || endpoint.endsWith('/')) {
+                    return [];
+                }
+                
+                // For individual activity endpoints, return a default object based on type
+                if (endpoint.includes('/quizzes/')) {
+                    return {
+                        id: endpoint.split('/').pop(),
+                        title: 'Sample Quiz (Offline)',
+                        description: 'This quiz is not available right now',
+                        questions: [],
+                        course_id: 'COMP5241',
+                        is_active: false
+                    };
+                } else if (endpoint.includes('/polls/')) {
+                    return {
+                        id: endpoint.split('/').pop(),
+                        question: 'Sample Poll (Offline)',
+                        options: [],
+                        course_id: 'COMP5241',
+                        is_active: false
+                    };
+                } else if (endpoint.includes('/wordclouds/')) {
+                    return {
+                        id: endpoint.split('/').pop(),
+                        title: 'Sample Word Cloud (Offline)',
+                        description: 'This word cloud is not available right now',
+                        course_id: 'COMP5241',
+                        is_active: false
+                    };
+                } else if (endpoint.includes('/shortanswers/')) {
+                    return {
+                        id: endpoint.split('/').pop(),
+                        question: 'Sample Short Answer (Offline)',
+                        description: 'This question is not available right now',
+                        course_id: 'COMP5241',
+                        is_active: false
+                    };
+                }
+                
+                // Default fallback
                 return [];
             }
             throw error;
@@ -322,6 +383,14 @@ const LearningActivitiesAPI = {
     
     submitQuiz: async (quizId, answers) => {
         return api.post(`/learning/quizzes/${quizId}/submit`, answers);
+    },
+    
+    updateQuiz: async (quizId, quizData) => {
+        return api.put(`/learning/quizzes/${quizId}`, quizData);
+    },
+    
+    getQuizResults: async (quizId) => {
+        return api.get(`/learning/quizzes/${quizId}/results`);
     },
     
     // Word Cloud endpoints
@@ -537,6 +606,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log('API connection successful:', health);
     } catch (error) {
         console.warn('API connection failed:', error.message);
-        showAlert('Backend API is not available. Please ensure the Flask server is running.', 'warning');
+        // Don't show popup for connection test failures - just log to console
     }
 });

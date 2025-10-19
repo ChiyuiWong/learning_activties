@@ -84,23 +84,71 @@ class LearningActivitiesManager {
 
     // Basic poll view (show poll question and options, allow teacher to view results)
     showPollInterface(poll) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         let html = `
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" onclick="learningActivities.showMyActivities()">
+                    ← 返回活动列表
+                </button>
+            </div>
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">📊 ${poll.question}</h5>
                 </div>
                 <div class="card-body">
-                    <ul class="list-group mb-3">
-                        ${poll.options.map((opt, idx) => `<li class="list-group-item">${idx+1}. ${opt.text} <span class="badge bg-secondary float-end">${opt.votes||0}</span></li>`).join('')}
-                    </ul>
+                    <p class="mb-3">选择一个选项进行投票：</p>
+                    <div class="mb-3">
+                        ${poll.options.map((opt, idx) => `
+                            <div class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+                                <span>${opt.text}</span>
+                                <div>
+                                    <span class="badge bg-secondary me-2">${opt.votes||0} 票</span>
+                                    <button class="btn btn-sm btn-primary" onclick="learningActivities.vote('${poll.id}', ${idx})">
+                                        投票
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="learningActivities.refreshCurrentView()">Refresh</button>
+                        <button class="btn btn-outline-primary" onclick="learningActivities.refreshPoll('${poll.id}')">刷新结果</button>
                     </div>
                 </div>
             </div>
         `;
         content.innerHTML = html;
+    }
+    
+    async vote(pollId, optionIndex) {
+        try {
+            console.log(`Voting on poll ${pollId}, option ${optionIndex}`);
+            
+            const response = await this.api.post(`/learning/polls/${pollId}/vote`, {
+                option_index: optionIndex
+            });
+            
+            this.showNotification('投票成功！', 'success');
+            
+            // Refresh the poll to show updated results
+            this.refreshPoll(pollId);
+            
+        } catch (error) {
+            console.error('Error voting:', error);
+            // Only show notification for non-auth errors
+            if (error.status !== 401) {
+                this.showNotification('投票失败，请稍后重试', 'error');
+            }
+        }
+    }
+    
+    async refreshPoll(pollId) {
+        try {
+            const poll = await this.api.get(`/learning/polls/${pollId}`);
+            this.showPollInterface(poll);
+        } catch (error) {
+            console.error('Error refreshing poll:', error);
+            // Don't show notification for refresh errors - they're not critical
+        }
     }
 
     // Show create form for different activity types
@@ -1055,15 +1103,29 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error loading my activities:', error);
-            content.innerHTML = `
-                <div class="alert alert-danger">
-                    <h6>Error Loading Activities</h6>
-                    <p>Unable to load your activities. Please try refreshing the page.</p>
-                    <button class="btn btn-outline-danger btn-sm" onclick="learningActivities.loadMyActivities()">
-                        Try Again
-                    </button>
-                </div>
-            `;
+            
+            // Show different messages based on error type
+            if (error.status === 401) {
+                content.innerHTML = `
+                    <div class="alert alert-info text-center">
+                        <h5><i class="bi bi-lock"></i> 需要登录</h5>
+                        <p>请先登录以查看您的学习活动</p>
+                        <a href="/login.html" class="btn btn-primary">
+                            <i class="bi bi-person-circle"></i> 立即登录
+                        </a>
+                    </div>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div class="alert alert-warning text-center">
+                        <h6>暂时无法加载活动</h6>
+                        <p>请稍后再试</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="learningActivities.loadMyActivities()">
+                            重新加载
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
     
@@ -1144,6 +1206,9 @@ class LearningActivitiesManager {
         };
         const color = colorMap[type] || 'secondary';
         
+        // Check if user is the creator (for delete button)
+        const isCreator = activity.created_by === this.api.userId || activity.created_by === window.currentUser?.id;
+        
         return `
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 border-${color}">
@@ -1155,9 +1220,14 @@ class LearningActivitiesManager {
                             <small class="text-muted">
                                 ${activity.expires_at ? `Expires: ${new Date(activity.expires_at).toLocaleDateString()}` : 'No deadline'}
                             </small>
-                            <button class="btn btn-${color}" onclick="learningActivities.openActivity('${type}', '${activity.id || activity._id}')">
-                                ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : type === 'poll' ? 'View Poll' : 'View Activity'}
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-${color}" onclick="learningActivities.openActivity('${type}', '${activity.id || activity._id}')">
+                                    ${type === 'quiz' ? 'Take Quiz' : type === 'wordcloud' ? 'Submit Words' : type === 'shortanswer' ? 'Answer' : type === 'poll' ? 'View Poll' : 'View Activity'}
+                                </button>
+                                ${isCreator ? `<button class="btn btn-outline-danger btn-sm" onclick="learningActivities.deleteActivity('${type}', '${activity.id || activity._id}')" title="Delete Activity">
+                                    <i class="bi bi-trash"></i>
+                                </button>` : ''}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1192,14 +1262,45 @@ class LearningActivitiesManager {
         console.log(`Opening ${type} activity: ${activityId}`);
         
         try {
+            // Map activity types to correct API endpoints
+            let endpoint;
+            switch(type) {
+                case 'quiz':
+                    endpoint = `/learning/quizzes/${activityId}`;
+                    break;
+                case 'poll':
+                    endpoint = `/learning/polls/${activityId}`;
+                    break;
+                case 'wordcloud':
+                    endpoint = `/learning/wordclouds/${activityId}`;
+                    break;
+                case 'shortanswer':
+                    endpoint = `/learning/shortanswers/${activityId}`;
+                    break;
+                default:
+                    throw new Error(`Unknown activity type: ${type}`);
+            }
+            
             // Load activity details
-            const activity = await this.api.get(`/learning/${type}s/${activityId}`);
+            const activity = await this.api.get(endpoint);
             this.currentActivity = { type, activity, id: activityId };
+            
+            // Check if we're in "my-activities" context
+            const myActivitiesContent = document.getElementById('my-activities-content');
+            const isInMyActivities = myActivitiesContent && !myActivitiesContent.closest('.d-none');
+            
+            if (isInMyActivities) {
+                // We're in "my-activities" page, so we need to ensure the interface shows in the right place
+                console.log('Opening activity in my-activities context');
+            }
             
             // Show activity interface based on type
             switch(type) {
                 case 'quiz':
                     this.showQuizInterface(activity);
+                    break;
+                case 'poll':
+                    this.showPollInterface(activity);
                     break;
                 case 'wordcloud':
                     this.showWordCloudInterface(activity);
@@ -1211,14 +1312,45 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error(`Error opening ${type} activity:`, error);
-            this.showNotification(`Error opening activity: ${error.message}`, 'error');
+            // Only show error notification for non-authentication errors
+            if (error.status !== 401) {
+                this.showNotification(`无法打开活动，请稍后重试`, 'error');
+            }
         }
     }
     
+    getActivityContainer() {
+        // Try to find the appropriate container for displaying activity content
+        let container = document.getElementById('activity-details-content');
+        
+        // If activity-details-content doesn't exist or is not visible, use my-activities-content
+        if (!container || container.closest('.d-none')) {
+            container = document.getElementById('my-activities-content');
+        }
+        
+        if (!container) {
+            // Fallback: create a temporary container
+            container = document.createElement('div');
+            container.className = 'container mt-4';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+    
+    showMyActivities() {
+        // Reload the activities list
+        this.loadMyActivities();
+    }
+    
     showQuizInterface(quiz) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         
         let html = `
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary" onclick="learningActivities.showMyActivities()">
+                    ← 返回活动列表
+                </button>
+            </div>
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0">📝 ${quiz.title}</h5>
@@ -1246,13 +1378,16 @@ class LearningActivitiesManager {
     
     async startQuiz(quizId) {
         try {
-            // Start quiz attempt
-            const attempt = await this.api.post(`/learning/quizzes/${quizId}/attempt`);
+            console.log('Starting quiz:', quizId);
             
-            // Load quiz questions
+            // Load quiz questions directly
             const quiz = await this.api.get(`/learning/quizzes/${quizId}`);
+            console.log('Quiz loaded:', quiz);
             
-            this.showQuizQuestions(quiz, attempt.attempt_id);
+            // Generate a simple attempt ID for tracking
+            const attemptId = 'attempt_' + Date.now();
+            
+            this.showQuizQuestions(quiz, attemptId);
             
         } catch (error) {
             console.error('Error starting quiz:', error);
@@ -1261,7 +1396,7 @@ class LearningActivitiesManager {
     }
     
     showQuizQuestions(quiz, attemptId) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         
         let html = `
             <div class="card">
@@ -1354,12 +1489,18 @@ class LearningActivitiesManager {
     
     async submitQuiz(quizId, attemptId) {
         try {
+            console.log('Submitting quiz:', quizId);
+            
             const form = document.getElementById('quiz-form');
-            const formData = new FormData(form);
+            if (!form) {
+                throw new Error('Quiz form not found');
+            }
             
             // Prepare answers
             const answers = [];
             const questions = document.querySelectorAll('.question-container');
+            
+            console.log('Found questions:', questions.length);
             
             questions.forEach((questionEl, index) => {
                 const selectedOptions = [];
@@ -1375,21 +1516,24 @@ class LearningActivitiesManager {
                 });
             });
             
+            console.log('Prepared answers:', answers);
+            
             // Submit quiz
             const result = await this.api.post(`/learning/quizzes/${quizId}/submit`, {
                 answers: answers
             });
             
+            console.log('Quiz submission result:', result);
             this.showQuizResults(result);
             
         } catch (error) {
             console.error('Error submitting quiz:', error);
-            this.showNotification('Error submitting quiz: ' + error.message, 'error');
+            this.showNotification('提交测验失败: ' + error.message, 'error');
         }
     }
     
     showQuizResults(result) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         
         const percentage = result.score_percentage || 0;
         const scoreColor = percentage >= 80 ? 'success' : percentage >= 60 ? 'warning' : 'danger';
@@ -1426,7 +1570,7 @@ class LearningActivitiesManager {
     }
     
     showWordCloudInterface(wordcloud) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         
         content.innerHTML = `
             <div class="card">
@@ -1457,6 +1601,11 @@ class LearningActivitiesManager {
                                 <!-- Word cloud visualization will appear here -->
                             </div>
                         </div>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-secondary" onclick="learningActivities.showMyActivities()">
+                            返回活动列表
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1496,16 +1645,222 @@ class LearningActivitiesManager {
             return;
         }
         
-        // Simple word cloud visualization using CSS
-        let html = '<div class="word-cloud">';
-        words.forEach(wordData => {
-            const frequency = wordData.frequency || 1;
-            const fontSize = Math.min(12 + frequency * 4, 28); // Scale font size based on frequency
-            html += `<span class="word-item" style="font-size: ${fontSize}px; margin: 5px;">${wordData.word}</span>`;
-        });
-        html += '</div>';
+        // Add anti-translation attributes to container
+        container.setAttribute('translate', 'no');
+        container.setAttribute('class', container.className + ' notranslate');
         
-        container.innerHTML = html;
+        // Detect language function
+        const detectLanguage = (text) => {
+            return /^[a-zA-Z\s\-'\.]+$/.test(text.trim()) ? 'english' : 'chinese';
+        };
+        
+        // Create canvas for professional word cloud
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 500;
+        canvas.style.cssText = `
+            width: 100%;
+            height: 500px;
+            max-width: 800px;
+            border: none;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        `;
+        canvas.setAttribute('translate', 'no');
+        canvas.className = 'notranslate';
+        
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas with gradient background
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#f8f9fa');
+        gradient.addColorStop(1, '#ffffff');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Sort words by frequency (highest first)
+        const sortedWords = words.sort((a, b) => {
+            const freqA = a.frequency || a.value || a.weight || 1;
+            const freqB = b.frequency || b.value || b.weight || 1;
+            return freqB - freqA;
+        });
+        
+        console.log('Rendering professional word cloud with words:', sortedWords.length, sortedWords);
+        
+        // Professional color palettes like the reference image
+        const professionalColors = [
+            '#8B5CF6', // Purple (like "Transform")
+            '#3B82F6', // Blue (like "Data") 
+            '#10B981', // Green (like "count")
+            '#F59E0B', // Orange (like "generator")
+            '#EF4444', // Red (like "font")
+            '#EC4899', // Pink (like "Into Insights")
+            '#6366F1', // Indigo (like "word")
+            '#84CC16', // Lime (like "visualize")
+            '#06B6D4', // Cyan (like "cloud")
+            '#8B5A2B', // Brown (like "print")
+            '#7C3AED', // Violet
+            '#059669'  // Emerald
+        ];
+        
+        // Advanced word cloud layout algorithm
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const placedWords = []; // Track placed words to avoid overlap
+        
+        sortedWords.forEach((wordData, index) => {
+            const frequency = wordData.frequency || wordData.value || wordData.weight || 1;
+            const text = wordData.text || wordData.word || String(wordData) || 'Unknown';
+            const language = detectLanguage(text);
+            
+            console.log(`Word ${index}:`, { text, frequency, wordData });
+            
+            // Calculate font size based on frequency (like the reference image)
+            let fontSize;
+            if (index === 0) {
+                fontSize = 72; // Largest word like "Data" and "Insights"
+            } else if (index < 3) {
+                fontSize = 56; // Second tier like "Transform", "Into"
+            } else if (index < 6) {
+                fontSize = 42; // Third tier
+            } else if (index < 10) {
+                fontSize = 32; // Fourth tier
+            } else {
+                fontSize = 24; // Smallest words
+            }
+            
+            // Adjust font size based on actual frequency
+            fontSize = Math.max(fontSize * (0.5 + frequency * 0.1), 20);
+            fontSize = Math.min(fontSize, 80);
+            
+            // Color selection
+            const color = professionalColors[index % professionalColors.length];
+            
+            // Find position using improved layout algorithm
+            let x, y, attempts = 0;
+            let positioned = false;
+            
+            while (!positioned && attempts < 150) {
+                if (attempts === 0 && index === 0) {
+                    // First word goes in center
+                    x = centerX;
+                    y = centerY;
+                } else {
+                    // Use golden angle spiral for natural distribution
+                    const angle = attempts * 137.5 * Math.PI / 180; // Golden angle
+                    const radius = Math.sqrt(attempts) * 25; // Spiral outward more gradually
+                    x = centerX + Math.cos(angle) * radius;
+                    y = centerY + Math.sin(angle) * radius;
+                    
+                    // Keep within canvas bounds with padding
+                    const padding = fontSize / 2;
+                    x = Math.max(padding, Math.min(canvas.width - padding, x));
+                    y = Math.max(padding, Math.min(canvas.height - padding, y));
+                }
+                
+                // Improved collision detection
+                let collision = false;
+                for (let placed of placedWords) {
+                    const dx = x - placed.x;
+                    const dy = y - placed.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const minDistance = (fontSize + placed.fontSize) * 0.5; // Closer packing
+                    
+                    if (distance < minDistance) {
+                        collision = true;
+                        break;
+                    }
+                }
+                
+                if (!collision) {
+                    positioned = true;
+                    placedWords.push({ x, y, fontSize, text });
+                }
+                attempts++;
+            }
+            
+            // If still not positioned after many attempts, place it anyway
+            if (!positioned) {
+                x = centerX + (Math.random() - 0.5) * canvas.width * 0.8;
+                y = centerY + (Math.random() - 0.5) * canvas.height * 0.8;
+                placedWords.push({ x, y, fontSize, text });
+            }
+            
+            // No rotation - keep all words horizontal like in the reference image
+            const rotation = 0;
+            
+            // Draw the word
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            // Font styling (Impact font like professional word clouds)
+            ctx.font = `bold ${fontSize}px Impact, "Arial Black", sans-serif`;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Add subtle shadow for depth
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+            ctx.shadowBlur = 3;
+            ctx.shadowOffsetX = 1;
+            ctx.shadowOffsetY = 1;
+            
+            // Draw the word
+            ctx.fillText(text, 0, 0);
+            
+            // Add subtle stroke for better visibility
+            ctx.shadowColor = 'transparent';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.strokeText(text, 0, 0);
+            
+            ctx.restore();
+        });
+        
+        // Create container
+        container.innerHTML = '';
+        
+        const mainContainer = document.createElement('div');
+        mainContainer.className = 'word-cloud-container notranslate';
+        mainContainer.setAttribute('translate', 'no');
+        mainContainer.style.textAlign = 'center';
+        
+        const canvasContainer = document.createElement('div');
+        canvasContainer.className = 'canvas-container';
+        canvasContainer.style.marginBottom = '15px';
+        canvasContainer.appendChild(canvas);
+        
+        // Statistics
+        const englishWords = sortedWords.filter(w => detectLanguage(w.text || w.word || String(w)) === 'english');
+        const chineseWords = sortedWords.filter(w => detectLanguage(w.text || w.word || String(w)) === 'chinese');
+        
+        const statsContainer = document.createElement('div');
+        statsContainer.className = 'word-cloud-stats';
+        statsContainer.innerHTML = `
+            <small class="text-muted">
+                <span class="badge bg-primary me-2">${englishWords.length} English</span>
+                <span class="badge bg-success me-2">${chineseWords.length} Chinese</span>
+                <span class="badge bg-secondary">${words.length} Total Words</span>
+            </small>
+        `;
+        
+        mainContainer.appendChild(canvasContainer);
+        mainContainer.appendChild(statsContainer);
+        container.appendChild(mainContainer);
+        
+        // Force disable translation
+        setTimeout(() => {
+            container.setAttribute('translate', 'no');
+            container.querySelectorAll('*').forEach(element => {
+                element.setAttribute('translate', 'no');
+            });
+        }, 100);
+        
+        console.log('Professional word cloud rendered successfully!');
     }
     
     async submitWord(wordcloudId) {
@@ -1530,12 +1885,15 @@ class LearningActivitiesManager {
             
         } catch (error) {
             console.error('Error submitting word:', error);
-            this.showNotification('Error submitting word: ' + error.message, 'error');
+            // Only show notification for non-auth errors
+            if (error.status !== 401) {
+                this.showNotification('提交失败，请稍后重试', 'error');
+            }
         }
     }
     
     showShortAnswerInterface(question) {
-        const content = document.getElementById('activity-details-content');
+        const content = this.getActivityContainer();
         
         content.innerHTML = `
             <div class="card">
@@ -1544,7 +1902,7 @@ class LearningActivitiesManager {
                 </div>
                 <div class="card-body">
                     <h6>Question:</h6>
-                    <p class="lead">${question.question}</p>
+                    <p class="lead">${question.text || question.question}</p>
                     
                     ${question.answer_hint ? `
                         <div class="alert alert-info">
@@ -1669,18 +2027,65 @@ class LearningActivitiesManager {
         // Convert to minutes and round up to ensure minimum time is met
         return Math.ceil(seconds / 60);
     }
+    
+    /**
+     * Delete an activity
+     * @param {string} type - Activity type (quiz, poll, shortanswer, wordcloud)
+     * @param {string} activityId - ID of the activity to delete
+     */
+    async deleteActivity(type, activityId) {
+        try {
+            // Confirm deletion
+            const confirmMessage = `Are you sure you want to delete this ${type}? This action cannot be undone.`;
+            if (!confirm(confirmMessage)) {
+                return;
+            }
+            
+            // Show loading state
+            this.showNotification('Deleting activity...', 'info');
+            
+            // Call the appropriate delete endpoint
+            let endpoint;
+            switch(type) {
+                case 'quiz':
+                    endpoint = `/learning/delete/quizzes/${activityId}`;
+                    break;
+                case 'poll':
+                    endpoint = `/learning/delete/polls/${activityId}`;
+                    break;
+                case 'shortanswer':
+                    endpoint = `/learning/delete/shortanswers/${activityId}`;
+                    break;
+                case 'wordcloud':
+                    endpoint = `/learning/delete/wordclouds/${activityId}`;
+                    break;
+                default:
+                    throw new Error(`Unknown activity type: ${type}`);
+            }
+            
+            // Make the delete request
+            const response = await this.api.delete(endpoint);
+            
+            if (response && response.message) {
+                this.showNotification(response.message, 'success');
+                
+                // Refresh the current view
+                this.refreshCurrentView();
+                
+                // If we're in a detail view, go back to overview
+                if (this.currentView === 'detail') {
+                    this.switchView('overview');
+                }
+            } else {
+                throw new Error('Delete request failed');
+            }
+            
+        } catch (error) {
+            console.error(`Error deleting ${type} activity:`, error);
+            this.showNotification(`Failed to delete ${type}: ${error.message}`, 'error');
+        }
+    }
 }
 
 // Initialize learning activities when DOM is ready
-let learningActivities;
-document.addEventListener('DOMContentLoaded', function() {
-    // Wait for API client to be available
-    setTimeout(() => {
-        if (typeof api !== 'undefined') {
-            learningActivities = new LearningActivitiesManager(api);
-            console.log('Learning Activities Manager initialized');
-        } else {
-            console.error('API client not available for Learning Activities Manager');
-        }
-    }, 100);
-});
+// Note: learningActivities is initialized in main.js to avoid conflicts

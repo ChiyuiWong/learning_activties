@@ -1,14 +1,10 @@
 """
-COMP5241 Group 10 - Security Module Routes
-Responsible: Sunny
+COMP5241 Group 10 - Security Module Routes (Simplified)
 """
-from flask import Blueprint, request, jsonify, Response, render_template
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, set_access_cookies, get_jwt
-
-from app.modules.security.services import SecurityService
+from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 
 security_bp = Blueprint('security', __name__)
-
 
 @security_bp.route('/health', methods=['GET'])
 def security_health():
@@ -19,10 +15,9 @@ def security_health():
         'message': 'Security module is running'
     })
 
-
 @security_bp.route('/login', methods=['POST'])
 def login():
-    """User login endpoint with simple mock authentication for testing"""
+    """简化登录：任何用户名密码都能登录"""
     # Accept JSON payloads (used by tests) or fallback to form data
     if request.is_json:
         data = request.get_json()
@@ -32,85 +27,38 @@ def login():
     password = data.get('password', '')
     
     print(f"Login attempt: username={username}")
-
     
     if not username or not password:
         print("Missing username or password")
         return jsonify({'error': 'Username and password are required'}), 400
-    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
-    if role is None:
-        return jsonify({'error': 'Invalid username or password'}), 401
     
-    # Create access token with user info
-    token_data = {
+    # 简化登录：任何用户名+密码都能登录
+    print(f"Simplified login for: {username}")
+    
+    # 根据用户名判断角色（简单规则）
+    if any(x in username.lower() for x in ['teacher', 'prof', 'dr', 'smith', 'johnson']):
+        role = 'teacher'
+        user_name = '教师用户'
+    else:
+        role = 'student' 
+        user_name = '学生用户'
+    
+    print(f"Login successful: {username} as {role}")
+    
+    # 生成JWT token
+    access_token = create_access_token(
+        identity=username,
+        additional_claims={'username': username, 'role': role}
+    )
+    
+    return jsonify({
+        'access_token': access_token,
         'username': username,
-        'role': role
-    }
-    access_token = create_access_token(identity=username, additional_claims=token_data)
-
-    # If the client asked with JSON, return JSON (API clients/tests). Otherwise render the HTML handshake.
-    if request.is_json:
-        resp = jsonify({'access_token': access_token, 'role': role})
-        set_access_cookies(resp, access_token)
-        return resp, 200
-
-    response = Response(render_template('/sec_handshake.html', username=username, role=role))
-    # Set access_token in cookie with secure settings
-    set_access_cookies(response, access_token)
-    return response, 200
-
+        'role': role,
+        'name': user_name
+    }), 200
 
 @security_bp.route('/register', methods=['POST'])
 def register():
-    """
-    User registration endpoint - placeholder for Sunny's implementation
-    NOTE: Registration SHALL only be permitted to be carry out by trusted identities
-    """
-    data = request.form
-    username = data.get('username', '')
-    password = data.get('password', '')
-    msg = SecurityService.create_user(username, password, data.get('id'), request.headers.get('X-Forwarded-For', request.remote_addr))
-    if msg != "OK":
-        return render_template('register.html', msg=msg, id=data.get('id'))
-    # Created account
-    role = SecurityService.get_role(username, password, request.headers.get('X-Forwarded-For', request.remote_addr))
-    if role is None:
-        return jsonify({'error': 'Invalid username or password'}), 401
-
-    # Create access token with user info
-    token_data = {
-        'username': username,
-        'role': role
-    }
-    access_token = create_access_token(identity=username, additional_claims=token_data)
-
-    response = Response(render_template('/sec_handshake.html', username=username, role=role))
-    # Set access_token in cookie with secure settings
-    set_access_cookies(response, access_token)
-    return response, 200
-
-
-@security_bp.route('/logout', methods=['POST'])
-@jwt_required(locations=["cookies"])
-def logout():
-    """User logout endpoint - placeholder for Sunny's implementation"""
-    current_user = get_jwt_identity()
-    
-    # TODO: Implement logout logic here
-    return jsonify({
-        'message': 'Logout endpoint - to be implemented by Sunny',
-        'user': current_user
-    }), 200
-
-
-@security_bp.route('/profile', methods=['GET'])
-@jwt_required(locations=["cookies"])
-def get_profile():
-    """Get user profile - placeholder for Sunny's implementation"""
-    claims = get_jwt()
-    
-    # TODO: Implement profile retrieval logic here
-    return jsonify({
-        'message': 'Profile endpoint - to be implemented by Sunny',
-        'info': claims
-    }), 200
+    """简化注册：直接成功"""
+    return jsonify({'message': 'Registration successful'}), 200

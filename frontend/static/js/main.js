@@ -40,8 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeApp() {
     console.log('Initializing COMP5241 LMS Application...');
     
-    // Initialize API client
-    const apiClient = new APIClient('http://localhost:5001');
+    // Initialize API client (auto-detect base URL to avoid CORS issues)
+    window.api = new APIClient();
+    const apiClient = window.api;
     
     // Initialize Learning Activities Manager
     window.learningActivities = new LearningActivitiesManager(apiClient);

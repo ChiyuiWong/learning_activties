@@ -14,7 +14,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')
     
     # Development settings - WARNING: Set to False in production!
-    DISABLE_AUTH = os.environ.get('DISABLE_AUTH', 'true').lower() == 'true'
+    DISABLE_AUTH = os.environ.get('DISABLE_AUTH', 'true').lower() == 'true'  # 开发模式默认禁用认证
     
     # JWT settings
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-key')
