@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>清除缓存指南</title>
+    <style>
+        body { font-family: Arial; margin: 40px; max-width: 800px; }
+        .step { background: #f0f0f0; padding: 20px; margin: 20px 0; border-radius: 8px; }
+        .highlight { background: #ffeb3b; padding: 2px 5px; }
+        button { padding: 15px 30px; font-size: 16px; margin: 10px; cursor: pointer; }
+        .primary { background: #007bff; color: white; border: none; border-radius: 5px; }
+        .success { background: #28a745; color: white; border: none; border-radius: 5px; }
+        .warning { background: #ffc107; color: black; border: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 清除浏览器缓存指南</h1>
+    
+    <div class="step">
+        <h2>问题原因</h2>
+        <p>您的浏览器缓存了旧版本的JavaScript文件，这些文件没有JWT token传递功能，导致API请求总是返回401错误。</p>
+    </div>
+    
+    <div class="step">
+        <h2>解决方案1：使用临时页面（推荐）</h2>
+        <p>我们创建了一个临时教师管理页面，它完全绕过缓存问题：</p>
+        <button class="primary" onclick="window.open('emergency-fix.html', '_blank')">
+            步骤1: 打开紧急登录页面
+        </button>
+        <button class="success" onclick="window.open('temp-teacher.html', '_blank')">
+            步骤2: 打开临时教师页面
+        </button>
+    </div>
+    
+    <div class="step">
+        <h2>解决方案2：清除浏览器缓存</h2>
+        <h3>方法A: 键盘快捷键（最快）</h3>
+        <ul>
+            <li>按 <span class="highlight">Ctrl + Shift + R</span> 或 <span class="highlight">Ctrl + F5</span> 进行硬刷新</li>
+            <li>这会清除当前页面的缓存并重新加载</li>
+        </ul>
+        
+        <h3>方法B: 开发者工具</h3>
+        <ol>
+            <li>按 <span class="highlight">F12</span> 打开开发者工具</li>
+            <li>右键点击浏览器的刷新按钮</li>
+            <li>选择"清空缓存并硬性重新加载"</li>
+        </ol>
+        
+        <h3>方法C: 清除浏览器数据</h3>
+        <ol>
+            <li>按 <span class="highlight">Ctrl + Shift + Delete</span></li>
+            <li>选择"缓存的图片和文件"</li>
+            <li>点击"清除数据"</li>
+        </ol>
+        
+        <button class="warning" onclick="clearCache()">自动清除缓存并重新加载</button>
+    </div>
+    
+    <div class="step">
+        <h2>解决方案3：使用无痕模式</h2>
+        <ul>
+            <li>Chrome: 按 <span class="highlight">Ctrl + Shift + N</span></li>
+            <li>Firefox: 按 <span class="highlight">Ctrl + Shift + P</span></li>
+            <li>Edge: 按 <span class="highlight">Ctrl + Shift + N</span></li>
+        </ul>
+        <p>在无痕窗口中访问应用，不会受到缓存影响</p>
+    </div>
+    
+    <div class="step">
+        <h2>验证是否修复成功</h2>
+        <p>清除缓存后，打开教师页面时应该看到：</p>
+        <ul>
+            <li>✅ 浏览器控制台显示: "Adding JWT token to request headers"</li>
+            <li>✅ API请求返回200状态码，而不是401</li>
+            <li>✅ 页面正常显示活动列表，而不是登录提示</li>
+        </ul>
+    </div>
+
+    <script>
+        function clearCache() {
+            // 清除localStorage
+            localStorage.clear();
+            
+            // 尝试清除缓存API
+            if ('caches' in window) {
+                caches.keys().then(function(names) {
+                    names.forEach(function(name) {
+                        caches.delete(name);
+                    });
+                });
+            }
+            
+            alert('缓存已清除！页面将在3秒后重新加载...');
+            
+            setTimeout(function() {
+                window.location.href = 'emergency-fix.html';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

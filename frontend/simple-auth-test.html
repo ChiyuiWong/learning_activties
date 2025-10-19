@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>简单认证测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .step { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        button { margin: 5px; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>简单认证测试</h1>
+    
+    <div class="step">
+        <h3>步骤1: 清空并登录</h3>
+        <button onclick="clearStorage()">清空存储</button>
+        <button onclick="login()">登录教师</button>
+        <div id="step1"></div>
+    </div>
+    
+    <div class="step">
+        <h3>步骤2: 检查状态</h3>
+        <button onclick="checkStorage()">检查存储</button>
+        <button onclick="testAPI()">测试API</button>
+        <div id="step2"></div>
+    </div>
+    
+    <div class="step">
+        <h3>步骤3: 访问页面</h3>
+        <button onclick="openTeacher()">打开教师页面</button>
+        <div id="step3"></div>
+    </div>
+
+    <script>
+        // 直接创建API客户端，不依赖其他文件
+        class SimpleAPIClient {
+            constructor() {
+                this.baseUrl = window.location.protocol + '//' + window.location.host;
+            }
+            
+            getHeaders() {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                    console.log('✅ 添加JWT token到请求头');
+                } else {
+                    console.log('❌ 未找到JWT token');
+                }
+                return headers;
+            }
+            
+            async request(endpoint, options = {}) {
+                const url = `${this.baseUrl}/api${endpoint}`;
+                const config = {
+                    headers: this.getHeaders(),
+                    ...options
+                };
+                
+                console.log('发送请求到:', url);
+                console.log('请求头:', config.headers);
+                
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(`${response.status}: ${data.message || 'API请求失败'}`);
+                }
+                
+                return data;
+            }
+            
+            async post(endpoint, body) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+            }
+            
+            async get(endpoint) {
+                return this.request(endpoint, { method: 'GET' });
+            }
+        }
+        
+        const api = new SimpleAPIClient();
+        
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('step1').innerHTML = '<span style="color: green;">✅ 存储已清空</span>';
+        }
+        
+        async function login() {
+            try {
+                const response = await api.post('/security/login', {
+                    username: 'teacher1',
+                    password: 'password123'
+                });
+                
+                localStorage.setItem('access_token', response.access_token);
+                localStorage.setItem('username', response.username);
+                localStorage.setItem('user_role', response.role);
+                localStorage.setItem('user_name', response.name);
+                
+                document.getElementById('step1').innerHTML = '<span style="color: green;">✅ 登录成功</span>';
+                console.log('登录成功:', response);
+                
+            } catch (error) {
+                document.getElementById('step1').innerHTML = '<span style="color: red;">❌ 登录失败: ' + error.message + '</span>';
+                console.error('登录失败:', error);
+            }
+        }
+        
+        function checkStorage() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            const role = localStorage.getItem('user_role');
+            
+            const result = `Token: ${token ? '存在' : '缺失'}, 用户: ${username || '无'}, 角色: ${role || '无'}`;
+            document.getElementById('step2').innerHTML = result;
+            console.log('存储状态:', { token: token ? '存在' : '缺失', username, role });
+        }
+        
+        async function testAPI() {
+            try {
+                const result = await api.get('/learning/polls/?course_id=COMP5241');
+                document.getElementById('step2').innerHTML += '<br><span style="color: green;">✅ API请求成功，返回 ' + result.length + ' 个投票</span>';
+                console.log('API请求成功:', result);
+                
+            } catch (error) {
+                document.getElementById('step2').innerHTML += '<br><span style="color: red;">❌ API请求失败: ' + error.message + '</span>';
+                console.error('API请求失败:', error);
+            }
+        }
+        
+        function openTeacher() {
+            window.open('teacher-activities.html', '_blank');
+            document.getElementById('step3').innerHTML = '已打开教师页面';
+        }
+    </script>
+</body>
+</html>

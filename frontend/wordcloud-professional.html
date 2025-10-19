@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" translate="no" class="notranslate">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta name="translate" content="no">
+    <title>Professional Word Cloud - COMP5241</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .wordcloud-canvas {
+            width: 100%;
+            height: 400px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .no-translate {
+            translate: no !important;
+        }
+        
+        .stats-row {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="no-translate">
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-12">
+                <h2 class="text-center mb-4">Professional Word Cloud</h2>
+                
+                <!-- Stats -->
+                <div class="stats-row">
+                    <div class="row text-center">
+                        <div class="col-3">
+                            <h4 id="total-count">0</h4>
+                            <small class="text-muted">Total Words</small>
+                        </div>
+                        <div class="col-3">
+                            <h4 id="english-count">0</h4>
+                            <small class="text-muted">English</small>
+                        </div>
+                        <div class="col-3">
+                            <h4 id="chinese-count">0</h4>
+                            <small class="text-muted">Chinese</small>
+                        </div>
+                        <div class="col-3">
+                            <button class="btn btn-primary btn-sm" onclick="loadData()">Refresh</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Word Cloud Canvas -->
+                <div class="text-center">
+                    <canvas id="wordcloud" class="wordcloud-canvas"></canvas>
+                </div>
+                
+                <!-- Word List -->
+                <div class="mt-4">
+                    <h5>Word List:</h5>
+                    <div id="word-list" class="no-translate">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const WORDCLOUD_ID = '68f1d0c27a93ac676124ea2d';
+        let words = [];
+        
+        // Prevent translation
+        document.documentElement.setAttribute('translate', 'no');
+        
+        function detectLanguage(text) {
+            return /^[a-zA-Z\s\-'\.]+$/.test(text.trim()) ? 'english' : 'chinese';
+        }
+        
+        async function loadData() {
+            try {
+                const response = await fetch(`/api/learning/wordclouds/${WORDCLOUD_ID}/results`);
+                const data = await response.json();
+                
+                words = data.words || [];
+                console.log('Loaded words:', words);
+                
+                updateStats();
+                updateWordList();
+                renderWordCloud();
+                
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('word-list').innerHTML = 'Error loading data: ' + error.message;
+            }
+        }
+        
+        function updateStats() {
+            const english = words.filter(w => detectLanguage(w.text) === 'english');
+            const chinese = words.filter(w => detectLanguage(w.text) === 'chinese');
+            
+            document.getElementById('total-count').textContent = words.length;
+            document.getElementById('english-count').textContent = english.length;
+            document.getElementById('chinese-count').textContent = chinese.length;
+        }
+        
+        function updateWordList() {
+            const container = document.getElementById('word-list');
+            if (words.length === 0) {
+                container.innerHTML = 'No words found';
+                return;
+            }
+            
+            const html = words.map(word => {
+                const lang = detectLanguage(word.text);
+                const color = lang === 'english' ? 'primary' : 'success';
+                return `<span class="badge bg-${color} me-2 mb-2 no-translate">${word.text} (${word.value})</span>`;
+            }).join('');
+            
+            container.innerHTML = html;
+        }
+        
+        function renderWordCloud() {
+            const canvas = document.getElementById('wordcloud');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 400;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (words.length === 0) {
+                ctx.fillStyle = '#666';
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('No words to display', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            // Professional word cloud layout
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+            
+            // Color palettes
+            const englishColors = ['#8B5CF6', '#3B82F6', '#10B981', '#6366F1'];
+            const chineseColors = ['#F59E0B', '#EF4444', '#EC4899', '#F97316'];
+            
+            words.forEach((word, index) => {
+                const lang = detectLanguage(word.text);
+                const fontSize = Math.max(16 + word.value * 12, 20);
+                
+                // Spiral layout algorithm
+                const angle = index * 137.5 * Math.PI / 180; // Golden angle
+                const radius = Math.sqrt(index) * 25;
+                const x = centerX + Math.cos(angle) * Math.min(radius, maxRadius);
+                const y = centerY + Math.sin(angle) * Math.min(radius, maxRadius);
+                
+                ctx.save();
+                ctx.translate(x, y);
+                
+                // Random rotation for visual appeal
+                if (Math.random() > 0.7) {
+                    ctx.rotate((Math.random() - 0.5) * Math.PI / 3);
+                }
+                
+                // Set font and color
+                ctx.font = `bold ${fontSize}px Impact, Arial Black, sans-serif`;
+                ctx.fillStyle = lang === 'english' 
+                    ? englishColors[index % englishColors.length]
+                    : chineseColors[index % chineseColors.length];
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // Add shadow for depth
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 3;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+                
+                // Draw the word
+                ctx.fillText(word.text, 0, 0);
+                
+                ctx.restore();
+            });
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            
+            // Auto-refresh every 30 seconds
+            setInterval(loadData, 30000);
+        });
+        
+        // Handle resize
+        window.addEventListener('resize', function() {
+            setTimeout(renderWordCloud, 100);
+        });
+    </script>
+</body>
+</html>
+

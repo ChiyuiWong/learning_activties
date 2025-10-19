@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词云调试页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .word-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+        .english-word {
+            background: #28a745;
+        }
+        .chinese-word {
+            background: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>词云数据调试页面</h2>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>提交新词汇</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">词云ID:</label>
+                            <input type="text" id="wordcloud-id" class="form-control" value="68f1d0c27a93ac676124ea2d">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">词汇:</label>
+                            <input type="text" id="word-input" class="form-control" placeholder="输入英文或中文词汇">
+                        </div>
+                        <button onclick="submitWord()" class="btn btn-primary">提交词汇</button>
+                        <button onclick="loadWordCloud()" class="btn btn-secondary">刷新词云</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>词云统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="stats">
+                            <p>总词汇数: <span id="total-words">-</span></p>
+                            <p>英文词汇数: <span id="english-words">-</span></p>
+                            <p>中文词汇数: <span id="chinese-words">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>词云可视化</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="wordcloud-display" class="text-center p-4">
+                            点击"刷新词云"加载数据
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>原始数据 (JSON)</h5>
+                    </div>
+                    <div class="card-body">
+                        <pre id="raw-data" class="bg-light p-3" style="max-height: 300px; overflow-y: auto;">
+                            暂无数据
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 检测是否为英文词汇
+        function isEnglish(text) {
+            return /^[a-zA-Z\s\-]+$/.test(text);
+        }
+        
+        // 提交词汇
+        async function submitWord() {
+            const wordcloudId = document.getElementById('wordcloud-id').value;
+            const word = document.getElementById('word-input').value.trim();
+            
+            if (!word) {
+                alert('请输入词汇');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/learning/wordclouds/${wordcloudId}/submit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ word: word })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(`提交成功! 词汇: "${word}"`);
+                    document.getElementById('word-input').value = '';
+                    // 自动刷新词云
+                    setTimeout(loadWordCloud, 500);
+                } else {
+                    alert(`提交失败: ${result.error || '未知错误'}`);
+                }
+            } catch (error) {
+                alert(`网络错误: ${error.message}`);
+            }
+        }
+        
+        // 加载词云数据
+        async function loadWordCloud() {
+            const wordcloudId = document.getElementById('wordcloud-id').value;
+            
+            try {
+                const response = await fetch(`/api/learning/wordclouds/${wordcloudId}/results`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayWordCloud(data);
+                    updateStats(data);
+                    document.getElementById('raw-data').textContent = JSON.stringify(data, null, 2);
+                } else {
+                    alert(`加载失败: ${data.error || '未知错误'}`);
+                }
+            } catch (error) {
+                alert(`网络错误: ${error.message}`);
+            }
+        }
+        
+        // 显示词云
+        function displayWordCloud(data) {
+            const container = document.getElementById('wordcloud-display');
+            const words = data.words || [];
+            
+            if (words.length === 0) {
+                container.innerHTML = '<p class="text-muted">暂无词汇数据</p>';
+                return;
+            }
+            
+            let html = '';
+            words.forEach(word => {
+                const isEng = isEnglish(word.text);
+                const className = isEng ? 'english-word' : 'chinese-word';
+                const size = Math.max(12, Math.min(24, 12 + word.value * 2));
+                
+                html += `<span class="word-item ${className}" style="font-size: ${size}px;" title="出现次数: ${word.value}">
+                    ${word.text}
+                </span>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // 更新统计信息
+        function updateStats(data) {
+            const words = data.words || [];
+            const englishWords = words.filter(w => isEnglish(w.text));
+            const chineseWords = words.filter(w => !isEnglish(w.text));
+            
+            document.getElementById('total-words').textContent = words.length;
+            document.getElementById('english-words').textContent = englishWords.length;
+            document.getElementById('chinese-words').textContent = chineseWords.length;
+        }
+        
+        // 页面加载时自动加载词云
+        window.addEventListener('load', loadWordCloud);
+        
+        // 回车提交
+        document.getElementById('word-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                submitWord();
+            }
+        });
+    </script>
+</body>
+</html>
+
