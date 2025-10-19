@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录流程测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>登录流程测试</h2>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>快速登录</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary mb-2" onclick="loginAsTeacher()">登录为教师</button><br>
+                        <button class="btn btn-success mb-2" onclick="loginAsStudent()">登录为学生</button><br>
+                        <button class="btn btn-warning mb-2" onclick="checkLoginStatus()">检查登录状态</button><br>
+                        <button class="btn btn-danger mb-2" onclick="logout()">退出登录</button>
+                        <div id="loginResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>测试创建功能</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="testCreatePoll()">测试创建投票</button>
+                        <div id="createResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>快速访问</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="teacher-activities.html" class="btn btn-outline-primary me-2">教师管理页面</a>
+                        <a href="student-activities.html" class="btn btn-outline-success me-2">学生活动页面</a>
+                        <a href="login.html" class="btn btn-outline-info me-2">登录页面</a>
+                        <a href="index.html" class="btn btn-outline-secondary">首页</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/api.js"></script>
+    <script src="static/js/main.js"></script>
+    
+    <script>
+        let api;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                api = window.api || new APIClient();
+                checkLoginStatus();
+            }, 200);
+        });
+        
+        async function loginAsTeacher() {
+            try {
+                const response = await api.post('/security/login', {
+                    username: 'teacher1',
+                    password: 'password123'
+                });
+                
+                // 保存登录信息
+                localStorage.setItem('access_token', response.access_token);
+                localStorage.setItem('username', response.username);
+                localStorage.setItem('user_role', response.role);
+                localStorage.setItem('user_name', response.name);
+                
+                document.getElementById('loginResult').innerHTML = 
+                    '<div class="alert alert-success">教师登录成功！</div>';
+                checkLoginStatus();
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    '<div class="alert alert-danger">登录失败: ' + error.message + '</div>';
+            }
+        }
+        
+        async function loginAsStudent() {
+            try {
+                const response = await api.post('/security/login', {
+                    username: 'student1',
+                    password: 'password123'
+                });
+                
+                // 保存登录信息
+                localStorage.setItem('access_token', response.access_token);
+                localStorage.setItem('username', response.username);
+                localStorage.setItem('user_role', response.role);
+                localStorage.setItem('user_name', response.name);
+                
+                document.getElementById('loginResult').innerHTML = 
+                    '<div class="alert alert-success">学生登录成功！</div>';
+                checkLoginStatus();
+            } catch (error) {
+                document.getElementById('loginResult').innerHTML = 
+                    '<div class="alert alert-danger">登录失败: ' + error.message + '</div>';
+            }
+        }
+        
+        function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            const role = localStorage.getItem('user_role');
+            
+            if (token && username && role) {
+                document.getElementById('loginResult').innerHTML = 
+                    `<div class="alert alert-info">
+                        <strong>已登录:</strong><br>
+                        用户名: ${username}<br>
+                        角色: ${role}<br>
+                        Token: ${token.substring(0, 50)}...
+                    </div>`;
+            } else {
+                document.getElementById('loginResult').innerHTML = 
+                    '<div class="alert alert-warning">未登录</div>';
+            }
+        }
+        
+        function logout() {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+            
+            document.getElementById('loginResult').innerHTML = 
+                '<div class="alert alert-info">已退出登录</div>';
+        }
+        
+        async function testCreatePoll() {
+            try {
+                const result = await api.post('/learning/polls/', {
+                    question: '测试投票问题 - ' + new Date().toLocaleTimeString(),
+                    options: ['选项A', '选项B', '选项C'],
+                    course_id: 'COMP5241'
+                });
+                
+                document.getElementById('createResult').innerHTML = 
+                    '<div class="alert alert-success">投票创建成功！ID: ' + (result.id || 'N/A') + '</div>';
+            } catch (error) {
+                document.getElementById('createResult').innerHTML = 
+                    '<div class="alert alert-danger">创建失败: ' + error.message + '</div>';
+                console.error('详细错误:', error);
+            }
+        }
+    </script>
+</body>
+</html>

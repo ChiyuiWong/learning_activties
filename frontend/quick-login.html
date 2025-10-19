@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快速登录</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .login-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); }
+        .demo-card { cursor: pointer; transition: all 0.3s; }
+        .demo-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="d-flex align-items-center">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card login-card shadow-lg border-0 rounded-4">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <h2 class="fw-bold text-primary">🚀 快速登录</h2>
+                            <p class="text-muted">选择一个演示账号立即开始使用</p>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <!-- 教师账号 -->
+                            <div class="col-md-6">
+                                <div class="card demo-card h-100 border-primary" onclick="loginAsTeacher()">
+                                    <div class="card-body text-center p-4">
+                                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                            <i class="bi bi-person-workspace fs-1 text-primary"></i>
+                                        </div>
+                                        <h4 class="text-primary">👨‍🏫 史密斯教授</h4>
+                                        <p class="text-muted mb-3">计算机科学</p>
+                                        <div class="badge bg-primary">教师权限</div>
+                                        <p class="small text-muted mt-2">可以创建和管理学习活动</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 学生账号 -->
+                            <div class="col-md-6">
+                                <div class="card demo-card h-100 border-success" onclick="loginAsStudent()">
+                                    <div class="card-body text-center p-4">
+                                        <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                            <i class="bi bi-person-check fs-1 text-success"></i>
+                                        </div>
+                                        <h4 class="text-success">👩‍🎓 王小明</h4>
+                                        <p class="text-muted mb-3">计算机专业学生</p>
+                                        <div class="badge bg-success">学生权限</div>
+                                        <p class="small text-muted mt-2">可以参与学习活动</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>提示：</strong>这是演示系统，点击上方账号即可快速登录
+                            </div>
+                        </div>
+                        
+                        <div id="loginStatus" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <script>
+        function showStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('loginStatus');
+            statusDiv.innerHTML = `<div class="alert alert-${type} text-center">${message}</div>`;
+        }
+        
+        function loginAsTeacher() {
+            showStatus('🔄 正在登录教师账号...', 'warning');
+            
+            // 生成模拟的JWT token（实际项目中应该从后端获取）
+            const mockJWTToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY5NzQ2NzIwMCwianRpIjoiZGVtby10b2tlbiIsInR5cGUiOiJhY2Nlc3MiLCJzdWIiOiJ0ZWFjaGVyMSIsIm5iZiI6MTY5NzQ2NzIwMCwiZXhwIjoxNjk3NDcwODAwLCJ1c2VybmFtZSI6InRlYWNoZXIxIiwicm9sZSI6InRlYWNoZXIifQ.demo-signature-for-development';
+            
+            // 保存登录信息
+            localStorage.setItem('access_token', mockJWTToken);
+            localStorage.setItem('username', 'teacher1');
+            localStorage.setItem('user_role', 'teacher');
+            localStorage.setItem('user_name', '史密斯教授');
+            
+            showStatus('✅ 教师登录成功！正在跳转...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'teacher-activities.html';
+            }, 1500);
+        }
+        
+        function loginAsStudent() {
+            showStatus('🔄 正在登录学生账号...', 'warning');
+            
+            // 生成模拟的JWT token
+            const mockJWTToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTY5NzQ2NzIwMCwianRpIjoiZGVtby10b2tlbiIsInR5cGUiOiJhY2Nlc3MiLCJzdWIiOiJzdHVkZW50MSIsIm5iZiI6MTY5NzQ2NzIwMCwiZXhwIjoxNjk3NDcwODAwLCJ1c2VybmFtZSI6InN0dWRlbnQxIiwicm9sZSI6InN0dWRlbnQifQ.demo-signature-for-development';
+            
+            // 保存登录信息
+            localStorage.setItem('access_token', mockJWTToken);
+            localStorage.setItem('username', 'student1');
+            localStorage.setItem('user_role', 'student');
+            localStorage.setItem('user_name', '王小明');
+            
+            showStatus('✅ 学生登录成功！正在跳转...', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'student-activities.html';
+            }, 1500);
+        }
+        
+        // 页面加载时检查是否已登录
+        window.addEventListener('load', function() {
+            const token = localStorage.getItem('access_token');
+            const role = localStorage.getItem('user_role');
+            
+            if (token && role) {
+                showStatus(`✅ 检测到已登录的${role === 'teacher' ? '教师' : '学生'}账号`, 'success');
+                
+                setTimeout(() => {
+                    if (role === 'teacher') {
+                        window.location.href = 'teacher-activities.html';
+                    } else {
+                        window.location.href = 'student-activities.html';
+                    }
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

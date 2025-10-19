@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>临时教师管理页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .activity-card { margin-bottom: 20px; }
+        .btn-group { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">教师管理系统</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text" id="userInfo">正在加载...</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action active" onclick="switchTab('polls')">
+                        📊 投票管理
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="switchTab('quizzes')">
+                        📝 测验管理
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="switchTab('wordclouds')">
+                        ☁️ 词云管理
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" onclick="switchTab('shortanswers')">
+                        💬 问答管理
+                    </a>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <div id="content">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h3 id="contentTitle">投票管理</h3>
+                        <button class="btn btn-primary" onclick="showCreateModal()">创建新投票</button>
+                    </div>
+                    <div id="activityList">
+                        <div class="text-center">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">加载中...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 创建投票模态框 -->
+    <div class="modal fade" id="createModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">创建投票</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createForm">
+                        <div class="mb-3">
+                            <label class="form-label">问题</label>
+                            <input type="text" class="form-control" id="pollQuestion" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">选项</label>
+                            <div id="optionsContainer">
+                                <input type="text" class="form-control mb-2" placeholder="选项 1" required>
+                                <input type="text" class="form-control mb-2" placeholder="选项 2" required>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addOption()">添加选项</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="createPoll()">创建</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 内置API客户端，绕过缓存问题
+        class TempAPI {
+            constructor() {
+                this.baseUrl = window.location.protocol + '//' + window.location.host;
+                console.log('TempAPI initialized');
+            }
+            
+            getHeaders() {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                    console.log('✅ JWT token added to headers');
+                } else {
+                    console.log('❌ No JWT token found');
+                }
+                return headers;
+            }
+            
+            async request(endpoint, options = {}) {
+                const url = `${this.baseUrl}/api${endpoint}`;
+                const config = {
+                    headers: this.getHeaders(),
+                    ...options
+                };
+                
+                console.log(`Making request to: ${url}`);
+                console.log('Headers:', config.headers);
+                
+                const response = await fetch(url, config);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`${response.status}: ${errorText}`);
+                }
+                
+                return await response.json();
+            }
+            
+            async get(endpoint) {
+                return this.request(endpoint, { method: 'GET' });
+            }
+            
+            async post(endpoint, body) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+            }
+            
+            async delete(endpoint) {
+                return this.request(endpoint, { method: 'DELETE' });
+            }
+        }
+        
+        const api = new TempAPI();
+        let currentTab = 'polls';
+        
+        // 页面加载时检查登录状态
+        document.addEventListener('DOMContentLoaded', function() {
+            checkLoginStatus();
+            loadContent();
+        });
+        
+        function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            
+            if (!token) {
+                document.body.innerHTML = `
+                    <div class="container mt-5">
+                        <div class="alert alert-warning text-center">
+                            <h4>需要登录</h4>
+                            <p>请先登录教师账号</p>
+                            <a href="emergency-fix.html" class="btn btn-primary">前往登录</a>
+                        </div>
+                    </div>
+                `;
+                return false;
+            }
+            
+            document.getElementById('userInfo').textContent = `欢迎，${username || '教师'}`;
+            return true;
+        }
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // 更新导航
+            document.querySelectorAll('.list-group-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 更新标题
+            const titles = {
+                'polls': '投票管理',
+                'quizzes': '测验管理', 
+                'wordclouds': '词云管理',
+                'shortanswers': '问答管理'
+            };
+            document.getElementById('contentTitle').textContent = titles[tab];
+            
+            loadContent();
+        }
+        
+        async function loadContent() {
+            const listDiv = document.getElementById('activityList');
+            listDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div></div>';
+            
+            try {
+                const endpoint = `/learning/${currentTab}/?course_id=COMP5241`;
+                const activities = await api.get(endpoint);
+                
+                if (activities.length === 0) {
+                    listDiv.innerHTML = '<div class="alert alert-info">暂无活动</div>';
+                    return;
+                }
+                
+                let html = '<div class="row">';
+                activities.forEach(activity => {
+                    html += `
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">${activity.title || activity.question || '未命名'}</h5>
+                                    <p class="card-text">${activity.description || '无描述'}</p>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewActivity('${activity.id}')">查看</button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteActivity('${activity.id}')">删除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                listDiv.innerHTML = html;
+                console.log(`✅ 加载了 ${activities.length} 个活动`);
+                
+            } catch (error) {
+                console.error('加载活动失败:', error);
+                listDiv.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
+            }
+        }
+        
+        function showCreateModal() {
+            const modal = new bootstrap.Modal(document.getElementById('createModal'));
+            modal.show();
+        }
+        
+        function addOption() {
+            const container = document.getElementById('optionsContainer');
+            const optionCount = container.children.length + 1;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control mb-2';
+            input.placeholder = `选项 ${optionCount}`;
+            container.appendChild(input);
+        }
+        
+        async function createPoll() {
+            try {
+                const question = document.getElementById('pollQuestion').value;
+                const optionInputs = document.querySelectorAll('#optionsContainer input');
+                const options = Array.from(optionInputs).map(input => input.value).filter(val => val.trim());
+                
+                if (!question || options.length < 2) {
+                    alert('请填写问题和至少2个选项');
+                    return;
+                }
+                
+                await api.post('/learning/polls/', {
+                    question: question,
+                    options: options,
+                    course_id: 'COMP5241'
+                });
+                
+                alert('投票创建成功！');
+                bootstrap.Modal.getInstance(document.getElementById('createModal')).hide();
+                loadContent();
+                
+            } catch (error) {
+                console.error('创建投票失败:', error);
+                alert('创建失败: ' + error.message);
+            }
+        }
+        
+        async function deleteActivity(id) {
+            if (!confirm('确定要删除这个活动吗？')) return;
+            
+            try {
+                await api.delete(`/learning/${currentTab}/${id}`);
+                alert('删除成功！');
+                loadContent();
+            } catch (error) {
+                console.error('删除失败:', error);
+                alert('删除失败: ' + error.message);
+            }
+        }
+        
+        function viewActivity(id) {
+            alert(`查看活动: ${id}`);
+        }
+    </script>
+</body>
+</html>

@@ -15,12 +15,16 @@ def create_app(config_class=Config):
     # Get frontend directory path
     frontend_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'frontend')
     
+    # Get correct template directory path
+    backend_dir = os.path.dirname(os.path.dirname(__file__))  # backend directory
+    template_dir = os.path.join(backend_dir, 'templates')
+    
     # Initialize Flask app with frontend directory as static folder
     app = Flask(__name__,
                 static_folder=frontend_dir,
                 static_url_path='',
-                template_folder=os.path.abspath("templates"))
-    print(os.path.abspath("templates"))
+                template_folder=template_dir)
+    print(f"Template directory: {template_dir}")
     app.config.from_object(config_class)
     # If running under pytest, some tests call create_app() without passing
     # TestConfig and set TESTING afterwards. Detect pytest via common
@@ -208,17 +212,26 @@ def create_app(config_class=Config):
 
     
     # Register blueprints
-    # from app.modules.genai.routes import genai_bp
+    from app.modules.genai.routes import genai_bp
     from app.modules.security.routes import security_bp
     from app.modules.admin.routes import admin_bp
     from app.modules.learning_activities.routes import learning_bp
     from app.modules.courses.routes import courses_bp
     
-    # app.register_blueprint(genai_bp, url_prefix='/api/genai')
+    app.register_blueprint(genai_bp, url_prefix='/api/genai')
     app.register_blueprint(security_bp, url_prefix='/api/security')
     app.register_blueprint(admin_bp, url_prefix='/api/admin')
     app.register_blueprint(learning_bp, url_prefix='/api/learning')
+    print(f"[INFO] Registered learning_bp with prefix: /api/learning")
+    
+    # Print all registered routes for debugging
+    print("[INFO] All registered routes:")
+    for rule in app.url_map.iter_rules():
+        if 'wordcloud' in rule.rule.lower():
+            print(f"  - {rule.rule} -> {rule.endpoint} [{', '.join(rule.methods)}]")
     app.register_blueprint(courses_bp, url_prefix='/api/courses')
+    
+    # Placeholder endpoints removed - using dedicated blueprint routes only
     
     # Health check endpoint
     @app.route('/api/health')
@@ -234,10 +247,9 @@ def create_app(config_class=Config):
     # Serve frontend HTML files
     from flask import send_from_directory
     
-    # Temporarily commented out to resolve route conflict
-    # @app.route('/')
-    # def index():
-    #     return send_from_directory(frontend_dir, 'index.html')
+    @app.route('/')
+    def home():
+        return send_from_directory(frontend_dir, 'index.html')
 
     @app.route('/login.html')
     def login():
@@ -246,6 +258,10 @@ def create_app(config_class=Config):
     @app.route('/polls')
     def polls():
         return send_from_directory(frontend_dir, 'polls.html')
+    
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(frontend_dir, 'favicon.ico')
 
     @app.route('/admin')
     @jwt_required(locations=["cookies"])

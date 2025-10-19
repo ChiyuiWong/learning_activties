@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Login Test - COMP5241 LMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4">
+        <h2>Quick Login Test</h2>
+        <p>Use this page to quickly test login functionality and then go to the main page.</p>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Teacher Login</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-success" onclick="loginAsTeacher('prof.smith')">Login as Prof. Smith</button>
+                        <button class="btn btn-success" onclick="loginAsTeacher('dr.johnson')">Login as Dr. Johnson</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Student Login</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-primary" onclick="loginAsStudent('alice.wang')">Login as Alice Wang</button>
+                        <button class="btn btn-primary" onclick="loginAsStudent('bob.chen')">Login as Bob Chen</button>
+                        <button class="btn btn-primary" onclick="loginAsStudent('charlie.li')">Login as Charlie Li</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Actions</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-warning" onclick="clearStorage()">Clear All Storage</button>
+                    <a href="index.html" class="btn btn-info">Go to Main Page</a>
+                    <button class="btn btn-secondary" onclick="checkStatus()">Check Current Status</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div id="status" class="alert alert-info">
+                Ready to test login...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loginAsTeacher(username) {
+            // Set teacher login data
+            localStorage.setItem('access_token', 'fake_teacher_token_' + Date.now());
+            localStorage.setItem('username', getDisplayName(username));
+            localStorage.setItem('user_role', 'teacher');
+            localStorage.setItem('userInfo', JSON.stringify({
+                username: getDisplayName(username),
+                role: 'teacher',
+                name: getDisplayName(username),
+                actual_username: username
+            }));
+            
+            updateStatus(`✅ Logged in as ${getDisplayName(username)} (Teacher)`);
+        }
+        
+        function loginAsStudent(username) {
+            // Set student login data
+            localStorage.setItem('access_token', 'fake_student_token_' + Date.now());
+            localStorage.setItem('username', getDisplayName(username));
+            localStorage.setItem('user_role', 'student');
+            localStorage.setItem('userInfo', JSON.stringify({
+                username: getDisplayName(username),
+                role: 'student',
+                name: getDisplayName(username),
+                actual_username: username
+            }));
+            
+            updateStatus(`✅ Logged in as ${getDisplayName(username)} (Student)`);
+        }
+        
+        function getDisplayName(username) {
+            const displayNames = {
+                'prof.smith': 'Prof. Smith',
+                'dr.johnson': 'Dr. Johnson',
+                'alice.wang': 'Alice Wang',
+                'bob.chen': 'Bob Chen',
+                'charlie.li': 'Charlie Li'
+            };
+            return displayNames[username] || username;
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            updateStatus('🗑️ All storage cleared');
+        }
+        
+        function checkStatus() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            const role = localStorage.getItem('user_role');
+            const userInfo = localStorage.getItem('userInfo');
+            
+            let status = '<strong>Current Status:</strong><br>';
+            status += `Token: ${token ? 'exists' : 'none'}<br>`;
+            status += `Username: ${username || 'none'}<br>`;
+            status += `Role: ${role || 'none'}<br>`;
+            status += `UserInfo: ${userInfo ? 'exists' : 'none'}<br>`;
+            
+            if (token && username && role) {
+                status += '<br><span class="text-success">✅ Ready for main page!</span>';
+            } else {
+                status += '<br><span class="text-warning">⚠️ Incomplete login data</span>';
+            }
+            
+            updateStatus(status);
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message;
+        }
+        
+        // Check status on page load
+        document.addEventListener('DOMContentLoaded', checkStatus);
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Login Test - COMP5241 LMS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-person-gear"></i> Demo Account Login Test</h4>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Click on any account below to simulate login and test the role-based interface.</p>
+                        
+                        <!-- Teachers Section -->
+                        <div class="mb-4">
+                            <h5 class="text-success"><i class="bi bi-person-workspace"></i> Teachers</h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-body text-center">
+                                            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <span class="fw-bold">PS</span>
+                                            </div>
+                                            <h6 class="mt-2 mb-1">Prof. Smith</h6>
+                                            <small class="text-muted">Computer Science</small>
+                                            <br>
+                                            <button class="btn btn-success btn-sm mt-2" onclick="loginAs('prof.smith', 'teacher')">
+                                                <i class="bi bi-box-arrow-in-right"></i> Login as Prof. Smith
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card border-success">
+                                        <div class="card-body text-center">
+                                            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <span class="fw-bold">DJ</span>
+                                            </div>
+                                            <h6 class="mt-2 mb-1">Dr. Johnson</h6>
+                                            <small class="text-muted">Software Engineering</small>
+                                            <br>
+                                            <button class="btn btn-success btn-sm mt-2" onclick="loginAs('dr.johnson', 'teacher')">
+                                                <i class="bi bi-box-arrow-in-right"></i> Login as Dr. Johnson
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Students Section -->
+                        <div class="mb-4">
+                            <h5 class="text-primary"><i class="bi bi-people"></i> Students</h5>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card border-primary">
+                                        <div class="card-body text-center">
+                                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <span class="fw-bold">AW</span>
+                                            </div>
+                                            <h6 class="mt-2 mb-1">Alice Wang</h6>
+                                            <small class="text-muted">Student</small>
+                                            <br>
+                                            <button class="btn btn-primary btn-sm mt-2" onclick="loginAs('alice.wang', 'student')">
+                                                <i class="bi bi-box-arrow-in-right"></i> Login as Alice
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card border-primary">
+                                        <div class="card-body text-center">
+                                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <span class="fw-bold">BC</span>
+                                            </div>
+                                            <h6 class="mt-2 mb-1">Bob Chen</h6>
+                                            <small class="text-muted">Student</small>
+                                            <br>
+                                            <button class="btn btn-primary btn-sm mt-2" onclick="loginAs('bob.chen', 'student')">
+                                                <i class="bi bi-box-arrow-in-right"></i> Login as Bob
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="card border-primary">
+                                        <div class="card-body text-center">
+                                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                <span class="fw-bold">CL</span>
+                                            </div>
+                                            <h6 class="mt-2 mb-1">Charlie Li</h6>
+                                            <small class="text-muted">Student</small>
+                                            <br>
+                                            <button class="btn btn-primary btn-sm mt-2" onclick="loginAs('charlie.li', 'student')">
+                                                <i class="bi bi-box-arrow-in-right"></i> Login as Charlie
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Control Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-md-4">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">Logout</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-warning w-100" onclick="logout()">
+                                            <i class="bi bi-box-arrow-right"></i> Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">Test Interface</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <a href="index.html" class="btn btn-info w-100" target="_blank">
+                                            <i class="bi bi-house"></i> Open Main Page
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card border-secondary">
+                                    <div class="card-header bg-secondary text-white">
+                                        <h6 class="mb-0">Debug Info</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <button class="btn btn-secondary w-100" onclick="showDebugInfo()">
+                                            <i class="bi bi-bug"></i> Show Debug
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <h6>Current Login Status:</h6>
+                            <div id="status" class="alert alert-secondary">
+                                <div><strong>Username:</strong> <span id="current-username">Not logged in</span></div>
+                                <div><strong>Role:</strong> <span id="current-role">Not set</span></div>
+                                <div><strong>Token:</strong> <span id="current-token">Not set</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function loginAs(username, role) {
+            // Map usernames to display names
+            const displayNames = {
+                'prof.smith': 'Prof. Smith',
+                'dr.johnson': 'Dr. Johnson',
+                'alice.wang': 'Alice Wang',
+                'bob.chen': 'Bob Chen',
+                'charlie.li': 'Charlie Li'
+            };
+            
+            const displayName = displayNames[username] || username;
+            
+            // Set login data
+            localStorage.setItem('username', displayName);  // Use display name
+            localStorage.setItem('user_role', role);
+            localStorage.setItem('access_token', 'demo_token_' + Date.now());
+            
+            // Also set userInfo for compatibility
+            const userInfo = {
+                username: displayName,
+                role: role,
+                name: displayName,
+                actual_username: username  // Keep actual username for backend
+            };
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            
+            updateStatus();
+            
+            // Update the main page if it's open
+            try {
+                // Try to update the main page's user display
+                if (window.opener && !window.opener.closed) {
+                    window.opener.postMessage({
+                        type: 'updateUser',
+                        username: displayName,
+                        role: role
+                    }, '*');
+                }
+            } catch (e) {
+                console.log('Could not update main page:', e);
+            }
+            
+            // Show success message
+            const roleText = role === 'teacher' ? '教师' : '学生';
+            alert(`✅ 已登录为 ${displayName} (${roleText})!\n现在可以打开主页面测试 Learning Activities 功能。`);
+        }
+        
+        function logout() {
+            localStorage.removeItem('username');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('userInfo');
+            updateStatus();
+            alert('✅ 已退出登录！');
+        }
+        
+        function showDebugInfo() {
+            const debugInfo = {
+                username: localStorage.getItem('username'),
+                user_role: localStorage.getItem('user_role'),
+                access_token: localStorage.getItem('access_token'),
+                userInfo: localStorage.getItem('userInfo')
+            };
+            
+            console.log('Debug Info:', debugInfo);
+            alert('调试信息已输出到控制台，请按F12查看。');
+        }
+        
+        function updateStatus() {
+            const username = localStorage.getItem('username') || 'Not logged in';
+            const role = localStorage.getItem('user_role') || 'Not set';
+            const token = localStorage.getItem('access_token') || 'Not set';
+            
+            document.getElementById('current-username').textContent = username;
+            document.getElementById('current-role').textContent = role;
+            document.getElementById('current-token').textContent = token ? 'Set' : 'Not set';
+            
+            // Update alert class based on role
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'alert ';
+            if (role === 'teacher') {
+                statusDiv.className += 'alert-success';
+            } else if (role === 'student') {
+                statusDiv.className += 'alert-primary';
+            } else {
+                statusDiv.className += 'alert-secondary';
+            }
+        }
+        
+        // Update status on page load
+        updateStatus();
+    </script>
+</body>
+</html>

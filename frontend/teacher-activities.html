@@ -1,0 +1,2703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Management Interface - COMP5241 LMS</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .activity-card {
+            transition: transform 0.2s;
+        }
+        .activity-card:hover {
+            transform: translateY(-2px);
+        }
+        .create-form {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">
+                <i class="bi bi-mortarboard"></i> COMP5241 LMS - Teacher Interface
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="index.html">Back to Home</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0">Management Functions</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action active" data-tab="polls">
+                            <i class="bi bi-bar-chart"></i> Polls Management
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" data-tab="quizzes">
+                            <i class="bi bi-question-circle"></i> Quiz Management
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" data-tab="wordclouds">
+                            <i class="bi bi-cloud"></i> Word Cloud Management
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action" data-tab="shortanswers">
+                            <i class="bi bi-file-text"></i> Q&A Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-md-9">
+                <!-- Polls Management -->
+                <div id="polls-tab" class="tab-content">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="bi bi-bar-chart"></i> Polls Management</h3>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createPollModal">
+                            <i class="bi bi-plus"></i> Create Poll
+                        </button>
+                    </div>
+                    
+                    <div id="polls-list" class="row">
+                        <!-- Poll list will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <!-- Quiz Management -->
+                <div id="quizzes-tab" class="tab-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="bi bi-question-circle"></i> Quiz Management</h3>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createQuizModal">
+                            <i class="bi bi-plus"></i> Create Quiz
+                        </button>
+                    </div>
+                    
+                    <div id="quizzes-list" class="row">
+                        <!-- Quiz list will be dynamically loaded here -->
+                    </div>
+                </div>
+
+                <!-- Word Cloud Management -->
+                <div id="wordclouds-tab" class="tab-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="bi bi-cloud"></i> Word Cloud Management</h3>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createWordCloudModal">
+                            <i class="bi bi-plus"></i> Create词云
+                        </button>
+                    </div>
+                    
+                    <div id="wordclouds-list" class="row">
+                        <!-- 词云列表将in这里动态加载 -->
+                    </div>
+                </div>
+
+                <!-- Short Answers管理 -->
+                <div id="shortanswers-tab" class="tab-content d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h3><i class="bi bi-file-text"></i> Short Answers管理</h3>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createShortAnswerModal">
+                            <i class="bi bi-plus"></i> Create简短answers
+                        </button>
+                    </div>
+                    
+                    <div id="shortanswers-list" class="row">
+                        <!-- 问答列表将in这里动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Createvotes模态框 -->
+    <div class="modal fade" id="createPollModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create新votes</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createPollForm">
+                        <div class="mb-3">
+                            <label for="pollQuestion" class="form-label">votesQuestion</label>
+                            <input type="text" class="form-control" id="pollQuestion" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Options</label>
+                            <div id="pollOptions">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control poll-option" placeholder="Options 1" required>
+                                    <button type="button" class="btn btn-outline-danger" onclick="removePollOption(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control poll-option" placeholder="Options 2" required>
+                                    <button type="button" class="btn btn-outline-danger" onclick="removePollOption(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addPollOption()">
+                                <i class="bi bi-plus"></i> 添加Options
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createPoll()">Createvotes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Quiz模态框 -->
+    <div class="modal fade" id="createQuizModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create新测验</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createQuizForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="quizTitle" class="form-label">测验Title</label>
+                                    <input type="text" class="form-control" id="quizTitle" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="quizTimeLimit" class="form-label">Time限制（minutes）</label>
+                                    <input type="number" class="form-control" id="quizTimeLimit" value="30" min="1">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="quizDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="quizDescription" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="allowRetakes" checked>
+                                    <label class="form-check-label" for="allowRetakes">allow重做</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="showCorrectAnswers" checked>
+                                    <label class="form-check-label" for="showCorrectAnswers">显示正确Answer</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Question</label>
+                            <div id="quizQuestions">
+                                <!-- Question将in这里动态添加 -->
+                            </div>
+                            <button type="button" class="btn btn-outline-primary" onclick="addQuizQuestion()">
+                                <i class="bi bi-plus"></i> 添加Question
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createQuiz()">Create Quiz</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create词云模态框 -->
+    <div class="modal fade" id="createWordCloudModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create词云</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createWordCloudForm">
+                        <div class="mb-3">
+                            <label for="wcTitle" class="form-label">词云Title</label>
+                            <input type="text" class="form-control" id="wcTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wcDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="wcDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wcPrompt" class="form-label">Prompt词</label>
+                            <input type="text" class="form-control" id="wcPrompt" placeholder="例如：Please enterwith课程相关关键词" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wcMaxWords" class="form-label">最大words数</label>
+                            <input type="number" class="form-control" id="wcMaxWords" value="50" min="10" max="200">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="wcAllowDuplicates">
+                                <label class="form-check-label" for="wcAllowDuplicates">
+                                    allow重复words
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createWordCloud()">Create词云</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create问答模态框 -->
+    <div class="modal fade" id="createShortAnswerModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Q&A</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createShortAnswerForm">
+                        <div class="mb-3">
+                            <label for="saTitle" class="form-label">QuestionTitle</label>
+                            <input type="text" class="form-control" id="saTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="saQuestion" class="form-label">QuestionContent</label>
+                            <textarea class="form-control" id="saQuestion" rows="4" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="saMaxLength" class="form-label">Max Characters</label>
+                                    <input type="number" class="form-control" id="saMaxLength" value="500" min="50">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="saPoints" class="form-label">分值</label>
+                                    <input type="number" class="form-control" id="saPoints" value="10" min="1">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="createShortAnswer()">Create问答</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- API Client -->
+    <script src="static/js/api.js"></script>
+    <!-- 内嵌API Client - 避免缓存Question -->
+    <script>
+        // 内嵌API客户端，确保JWT token正确传递
+        class APIClient {
+            constructor() {
+                this.baseUrl = window.location.protocol + '//' + window.location.host;
+                console.log('APIClient initialized with baseUrl:', this.baseUrl);
+            }
+            
+            getHeaders() {
+                const headers = { 'Content-Type': 'application/json' };
+                const token = localStorage.getItem('access_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                    console.log('✅ JWT token added to headers');
+                } else {
+                    console.log('❌ No JWT token found in localStorage');
+                }
+                return headers;
+            }
+            
+            normalizeEndpoint(endpoint) {
+                let normalized = endpoint;
+                while (normalized.includes('/api/api/')) {
+                    normalized = normalized.replace('/api/api/', '/api/');
+                }
+                if (!normalized.startsWith('/api/')) {
+                    if (normalized.startsWith('/learning/') || 
+                        normalized.startsWith('/security/') || 
+                        normalized === '/health') {
+                        normalized = '/api' + normalized;
+                    }
+                }
+                return normalized;
+            }
+            
+            async request(endpoint, options = {}) {
+                const normalizedEndpoint = this.normalizeEndpoint(endpoint);
+                const url = `${this.baseUrl}${normalizedEndpoint}`;
+                const config = {
+                    headers: this.getHeaders(),
+                    credentials: 'include',
+                    mode: 'cors',
+                    ...options
+                };
+                
+                console.log(`Making API request to: ${url}`);
+                console.log('Request headers:', config.headers);
+                
+                try {
+                    const response = await fetch(url, config);
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        const error = new Error(errorData.message || 'API request failed');
+                        error.status = response.status;
+                        error.data = errorData;
+                        throw error;
+                    }
+                    
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Error:', error);
+                    throw error;
+                }
+            }
+            
+            async get(endpoint) {
+                return this.request(endpoint, { method: 'GET' });
+            }
+            
+            async post(endpoint, body) {
+                return this.request(endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify(body)
+                });
+            }
+            
+            async delete(endpoint) {
+                return this.request(endpoint, { method: 'DELETE' });
+            }
+        }
+        
+        // Create全局API实例
+        window.api = new APIClient();
+    </script>
+    
+    <script>
+        // 全局变量
+        let currentTab = 'polls';
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 等待main.js加载完成
+            setTimeout(() => {
+                if (!window.api) {
+                    window.api = new APIClient();
+                }
+                
+                // 检查登录Status
+                checkLoginStatus();
+                
+                // 检查URL锚点，决定显示哪个标签
+                const hash = window.location.hash.substring(1); // 移除#号
+                let initialTab = 'polls'; // 默认标签
+                
+                if (hash && ['polls', 'quizzes', 'wordclouds', 'shortanswers'].includes(hash)) {
+                    initialTab = hash;
+                }
+                
+                loadTabContent(initialTab);
+                
+                // 绑定标签切换事件
+                document.querySelectorAll('[data-tab]').forEach(tab => {
+                    tab.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const tabName = this.getAttribute('data-tab');
+                        switchTab(tabName);
+                    });
+                });
+                
+                // 监听URL锚点变化
+                window.addEventListener('hashchange', function() {
+                    const newHash = window.location.hash.substring(1);
+                    if (newHash && ['polls', 'quizzes', 'wordclouds', 'shortanswers'].includes(newHash)) {
+                        switchTab(newHash);
+                    }
+                });
+                
+            }, 100); // 延迟100ms确保main.js加载完成
+        });
+        
+        // 简化登录检查：只检查token，不限制角色
+        function checkLoginStatus() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            
+            console.log('Login check - Token:', token ? 'exists' : 'missing');
+            console.log('Login check - Username:', username);
+            
+            if (!token) {
+                // 显示登录Prompt
+                document.body.innerHTML = `
+                    <div class="container mt-5">
+                        <div class="row justify-content-center">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-warning">
+                                        <h5 class="mb-0">need登录</h5>
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <p>请先登录后使用教师管理功能。</p>
+                                        <div class="mb-3">
+                                            <small class="text-muted">
+                                                任何用户名and密码都can登录<br>
+                                                包含teacher/prof/dr/smith/johnson用户名会被识别as教师
+                                            </small>
+                                        </div>
+                                        <a href="login.html" class="btn btn-primary">前往登录</a>
+                                        <a href="index.html" class="btn btn-secondary ms-2">Back首页</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return false;
+            }
+            
+            // 显示用户信息
+            const userInfo = document.querySelector('.navbar-text');
+            if (userInfo) {
+                userInfo.textContent = `欢迎，${username || '用户'}`;
+            }
+            
+            return true;
+        }
+        
+        // 切换标签
+        function switchTab(tabName) {
+            // 更新导航
+            document.querySelectorAll('[data-tab]').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            
+            // 更新Content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('d-none');
+            });
+            document.getElementById(`${tabName}-tab`).classList.remove('d-none');
+            
+            // 更新URL锚点（不触发hashchange事件）
+            if (window.location.hash !== `#${tabName}`) {
+                history.replaceState(null, null, `#${tabName}`);
+            }
+            
+            currentTab = tabName;
+            loadTabContent(tabName);
+        }
+        
+        // 加载标签Content
+        function loadTabContent(tabName) {
+            switch(tabName) {
+                case 'polls':
+                    loadPolls();
+                    break;
+                case 'quizzes':
+                    loadQuizzes();
+                    break;
+                case 'wordclouds':
+                    loadWordClouds();
+                    break;
+                case 'shortanswers':
+                    loadShortAnswers();
+                    break;
+            }
+        }
+        
+        // 加载votes列表
+        async function loadPolls() {
+            try {
+                const polls = await window.api.get('/learning/polls/?course_id=COMP5241');
+                const container = document.getElementById('polls-list');
+                
+                if (polls.length === 0) {
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-info">暂无votes</div></div>';
+                    return;
+                }
+                
+                container.innerHTML = polls.map(poll => `
+                    <div class="col-md-6 mb-3">
+                        <div class="card activity-card">
+                            <div class="card-body">
+                                <h6 class="card-title">${poll.question}</h6>
+                                <p class="card-text text-muted">
+                                    ${poll.options.length} 个Options • ${poll.total_votes || 0} 票
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewPollResults('${poll.id}')">
+                                        View Results
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deletePoll('${poll.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载Vote submission failed:', error);
+                document.getElementById('polls-list').innerHTML = 
+                    '<div class="col-12"><div class="alert alert-danger">加载Vote submission failed</div></div>';
+            }
+        }
+        
+        // 加载测验列表
+        async function loadQuizzes() {
+            try {
+                const quizzes = await window.api.get('/learning/quizzes/?course_id=COMP5241');
+                const container = document.getElementById('quizzes-list');
+                
+                if (quizzes.length === 0) {
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-info">No quizzes available</div></div>';
+                    return;
+                }
+                
+                container.innerHTML = quizzes.map(quiz => `
+                    <div class="col-md-6 mb-3">
+                        <div class="card activity-card">
+                            <div class="card-body">
+                                <h6 class="card-title">${quiz.title}</h6>
+                                <p class="card-text text-muted">
+                                    ${quiz.questions_count} questions • ${quiz.time_limit/60} minutes
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewQuiz('${quiz.id}')">
+                                        View Details
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteQuiz('${quiz.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载测验失败:', error);
+                document.getElementById('quizzes-list').innerHTML = 
+                    '<div class="col-12"><div class="alert alert-danger">加载测验失败</div></div>';
+            }
+        }
+        
+        // 加载问答列表
+        async function loadShortAnswers() {
+            try {
+                const questions = await window.api.get('/learning/shortanswers/?course_id=COMP5241');
+                const container = document.getElementById('shortanswers-list');
+                
+                if (questions.length === 0) {
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-info">No Q&A availablequestions</div></div>';
+                    return;
+                }
+                
+                container.innerHTML = questions.map(question => `
+                    <div class="col-md-6 mb-3">
+                        <div class="card activity-card">
+                            <div class="card-body">
+                                <h6 class="card-title">${question.title}</h6>
+                                <p class="card-text text-muted">
+                                    ${question.submissions_count || 0} 份Answer • ${question.points} 分
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewQuestion('${question.id}')">
+                                        View Details
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteShortAnswer('${question.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载问答questions失败:', error);
+                document.getElementById('shortanswers-list').innerHTML = 
+                    '<div class="col-12"><div class="alert alert-danger">加载问答questions失败</div></div>';
+            }
+        }
+        
+        // 加载词云列表
+        async function loadWordClouds() {
+            try {
+                const wordclouds = await window.api.get('/learning/wordclouds/?course_id=COMP5241');
+                const container = document.getElementById('wordclouds-list');
+                
+                if (wordclouds.length === 0) {
+                    container.innerHTML = '<div class="col-12"><div class="alert alert-info">No word clouds available</div></div>';
+                    return;
+                }
+                
+                container.innerHTML = wordclouds.map(wordcloud => `
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title">${wordcloud.title}</h6>
+                                <p class="card-text text-muted small">${wordcloud.description || ''}</p>
+                                <p class="card-text small">
+                                    <i class="bi bi-cloud"></i> ${wordcloud.prompt}<br>
+                                    <i class="bi bi-people"></i> ${wordcloud.submission_count || wordcloud.submissions_count || 0}  words • Maximum ${wordcloud.max_words || 50} 个
+                                </p>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="viewWordCloud('${wordcloud.id}')">
+                                        View Details
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteWordCloud('${wordcloud.id}')">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载词云失败:', error);
+                document.getElementById('wordclouds-list').innerHTML = 
+                    '<div class="col-12"><div class="alert alert-danger">加载词云失败</div></div>';
+            }
+        }
+        
+        // Createvotes相关函数
+        function addPollOption() {
+            const container = document.getElementById('pollOptions');
+            const optionCount = container.children.length + 1;
+            const div = document.createElement('div');
+            div.className = 'input-group mb-2';
+            div.innerHTML = `
+                <input type="text" class="form-control poll-option" placeholder="Options ${optionCount}" required>
+                <button type="button" class="btn btn-outline-danger" onclick="removePollOption(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            `;
+            container.appendChild(div);
+        }
+        
+        function removePollOption(button) {
+            const container = document.getElementById('pollOptions');
+            if (container.children.length > 2) {
+                button.parentElement.remove();
+            }
+        }
+        
+        async function createPoll() {
+            console.log('createPoll function called!');
+            
+            const question = document.getElementById('pollQuestion').value;
+            const options = Array.from(document.querySelectorAll('.poll-option'))
+                .map(input => input.value.trim())
+                .filter(value => value);
+            
+            console.log('Question:', question);
+            console.log('Options:', options);
+            
+            if (!question || options.length < 2) {
+                alert('请填写Questionand至少2个Options');
+                return;
+            }
+            
+            try {
+                console.log('Sending POST request to create poll...');
+                const result = await window.api.post('/learning/polls/', {
+                    question: question,
+                    options: options,
+                    course_id: 'COMP5241'
+                });
+                
+                console.log('Poll created successfully:', result);
+                
+                bootstrap.Modal.getInstance(document.getElementById('createPollModal')).hide();
+                document.getElementById('createPollForm').reset();
+                loadPolls();
+                alert('votesCreate成功！');
+            } catch (error) {
+                console.error('CreateVote submission failed:', error);
+                alert('CreateVote submission failed: ' + error.message);
+            }
+        }
+        
+        // 添加测验Question
+        function addQuizQuestion() {
+            const questionsContainer = document.getElementById('quizQuestions');
+            const questionIndex = questionsContainer.children.length + 1;
+            
+            const questionHtml = `
+                <div class="card mb-3 quiz-question">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Question ${questionIndex}</h6>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeQuizQuestion(this)">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">QuestionContent</label>
+                            <textarea class="form-control question-text" rows="2" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Question类型</label>
+                            <select class="form-select question-type" onchange="updateQuestionOptions(this)">
+                                <option value="multiple_choice">单选questions</option>
+                                <option value="multiple_select">多选questions</option>
+                                <option value="true_false">判断questions</option>
+                            </select>
+                        </div>
+                        <div class="question-options">
+                            <label class="form-label">Options</label>
+                            <div class="options-container">
+                                <div class="input-group mb-2">
+                                    <div class="input-group-text">
+                                        <input type="radio" name="correct_${questionIndex}" value="0">
+                                    </div>
+                                    <input type="text" class="form-control option-text" placeholder="Options A" required>
+                                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                <div class="input-group mb-2">
+                                    <div class="input-group-text">
+                                        <input type="radio" name="correct_${questionIndex}" value="1">
+                                    </div>
+                                    <input type="text" class="form-control option-text" placeholder="Options B" required>
+                                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addQuestionOption(this)">
+                                <i class="bi bi-plus"></i> 添加Options
+                            </button>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label">分值</label>
+                            <input type="number" class="form-control question-points" value="1" min="1" max="10">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            questionsContainer.insertAdjacentHTML('beforeend', questionHtml);
+        }
+        
+        // Delete测验Question
+        function removeQuizQuestion(button) {
+            const questionCard = button.closest('.quiz-question');
+            questionCard.remove();
+            
+            // 重新编号Question
+            const questions = document.querySelectorAll('.quiz-question');
+            questions.forEach((question, index) => {
+                const header = question.querySelector('.card-header h6');
+                header.textContent = `Question ${index + 1}`;
+            });
+        }
+        
+        // 更新QuestionOptions类型
+        function updateQuestionOptions(select) {
+            const questionCard = select.closest('.quiz-question');
+            const optionsContainer = questionCard.querySelector('.options-container');
+            const questionIndex = Array.from(document.querySelectorAll('.quiz-question')).indexOf(questionCard) + 1;
+            
+            if (select.value === 'true_false') {
+                optionsContainer.innerHTML = `
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input type="radio" name="correct_${questionIndex}" value="0">
+                        </div>
+                        <input type="text" class="form-control option-text" value="正确" readonly>
+                    </div>
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input type="radio" name="correct_${questionIndex}" value="1">
+                        </div>
+                        <input type="text" class="form-control option-text" value="错误" readonly>
+                    </div>
+                `;
+            } else {
+                // Resetas普通Selectquestions
+                optionsContainer.innerHTML = `
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input type="${select.value === 'multiple_select' ? 'checkbox' : 'radio'}" name="correct_${questionIndex}" value="0">
+                        </div>
+                        <input type="text" class="form-control option-text" placeholder="Options A" required>
+                        <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                    <div class="input-group mb-2">
+                        <div class="input-group-text">
+                            <input type="${select.value === 'multiple_select' ? 'checkbox' : 'radio'}" name="correct_${questionIndex}" value="1">
+                        </div>
+                        <input type="text" class="form-control option-text" placeholder="Options B" required>
+                        <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        // 添加QuestionOptions
+        function addQuestionOption(button) {
+            const questionCard = button.closest('.quiz-question');
+            const optionsContainer = questionCard.querySelector('.options-container');
+            const questionIndex = Array.from(document.querySelectorAll('.quiz-question')).indexOf(questionCard) + 1;
+            const optionIndex = optionsContainer.children.length;
+            const questionType = questionCard.querySelector('.question-type').value;
+            const inputType = questionType === 'multiple_select' ? 'checkbox' : 'radio';
+            
+            const optionHtml = `
+                <div class="input-group mb-2">
+                    <div class="input-group-text">
+                        <input type="${inputType}" name="correct_${questionIndex}" value="${optionIndex}">
+                    </div>
+                    <input type="text" class="form-control option-text" placeholder="Options ${String.fromCharCode(65 + optionIndex)}" required>
+                    <button type="button" class="btn btn-outline-danger" onclick="removeOption(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            optionsContainer.insertAdjacentHTML('beforeend', optionHtml);
+        }
+        
+        // DeleteOptions
+        function removeOption(button) {
+            const optionGroup = button.closest('.input-group');
+            const optionsContainer = optionGroup.parentElement;
+            
+            if (optionsContainer.children.length > 2) {
+                optionGroup.remove();
+            } else {
+                alert('至少need保留2个Options');
+            }
+        }
+        
+        // Create Quiz
+        async function createQuiz() {
+            const title = document.getElementById('quizTitle').value.trim();
+            const description = document.getElementById('quizDescription').value.trim();
+            const timeLimit = parseInt(document.getElementById('quizTimeLimit').value) * 60; // 转换as秒
+            const allowRetakes = document.getElementById('allowRetakes').checked;
+            const showCorrectAnswers = document.getElementById('showCorrectAnswers').checked;
+            
+            if (!title) {
+                alert('请填写测验Title');
+                return;
+            }
+            
+            // 收集Question数据
+            const questions = [];
+            const questionCards = document.querySelectorAll('.quiz-question');
+            
+            if (questionCards.length === 0) {
+                alert('请至少添加一道Question');
+                return;
+            }
+            
+            for (let i = 0; i < questionCards.length; i++) {
+                const card = questionCards[i];
+                const questionText = card.querySelector('.question-text').value.trim();
+                const questionType = card.querySelector('.question-type').value;
+                const points = parseInt(card.querySelector('.question-points').value);
+                
+                if (!questionText) {
+                    alert(`请填写第${i + 1}questionsQuestionContent`);
+                    return;
+                }
+                
+                // 收集Options
+                const options = [];
+                const optionInputs = card.querySelectorAll('.option-text');
+                const correctInputs = card.querySelectorAll(`input[name="correct_${i + 1}"]:checked`);
+                
+                if (correctInputs.length === 0) {
+                    alert(`请as第${i + 1}questionsSelect正确Answer`);
+                    return;
+                }
+                
+                optionInputs.forEach((input, index) => {
+                    const text = input.value.trim();
+                    if (text) {
+                        options.push({
+                            text: text,
+                            is_correct: Array.from(correctInputs).some(ci => parseInt(ci.value) === index)
+                        });
+                    }
+                });
+                
+                if (options.length < 2) {
+                    alert(`第${i + 1}questions至少need2个Options`);
+                    return;
+                }
+                
+                questions.push({
+                    question: questionText,
+                    type: questionType,
+                    options: options,
+                    points: points
+                });
+            }
+            
+            try {
+                console.log('Creating quiz with data:', { title, description, questions, timeLimit });
+                
+                const result = await window.api.post('/learning/quizzes/', {
+                    title: title,
+                    description: description,
+                    questions: questions,
+                    time_limit: timeLimit,
+                    allow_retakes: allowRetakes,
+                    show_correct_answers: showCorrectAnswers,
+                    course_id: 'COMP5241'
+                });
+                
+                console.log('Quiz created successfully:', result);
+                
+                // Close模态框并Reset表单
+                bootstrap.Modal.getInstance(document.getElementById('createQuizModal')).hide();
+                document.getElementById('createQuizForm').reset();
+                document.getElementById('quizQuestions').innerHTML = '';
+                
+                // Reload测验列表
+                loadQuizzes();
+                alert('测验Create成功！');
+                
+            } catch (error) {
+                console.error('Create Quiz失败:', error);
+                alert('Create Quiz失败: ' + error.message);
+            }
+        }
+        
+        // Create词云
+        async function createWordCloud() {
+            const title = document.getElementById('wcTitle').value;
+            const description = document.getElementById('wcDescription').value;
+            const prompt = document.getElementById('wcPrompt').value;
+            const maxWords = parseInt(document.getElementById('wcMaxWords').value);
+            const allowDuplicates = document.getElementById('wcAllowDuplicates').checked;
+            
+            if (!title || !prompt) {
+                alert('请填写词云TitleandPrompt词');
+                return;
+            }
+            
+            try {
+                await window.api.post('/learning/wordclouds/', {
+                    title: title,
+                    description: description,
+                    prompt: prompt,
+                    max_words: maxWords,
+                    allow_duplicates: allowDuplicates,
+                    course_id: 'COMP5241'
+                });
+                
+                bootstrap.Modal.getInstance(document.getElementById('createWordCloudModal')).hide();
+                document.getElementById('createWordCloudForm').reset();
+                loadWordClouds();
+                alert('词云Create成功！');
+            } catch (error) {
+                console.error('Create词云失败:', error);
+                alert('Create词云失败，Please try again');
+            }
+        }
+        
+        // Create问答
+        async function createShortAnswer() {
+            const title = document.getElementById('saTitle').value;
+            const question = document.getElementById('saQuestion').value;
+            const maxLength = parseInt(document.getElementById('saMaxLength').value);
+            const points = parseInt(document.getElementById('saPoints').value);
+            
+            if (!title || !question) {
+                alert('请填写TitleandQuestionContent');
+                return;
+            }
+            
+            try {
+                await window.api.post('/learning/shortanswers/', {
+                    title: title,
+                    question: question,
+                    max_length: maxLength,
+                    points: points,
+                    course_id: 'COMP5241'
+                });
+                
+                bootstrap.Modal.getInstance(document.getElementById('createShortAnswerModal')).hide();
+                document.getElementById('createShortAnswerForm').reset();
+                loadShortAnswers();
+                alert('问答questionsCreate成功！');
+            } catch (error) {
+                console.error('Create Q&A失败:', error);
+                alert('Create Q&A失败，Please try again');
+            }
+        }
+        
+        // Delete功能
+        async function deletePoll(pollId) {
+            if (!confirm('Confirm要Delete这 votes吗？')) return;
+            
+            try {
+                await window.api.delete(`/learning/polls/${pollId}`);
+                loadPolls();
+                alert('votesDelete成功！');
+            } catch (error) {
+                console.error('DeleteVote submission failed:', error);
+                alert('DeleteVote submission failed，Please try again');
+            }
+        }
+        
+        async function deleteQuiz(quizId) {
+            if (!confirm('Confirm要Delete这个测验吗？')) return;
+            
+            try {
+                await window.api.delete(`/learning/quizzes/${quizId}`);
+                loadQuizzes();
+                alert('测验Delete成功！');
+            } catch (error) {
+                console.error('Delete测验失败:', error);
+                alert('Delete测验失败，Please try again');
+            }
+        }
+        
+        async function deleteWordCloud(wordcloudId) {
+            if (!confirm('Confirm要Delete这个词云吗？')) return;
+            
+            try {
+                await window.api.delete(`/learning/wordclouds/${wordcloudId}`);
+                loadWordClouds();
+                alert('词云Delete成功！');
+            } catch (error) {
+                console.error('Delete词云失败:', error);
+                alert('Delete词云失败，Please try again');
+            }
+        }
+        
+        async function deleteShortAnswer(questionId) {
+            if (!confirm('Confirm要Delete这个问答questions吗？')) return;
+            
+            try {
+                await window.api.delete(`/learning/shortanswers/${questionId}`);
+                loadShortAnswers();
+                alert('问答questionsDelete成功！');
+            } catch (error) {
+                console.error('Delete问答questions失败:', error);
+                alert('Delete问答questions失败，Please try again');
+            }
+        }
+        
+        // 查看Vote Results功能
+        async function viewPollResults(pollId) {
+            try {
+                // 获取votes详情
+                const poll = await window.api.get(`/learning/polls/${pollId}`);
+                
+                // Create结果显示模态框
+                const modalHtml = `
+                    <div class="modal fade" id="pollResultsModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Vote Results</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <h6 class="mb-3">${poll.question}</h6>
+                                    <div class="mb-3">
+                                        <small class="text-muted">
+                                            Created Time: ${new Date(poll.created_at).toLocaleString()} | 
+                                            总votes数: <strong>${poll.total_votes}</strong>
+                                        </small>
+                                    </div>
+                                    <div class="results-container">
+                                        ${poll.options.map((option, index) => {
+                                            const percentage = poll.total_votes > 0 ? (option.votes / poll.total_votes * 100) : 0;
+                                            return `
+                                                <div class="mb-3">
+                                                    <div class="d-flex justify-content-between mb-1">
+                                                        <span>${option.text}</span>
+                                                        <span><strong>${option.votes}</strong> 票 (${percentage.toFixed(1)}%)</span>
+                                                    </div>
+                                                    <div class="progress">
+                                                        <div class="progress-bar bg-primary" 
+                                                             role="progressbar" 
+                                                             style="width: ${percentage}%" 
+                                                             aria-valuenow="${option.votes}" 
+                                                             aria-valuemin="0" 
+                                                             aria-valuemax="${poll.total_votes}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                    ${poll.total_votes === 0 ? 
+                                        '<div class="alert alert-info">暂无votes数据</div>' : 
+                                        ''
+                                    }
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-primary" onclick="refreshPollResults('${pollId}')">Refresh Results</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存in模态框
+                const existingModal = document.getElementById('pollResultsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // 添加新模态框到页面
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('pollResultsModal'));
+                modal.show();
+                
+                // 模态框Close后清理
+                document.getElementById('pollResultsModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('获取Vote Results失败:', error);
+                alert('获取Vote Results失败，Please try again');
+            }
+        }
+        
+        // RefreshVote Results
+        async function refreshPollResults(pollId) {
+            try {
+                const poll = await window.api.get(`/learning/polls/${pollId}`);
+                
+                // 更新结果容器
+                const resultsContainer = document.querySelector('#pollResultsModal .results-container');
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = poll.options.map((option, index) => {
+                        const percentage = poll.total_votes > 0 ? (option.votes / poll.total_votes * 100) : 0;
+                        return `
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>${option.text}</span>
+                                    <span><strong>${option.votes}</strong> 票 (${percentage.toFixed(1)}%)</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" 
+                                         role="progressbar" 
+                                         style="width: ${percentage}%" 
+                                         aria-valuenow="${option.votes}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="${poll.total_votes}">
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    
+                    // 更新总votes数显示
+                    const totalVotesSpan = document.querySelector('#pollResultsModal .text-muted strong');
+                    if (totalVotesSpan) {
+                        totalVotesSpan.textContent = poll.total_votes;
+                    }
+                }
+                
+                console.log('Vote Results已Refresh');
+            } catch (error) {
+                console.error('RefreshVote Results失败:', error);
+                alert('Refresh失败，Please try again');
+            }
+        }
+        
+        async function viewQuiz(quizId) {
+            try {
+                // 获取Quiz Details
+                const quiz = await window.api.get(`/learning/quizzes/${quizId}`);
+                
+                // Create Quiz详情显示模态框
+                const modalHtml = `
+                    <div class="modal fade" id="quizDetailsModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Quiz Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-8">
+                                            <h4>${quiz.title}</h4>
+                                            ${quiz.description ? `<p class="text-muted">${quiz.description}</p>` : ''}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">测验信息</h6>
+                                                    <p class="mb-1"><strong>Question数量:</strong> ${quiz.questions.length}</p>
+                                                    <p class="mb-1"><strong>Time限制:</strong> ${quiz.time_limit / 60} minutes</p>
+                                                    <p class="mb-1"><strong>Created Time:</strong> ${new Date(quiz.created_at).toLocaleString()}</p>
+                                                    <p class="mb-0"><strong>Create者:</strong> ${quiz.created_by}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5>Question List</h5>
+                                    <div class="questions-list">
+                                        ${quiz.questions.map((question, index) => `
+                                            <div class="card mb-3">
+                                                <div class="card-header">
+                                                    <h6 class="mb-0">
+                                                        <span class="badge bg-primary me-2">${index + 1}</span>
+                                                        ${question.text || question.question}
+                                                        <span class="badge bg-secondary ms-2">${question.points || 1} 分</span>
+                                                        <span class="badge bg-info ms-1">${getQuestionTypeText(question.question_type || question.type)}</span>
+                                                    </h6>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row">
+                                                        ${question.options.map((option, optIndex) => `
+                                                            <div class="col-md-6 mb-2">
+                                                                <div class="d-flex align-items-center">
+                                                                    <span class="me-2 ${option.is_correct ? 'text-success fw-bold' : 'text-muted'}">
+                                                                        ${option.is_correct ? '✓' : '○'} ${String.fromCharCode(65 + optIndex)}.
+                                                                    </span>
+                                                                    <span class="${option.is_correct ? 'text-success fw-bold' : ''}">${option.text}</span>
+                                                                </div>
+                                                            </div>
+                                                        `).join('')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-info" onclick="viewQuizResults('${quizId}')">View Results</button>
+                                    <button type="button" class="btn btn-primary" onclick="editQuiz('${quizId}')">Edit</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存in模态框
+                const existingModal = document.getElementById('quizDetailsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // 添加新模态框到页面
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('quizDetailsModal'));
+                modal.show();
+                
+                // 模态框Close后清理
+                document.getElementById('quizDetailsModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('获取Quiz Details失败:', error);
+                alert('获取Quiz Details失败，Please try again');
+            }
+        }
+        
+        // 获取Question类型文本
+        function getQuestionTypeText(type) {
+            switch(type) {
+                case 'multiple_choice': return '单选questions';
+                case 'multiple_select': return '多选questions';
+                case 'true_false': return '判断questions';
+                default: return '未知类型';
+            }
+        }
+        
+        // Edit功能
+        async function editQuiz(quizId) {
+            try {
+                console.log('Edit:', quizId);
+                
+                // 获取Quiz Details
+                const quiz = await LearningActivitiesAPI.getQuiz(quizId);
+                
+                if (!quiz || quiz.error) {
+                    throw new Error(quiz?.error || '无法获取Quiz Details');
+                }
+                
+                const quizData = quiz;
+                
+                // CreateEdit表单模态框
+                const editModalHtml = `
+                    <div class="modal fade" id="editQuizModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Edit: ${quizData.title}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="editQuizForm">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">测验Title</label>
+                                                <input type="text" class="form-control" name="title" value="${quizData.title}" required>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Time限制（minutes）</label>
+                                                <input type="number" class="form-control" name="time_limit" value="${(quizData.time_limit || 1800) / 60}" min="1">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Description</label>
+                                            <textarea class="form-control" name="description" rows="3">${quizData.description || ''}</textarea>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="allow_retakes" ${quizData.allow_retakes ? 'checked' : ''}>
+                                                    <label class="form-check-label">allow重做</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="show_correct_answers" ${quizData.show_correct_answers !== false ? 'checked' : ''}>
+                                                    <label class="form-check-label">显示正确Answer</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Question管理</label>
+                                            <div id="questions-container">
+                                                ${quizData.questions.map((question, qIndex) => `
+                                                    <div class="card mb-2" data-question-index="${qIndex}">
+                                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                                            <h6 class="mb-0">Question ${qIndex + 1}</h6>
+                                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(${qIndex})">Delete</button>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <div class="mb-2">
+                                                                <label class="form-label">QuestionContent</label>
+                                                                <input type="text" class="form-control question-text" value="${question.text || question.question || question.title || ''}" placeholder="InputQuestionContent">
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label class="form-label">Options</label>
+                                                                <div class="options-container">
+                                                                    ${question.options.map((option, oIndex) => `
+                                                                        <div class="input-group mb-1">
+                                                                            <span class="input-group-text">${String.fromCharCode(65 + oIndex)}</span>
+                                                                            <input type="text" class="form-control option-text" value="${option.text}" placeholder="OptionsContent">
+                                                                            <div class="input-group-text">
+                                                                                <input class="form-check-input option-correct" type="checkbox" ${option.is_correct ? 'checked' : ''}>
+                                                                                <label class="form-check-label ms-1">正确</label>
+                                                                            </div>
+                                                                        </div>
+                                                                    `).join('')}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addNewQuestion()">添加Question</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" onclick="saveQuizChanges('${quizId}')">Save修改</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存inEdit模态框
+                const existingEditModal = document.getElementById('editQuizModal');
+                if (existingEditModal) {
+                    existingEditModal.remove();
+                }
+                
+                // 添加Edit模态框到页面
+                document.body.insertAdjacentHTML('beforeend', editModalHtml);
+                
+                // Close详情模态框
+                const detailsModal = bootstrap.Modal.getInstance(document.getElementById('quizDetailsModal'));
+                if (detailsModal) {
+                    detailsModal.hide();
+                }
+                
+                // 显示Edit模态框
+                const editModal = new bootstrap.Modal(document.getElementById('editQuizModal'));
+                editModal.show();
+                
+            } catch (error) {
+                console.error('Edit失败:', error);
+                alert('Edit失败: ' + error.message);
+            }
+        }
+        
+        // Save测验修改
+        async function saveQuizChanges(quizId) {
+            try {
+                const form = document.getElementById('editQuizForm');
+                const formData = new FormData(form);
+                
+                // 收集Question数据
+                const questions = [];
+                const questionCards = document.querySelectorAll('#questions-container .card[data-question-index]');
+                
+                questionCards.forEach((card, index) => {
+                    const questionText = card.querySelector('.question-text').value.trim();
+                    const optionInputs = card.querySelectorAll('.option-text');
+                    const correctInputs = card.querySelectorAll('.option-correct');
+                    
+                    if (!questionText) {
+                        throw new Error(`Question ${index + 1} Contentcannotas空`);
+                    }
+                    
+                    const options = [];
+                    let hasCorrectOption = false;
+                    
+                    optionInputs.forEach((input, oIndex) => {
+                        const optionText = input.value.trim();
+                        const isCorrect = correctInputs[oIndex].checked;
+                        
+                        if (!optionText) {
+                            throw new Error(`Question ${index + 1} Options ${String.fromCharCode(65 + oIndex)} cannotas空`);
+                        }
+                        
+                        if (isCorrect) hasCorrectOption = true;
+                        
+                        options.push({
+                            text: optionText,
+                            is_correct: isCorrect
+                        });
+                    });
+                    
+                    if (!hasCorrectOption) {
+                        throw new Error(`Question ${index + 1} 必须至少have一个正确Answer`);
+                    }
+                    
+                    questions.push({
+                        text: questionText,
+                        options: options,
+                        question_type: 'multiple_choice'
+                    });
+                });
+                
+                if (questions.length === 0) {
+                    throw new Error('测验必须至少包含一个Question');
+                }
+                
+                const updateData = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    time_limit: parseInt(formData.get('time_limit')) * 60,  // 转换minutesas秒
+                    allow_retakes: formData.has('allow_retakes'),
+                    show_correct_answers: formData.has('show_correct_answers'),
+                    questions: questions
+                };
+                
+                console.log('Save测验修改:', updateData);
+                
+                const result = await LearningActivitiesAPI.updateQuiz(quizId, updateData);
+                
+                if (result && result.success) {
+                    // CloseEdit模态框
+                    const editModal = bootstrap.Modal.getInstance(document.getElementById('editQuizModal'));
+                    if (editModal) {
+                        editModal.hide();
+                    }
+                    
+                    alert('测验修改成功！');
+                    
+                    // Refresh测验列表
+                    loadQuizzes();
+                } else {
+                    throw new Error(result.error || 'Save失败');
+                }
+                
+            } catch (error) {
+                console.error('Save测验修改失败:', error);
+                alert('Save失败: ' + error.message);
+            }
+        }
+        
+        // 查看测验结果功能
+        async function viewQuizResults(quizId) {
+            try {
+                console.log('查看测验结果:', quizId);
+                
+                // 获取测验结果
+                const results = await LearningActivitiesAPI.getQuizResults(quizId);
+                
+                if (!results || !results.success) {
+                    throw new Error('无法获取测验结果');
+                }
+                
+                const submissions = results.submissions || [];
+                
+                // Create结果显示模态框
+                const resultsModalHtml = `
+                    <div class="modal fade" id="quizResultsModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">测验结果</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <h6>Submit统计</h6>
+                                        <p>总Submit数: <strong>${submissions.length}</strong></p>
+                                        ${submissions.length > 0 ? `
+                                            <p>平均分: <strong>${(submissions.reduce((sum, sub) => sum + sub.score, 0) / submissions.length).toFixed(1)}%</strong></p>
+                                        ` : ''}
+                                    </div>
+                                    
+                                    ${submissions.length === 0 ? `
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            暂无StudentSubmit结果
+                                        </div>
+                                    ` : `
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student姓名</th>
+                                                        <th>邮箱</th>
+                                                        <th>Score</th>
+                                                        <th>正确questions数</th>
+                                                        <th>SubmitTime</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${submissions.map(submission => `
+                                                        <tr>
+                                                            <td>${submission.student_name || submission.user_id}</td>
+                                                            <td>${submission.student_email || ''}</td>
+                                                            <td>
+                                                                <span class="badge ${submission.score >= 80 ? 'bg-success' : submission.score >= 60 ? 'bg-warning' : 'bg-danger'}">
+                                                                    ${submission.score.toFixed(1)}%
+                                                                </span>
+                                                            </td>
+                                                            <td>${submission.correct_answers}/${submission.total_questions}</td>
+                                                            <td>${new Date(submission.submitted_at).toLocaleString('zh-CN')}</td>
+                                                        </tr>
+                                                    `).join('')}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    `}
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存in结果模态框
+                const existingResultsModal = document.getElementById('quizResultsModal');
+                if (existingResultsModal) {
+                    existingResultsModal.remove();
+                }
+                
+                // 添加结果模态框到页面
+                document.body.insertAdjacentHTML('beforeend', resultsModalHtml);
+                
+                // Close详情模态框
+                const detailsModal = bootstrap.Modal.getInstance(document.getElementById('quizDetailsModal'));
+                if (detailsModal) {
+                    detailsModal.hide();
+                }
+                
+                // 显示结果模态框
+                const resultsModal = new bootstrap.Modal(document.getElementById('quizResultsModal'));
+                resultsModal.show();
+                
+            } catch (error) {
+                console.error('查看测验结果失败:', error);
+                alert('查看测验结果失败: ' + error.message);
+            }
+        }
+        
+        // 添加新Question
+        function addNewQuestion() {
+            const container = document.getElementById('questions-container');
+            const questionIndex = container.children.length;
+            
+            const newQuestionHtml = `
+                <div class="card mb-2" data-question-index="${questionIndex}">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">Question ${questionIndex + 1}</h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeQuestion(${questionIndex})">Delete</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-2">
+                            <label class="form-label">QuestionContent</label>
+                            <input type="text" class="form-control question-text" value="" placeholder="InputQuestionContent">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Options</label>
+                            <div class="options-container">
+                                <div class="input-group mb-1">
+                                    <span class="input-group-text">A</span>
+                                    <input type="text" class="form-control option-text" value="" placeholder="OptionsContent">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input option-correct" type="checkbox">
+                                        <label class="form-check-label ms-1">正确</label>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-1">
+                                    <span class="input-group-text">B</span>
+                                    <input type="text" class="form-control option-text" value="" placeholder="OptionsContent">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input option-correct" type="checkbox">
+                                        <label class="form-check-label ms-1">正确</label>
+                                    </div>
+                                </div>
+                                <div class="input-group mb-1">
+                                    <span class="input-group-text">C</span>
+                                    <input type="text" class="form-control option-text" value="" placeholder="OptionsContent">
+                                    <div class="input-group-text">
+                                        <input class="form-check-input option-correct" type="checkbox">
+                                        <label class="form-check-label ms-1">正确</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', newQuestionHtml);
+            updateQuestionNumbers();
+        }
+        
+        // DeleteQuestion
+        function removeQuestion(index) {
+            const container = document.getElementById('questions-container');
+            const questionCard = container.querySelector(`[data-question-index="${index}"]`);
+            
+            if (container.children.length <= 1) {
+                alert('测验必须至少包含一个Question');
+                return;
+            }
+            
+            if (confirm('Confirm要Delete这个Question吗？')) {
+                questionCard.remove();
+                updateQuestionNumbers();
+            }
+        }
+        
+        // 更新Question编号
+        function updateQuestionNumbers() {
+            const container = document.getElementById('questions-container');
+            const questionCards = container.querySelectorAll('.card[data-question-index]');
+            
+            questionCards.forEach((card, index) => {
+                card.setAttribute('data-question-index', index);
+                const header = card.querySelector('.card-header h6');
+                header.textContent = `Question ${index + 1}`;
+                
+                const deleteBtn = card.querySelector('.btn-outline-danger');
+                deleteBtn.setAttribute('onclick', `removeQuestion(${index})`);
+            });
+        }
+        
+        async function viewQuestion(questionId) {
+            try {
+                // 获取短答questions详情
+                const question = await window.api.get(`/learning/shortanswers/${questionId}`);
+                console.log('Short answer question data:', question); // 调试信息
+                
+                // Create短答questions详情显示模态框
+                const modalHtml = `
+                    <div class="modal fade" id="questionDetailsModal" tabindex="-1">
+                        <div class="modal-dialog modal-xl">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">短答questions详情</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-8">
+                                            <h4>${question.title}</h4>
+                                            <div class="alert alert-primary">
+                                                <strong>Question:</strong> ${question.text || question.question}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">Question信息</h6>
+                                                    <p class="mb-1"><strong>最大characters数:</strong> ${question.max_length}</p>
+                                                    <p class="mb-1"><strong>分值:</strong> ${question.points} 分</p>
+                                                    <p class="mb-1"><strong>Submit数:</strong> ${question.submissions ? question.submissions.length : 0}</p>
+                                                    <p class="mb-1"><strong>Created Time:</strong> ${new Date(question.created_at).toLocaleString()}</p>
+                                                    <p class="mb-1"><strong>Create者:</strong> ${question.created_by}</p>
+                                                    <p class="mb-0"><strong>Status:</strong> 
+                                                        <span class="badge ${question.is_active ? 'bg-success' : 'bg-secondary'}">
+                                                            ${question.is_active ? 'Active' : '已Close'}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5>Student Answers</h5>
+                                    <div class="submissions-display">
+                                        ${question.submissions && question.submissions.length > 0 ? 
+                                            `<div class="accordion" id="submissionsAccordion">
+                                                ${question.submissions.map((submission, index) => `
+                                                    <div class="accordion-item">
+                                                        <h2 class="accordion-header" id="heading${index}">
+                                                            <button class="accordion-button ${index === 0 ? '' : 'collapsed'}" type="button" 
+                                                                    data-bs-toggle="collapse" data-bs-target="#collapse${index}" 
+                                                                    aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="collapse${index}">
+                                                                <div class="d-flex justify-content-between w-100 me-3">
+                                                                    <span><strong>Student:</strong> ${submission.student_id || '匿名Student'}</span>
+                                                                    <span class="text-muted">
+                                                                        ${new Date(submission.submitted_at).toLocaleString()} 
+                                                                        • ${submission.answer.length} characters
+                                                                        ${submission.score !== undefined ? ` • ${submission.score}/${question.points} 分` : ''}
+                                                                    </span>
+                                                                </div>
+                                                            </button>
+                                                        </h2>
+                                                        <div id="collapse${index}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}" 
+                                                             aria-labelledby="heading${index}" data-bs-parent="#submissionsAccordion">
+                                                            <div class="accordion-body">
+                                                                <div class="card">
+                                                                    <div class="card-body">
+                                                                        <h6 class="card-title">Student Answers:</h6>
+                                                                        <p class="card-text">${submission.answer}</p>
+                                                                        ${submission.feedback ? 
+                                                                            `<div class="mt-3">
+                                                                                <h6 class="text-success">教师反馈:</h6>
+                                                                                <p class="text-success">${submission.feedback}</p>
+                                                                            </div>` : ''
+                                                                        }
+                                                                        <div class="mt-3">
+                                                                            <button class="btn btn-sm btn-outline-primary" onclick="gradeSubmission('${questionId}', '${submission._id || index}')">
+                                                                                ${submission.score !== undefined ? '修改评分' : '评分'}
+                                                                            </button>
+                                                                            <button class="btn btn-sm btn-outline-info ms-2" onclick="provideFeedback('${questionId}', '${submission._id || index}')">
+                                                                                ${submission.feedback ? '修改反馈' : 'Add Feedback'}
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>` :
+                                            '<div class="alert alert-info">暂无StudentSubmit</div>'
+                                        }
+                                    </div>
+                                    
+                                    ${question.submissions && question.submissions.length > 0 ? 
+                                        `<div class="mt-4">
+                                            <h6>Statistics</h6>
+                                            <div class="row">
+                                                <div class="col-md-3">
+                                                    <div class="card text-center">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">${question.submissions.length}</h5>
+                                                            <p class="card-text">总Submit数</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card text-center">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">${Math.round(question.submissions.reduce((sum, s) => sum + s.answer.length, 0) / question.submissions.length)}</h5>
+                                                            <p class="card-text">平均characters数</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card text-center">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">${question.submissions.filter(s => s.score !== undefined).length}</h5>
+                                                            <p class="card-text">Graded</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3">
+                                                    <div class="card text-center">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">${question.submissions.filter(s => s.score !== undefined).length > 0 ? 
+                                                                Math.round(question.submissions.filter(s => s.score !== undefined).reduce((sum, s) => sum + s.score, 0) / 
+                                                                question.submissions.filter(s => s.score !== undefined).length * 10) / 10 : 0}</h5>
+                                                            <p class="card-text">平均分</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>` : ''
+                                    }
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-info" onclick="refreshQuestionData('${questionId}')">Refresh数据</button>
+                                    <button type="button" class="btn btn-success" onclick="exportSubmissions('${questionId}')">ExportAnswer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存in模态框
+                const existingModal = document.getElementById('questionDetailsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // 添加新模态框到页面
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('questionDetailsModal'));
+                modal.show();
+                
+                // 模态框Close后清理
+                document.getElementById('questionDetailsModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('获取短答questions详情失败:', error);
+                alert('获取短答questions详情失败，Please try again');
+            }
+        }
+        
+        // 评分功能
+        async function gradeSubmission(questionId, submissionId) {
+            try {
+                const score = prompt('Please enter分数 (0-10):');
+                if (score === null) return; // 用户Cancel
+                
+                const numScore = parseFloat(score);
+                if (isNaN(numScore) || numScore < 0 || numScore > 10) {
+                    alert('Please enterhave效分数 (0-10)');
+                    return;
+                }
+                
+                const feedback = prompt('Please enter反馈Content (可选):') || '';
+                
+                // 调用评分API
+                const response = await window.api.post(`/learning/shortanswers/${questionId}/submissions/${submissionId}/grade`, {
+                    score: numScore,
+                    feedback: feedback
+                });
+                
+                if (response.success) {
+                    alert('评分成功！');
+                    // Refresh页面数据
+                    await refreshQuestionData(questionId);
+                } else {
+                    alert('评分失败: ' + (response.error || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                console.error('评分失败:', error);
+                alert('评分失败: ' + error.message);
+            }
+        }
+        
+        // 反馈功能
+        async function provideFeedback(questionId, submissionId) {
+            try {
+                const feedback = prompt('Please enter反馈Content:');
+                if (feedback === null) return; // 用户Cancel
+                
+                if (!feedback.trim()) {
+                    alert('反馈Contentcannotas空');
+                    return;
+                }
+                
+                // 调用反馈API
+                const response = await window.api.post(`/learning/shortanswers/${questionId}/submissions/${submissionId}/feedback`, {
+                    feedback: feedback.trim()
+                });
+                
+                if (response.success) {
+                    alert('反馈添加成功！');
+                    // Refresh页面数据
+                    await refreshQuestionData(questionId);
+                } else {
+                    alert('Add Feedback失败: ' + (response.error || 'Unknown error'));
+                }
+                
+            } catch (error) {
+                console.error('Add Feedback失败:', error);
+                alert('Add Feedback失败: ' + error.message);
+            }
+        }
+        
+        // Refresh短答questions数据
+        async function refreshQuestionData(questionId) {
+            try {
+                // Close当前模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('questionDetailsModal'));
+                modal.hide();
+                
+                // 重新打开短答questions详情
+                setTimeout(() => {
+                    viewQuestion(questionId);
+                }, 300);
+                
+            } catch (error) {
+                console.error('Refresh短答questions数据失败:', error);
+                alert('Refresh失败，Please try again');
+            }
+        }
+        
+        // ExportStudent Answers
+        async function exportSubmissions(questionId) {
+            try {
+                // 获取短答questions数据
+                const question = await window.api.get(`/learning/shortanswers/${questionId}`);
+                
+                // CreateExportOptions模态框
+                const exportModalHtml = `
+                    <div class="modal fade" id="exportSubmissionsModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">ExportStudent Answers</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>SelectExport格式：</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="exportSubmissionsAsCSV('${questionId}')">
+                                            <i class="bi bi-file-earmark-spreadsheet"></i> Exportas CSV
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="exportSubmissionsAsJSON('${questionId}')">
+                                            <i class="bi bi-file-earmark-code"></i> Exportas JSON
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="exportSubmissionsAsTXT('${questionId}')">
+                                            <i class="bi bi-file-earmark-text"></i> Exportas TXT
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存inExport模态框
+                const existingExportModal = document.getElementById('exportSubmissionsModal');
+                if (existingExportModal) {
+                    existingExportModal.remove();
+                }
+                
+                // 添加Export模态框
+                document.body.insertAdjacentHTML('beforeend', exportModalHtml);
+                
+                // 显示Export模态框
+                const exportModal = new bootstrap.Modal(document.getElementById('exportSubmissionsModal'));
+                exportModal.show();
+                
+                // 模态框Close后清理
+                document.getElementById('exportSubmissionsModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('准备ExportAnswer失败:', error);
+                alert('准备ExportAnswer失败，Please try again');
+            }
+        }
+        
+        // ExportStudent AnswersasCSV格式
+        async function exportSubmissionsAsCSV(questionId) {
+            try {
+                const question = await window.api.get(`/learning/shortanswers/${questionId}`);
+                
+                // CreateCSVContent
+                let csvContent = "StudentID,AnswerContent,characters数,SubmitTime,分数,反馈\\n";
+                
+                if (question.submissions && question.submissions.length > 0) {
+                    question.submissions.forEach(submission => {
+                        const studentId = submission.student_id || '匿名Student';
+                        const answer = `"${submission.answer.replace(/"/g, '""')}"`;
+                        const wordCount = submission.answer.length;
+                        const submitTime = new Date(submission.submitted_at).toLocaleString();
+                        const score = submission.score !== undefined ? submission.score : 'Ungraded';
+                        const feedback = submission.feedback ? `"${submission.feedback.replace(/"/g, '""')}"` : '无';
+                        
+                        csvContent += `"${studentId}",${answer},${wordCount},"${submitTime}","${score}",${feedback}\\n`;
+                    });
+                } else {
+                    csvContent += "No data available,,,,,\\n";
+                }
+                
+                // Create并下载文件
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Student Answers_${question.title}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportSubmissionsModal')).hide();
+                
+                alert('CSV文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportCSV失败:', error);
+                alert('ExportCSV失败，Please try again');
+            }
+        }
+        
+        // ExportStudent AnswersasJSON格式
+        async function exportSubmissionsAsJSON(questionId) {
+            try {
+                const question = await window.api.get(`/learning/shortanswers/${questionId}`);
+                
+                // CreateExport数据对象
+                const exportData = {
+                    question_info: {
+                        id: question.id || question._id,
+                        title: question.title,
+                        question: question.text || question.question,
+                        max_length: question.max_length,
+                        points: question.points,
+                        created_at: question.created_at,
+                        created_by: question.created_by
+                    },
+                    submissions: question.submissions || [],
+                    statistics: {
+                        total_submissions: question.submissions ? question.submissions.length : 0,
+                        graded_submissions: question.submissions ? question.submissions.filter(s => s.score !== undefined).length : 0,
+                        average_word_count: question.submissions && question.submissions.length > 0 ? 
+                            Math.round(question.submissions.reduce((sum, s) => sum + s.answer.length, 0) / question.submissions.length) : 0,
+                        average_score: question.submissions && question.submissions.filter(s => s.score !== undefined).length > 0 ?
+                            Math.round(question.submissions.filter(s => s.score !== undefined).reduce((sum, s) => sum + s.score, 0) / 
+                            question.submissions.filter(s => s.score !== undefined).length * 10) / 10 : 0,
+                        export_time: new Date().toISOString()
+                    }
+                };
+                
+                // Create并下载文件
+                const jsonContent = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Student Answers_${question.title}_${new Date().toISOString().split('T')[0]}.json`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportSubmissionsModal')).hide();
+                
+                alert('JSON文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportJSON失败:', error);
+                alert('ExportJSON失败，Please try again');
+            }
+        }
+        
+        // ExportStudent AnswersasTXT格式
+        async function exportSubmissionsAsTXT(questionId) {
+            try {
+                const question = await window.api.get(`/learning/shortanswers/${questionId}`);
+                
+                // CreateTXTContent
+                let txtContent = `短答questionsStudent Answers报告\\n`;
+                txtContent += `==========================================\\n\\n`;
+                txtContent += `QuestionTitle: ${question.title}\\n`;
+                txtContent += `QuestionContent: ${question.text || question.question}\\n`;
+                txtContent += `最大characters数: ${question.max_length}\\n`;
+                txtContent += `分值: ${question.points} 分\\n`;
+                txtContent += `Created Time: ${new Date(question.created_at).toLocaleString()}\\n`;
+                txtContent += `Create者: ${question.created_by}\\n\\n`;
+                
+                if (question.submissions && question.submissions.length > 0) {
+                    txtContent += `Student Answers (共 ${question.submissions.length} 份):\\n`;
+                    txtContent += `------------------------------------------\\n\\n`;
+                    
+                    question.submissions.forEach((submission, index) => {
+                        txtContent += `Answer ${index + 1}:\\n`;
+                        txtContent += `Student: ${submission.student_id || '匿名Student'}\\n`;
+                        txtContent += `SubmitTime: ${new Date(submission.submitted_at).toLocaleString()}\\n`;
+                        txtContent += `characters数: ${submission.answer.length}\\n`;
+                        txtContent += `分数: ${submission.score !== undefined ? submission.score + '/' + question.points : 'Ungraded'}\\n`;
+                        txtContent += `AnswerContent:\\n${submission.answer}\\n`;
+                        if (submission.feedback) {
+                            txtContent += `教师反馈: ${submission.feedback}\\n`;
+                        }
+                        txtContent += `\\n${'='.repeat(50)}\\n\\n`;
+                    });
+                    
+                    // Statistics
+                    const gradedCount = question.submissions.filter(s => s.score !== undefined).length;
+                    const avgWordCount = Math.round(question.submissions.reduce((sum, s) => sum + s.answer.length, 0) / question.submissions.length);
+                    const avgScore = gradedCount > 0 ? 
+                        Math.round(question.submissions.filter(s => s.score !== undefined).reduce((sum, s) => sum + s.score, 0) / gradedCount * 10) / 10 : 0;
+                    
+                    txtContent += `Statistics:\\n`;
+                    txtContent += `------------------------------------------\\n`;
+                    txtContent += `总Submit数: ${question.submissions.length}\\n`;
+                    txtContent += `Graded数: ${gradedCount}\\n`;
+                    txtContent += `平均characters数: ${avgWordCount}\\n`;
+                    txtContent += `平均分数: ${avgScore}\\n`;
+                } else {
+                    txtContent += `暂无StudentSubmit\\n`;
+                }
+                
+                txtContent += `\\nExportTime: ${new Date().toLocaleString()}\\n`;
+                
+                // Create并下载文件
+                const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Student Answers_${question.title}_${new Date().toISOString().split('T')[0]}.txt`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportSubmissionsModal')).hide();
+                
+                alert('TXT文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportTXT失败:', error);
+                alert('ExportTXT失败，Please try again');
+            }
+        }
+        
+        async function viewWordCloud(wordcloudId) {
+            try {
+                // 获取词云详情and所haveSubmit数据
+                const wordcloud = await window.api.get(`/learning/wordclouds/${wordcloudId}/results`);
+                
+                // Create词云详情显示模态框
+                const modalHtml = `
+                    <div class="modal fade" id="wordcloudDetailsModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">词云详情</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row mb-4">
+                                        <div class="col-md-8">
+                                            <h4>${wordcloud.title}</h4>
+                                            ${wordcloud.description ? `<p class="text-muted">${wordcloud.description}</p>` : ''}
+                                            <div class="alert alert-info">
+                                                <strong>PromptQuestion:</strong> ${wordcloud.prompt}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="card bg-light">
+                                                <div class="card-body">
+                                                    <h6 class="card-title">词云信息</h6>
+                                                    <p class="mb-1"><strong>最大词数:</strong> ${wordcloud.max_words}</p>
+                                                    <p class="mb-1"><strong>Submit词数:</strong> ${wordcloud.analytics ? wordcloud.analytics.total_submissions : 0}</p>
+                                                    <p class="mb-1"><strong>独特words:</strong> ${wordcloud.analytics ? wordcloud.analytics.unique_words : 0}</p>
+                                                    <p class="mb-1"><strong>参with人数:</strong> ${wordcloud.analytics ? wordcloud.analytics.unique_contributors : 0}</p>
+                                                    <p class="mb-1"><strong>Created Time:</strong> ${new Date(wordcloud.created_at).toLocaleString()}</p>
+                                                    <p class="mb-1"><strong>Create者:</strong> ${wordcloud.created_by}</p>
+                                                    <p class="mb-0"><strong>Status:</strong> 
+                                                        <span class="badge ${wordcloud.is_active ? 'bg-success' : 'bg-secondary'}">
+                                                            ${wordcloud.is_active ? 'Active' : '已Close'}
+                                                        </span>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <h5>Submitwords</h5>
+                                    <div class="words-display">
+                                        ${wordcloud.words && wordcloud.words.length > 0 ? 
+                                            `<div class="row">
+                                                ${wordcloud.words.map(wordObj => `
+                                                    <div class="col-md-3 col-sm-4 col-6 mb-2">
+                                                        <div class="card text-center">
+                                                            <div class="card-body py-2">
+                                                                <h6 class="card-title mb-1">${wordObj.text}</h6>
+                                                                <small class="text-muted">出现 ${wordObj.value} 次</small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>` :
+                                            '<div class="alert alert-info">暂无Submitwords</div>'
+                                        }
+                                    </div>
+                                    
+                                    ${wordcloud.words && wordcloud.words.length > 0 ? 
+                                        `<div class="mt-4">
+                                            <h6>词云可视化</h6>
+                                            <div id="wordcloud-canvas-container-${wordcloudId}" class="word-cloud-visual p-3 border rounded bg-white text-center" style="height: 400px; position: relative; overflow: hidden;">
+                                                <!-- Canvas will be inserted here -->
+                                            </div>
+                                        </div>` : ''
+                                    }
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    <button type="button" class="btn btn-info" onclick="refreshWordCloudData('${wordcloudId}')">Refresh数据</button>
+                                    <button type="button" class="btn btn-primary" onclick="exportWordCloudData('${wordcloudId}')">Export数据</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存in模态框
+                const existingModal = document.getElementById('wordcloudDetailsModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+                
+                // 添加新模态框到页面
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+                
+                // 添加调试信息
+                console.log('Word cloud data:', wordcloud);
+                console.log('Words array:', wordcloud.words);
+                if (wordcloud.words && wordcloud.words.length > 0) {
+                    console.log('First word object:', wordcloud.words[0]);
+                    console.log('Word object keys:', Object.keys(wordcloud.words[0]));
+                }
+                
+                // 显示模态框
+                const modal = new bootstrap.Modal(document.getElementById('wordcloudDetailsModal'));
+                modal.show();
+                
+                // 渲染专业词云
+                if (wordcloud.words && wordcloud.words.length > 0) {
+                    setTimeout(() => {
+                        renderProfessionalWordCloud(wordcloud.words, `wordcloud-canvas-container-${wordcloudId}`);
+                    }, 300); // 等待模态框完全显示
+                }
+                
+                // 模态框Close后清理
+                document.getElementById('wordcloudDetailsModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('获取词云详情失败:', error);
+                alert('获取词云详情失败，Please try again');
+            }
+        }
+        
+        // 专业词云渲染函数
+        function renderProfessionalWordCloud(words, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container || !words || words.length === 0) return;
+            
+            // Createcanvas
+            const canvas = document.createElement('canvas');
+            canvas.width = 600;
+            canvas.height = 350;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.maxWidth = '600px';
+            canvas.style.maxHeight = '350px';
+            canvas.style.borderRadius = '8px';
+            canvas.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)';
+            
+            const ctx = canvas.getContext('2d');
+            
+            // 清除画布并设置背景
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#f8f9fa');
+            gradient.addColorStop(1, '#ffffff');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 专业配色方案
+            const colors = [
+                '#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', 
+                '#EF4444', '#EC4899', '#06B6D4', '#84CC16'
+            ];
+            
+            // 按频次排序
+            const sortedWords = words.sort((a, b) => (b.value || b.count || 1) - (a.value || a.count || 1));
+            
+            // 中心点
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const placedWords = [];
+            
+            sortedWords.forEach((wordData, index) => {
+                const frequency = wordData.value || wordData.count || 1;
+                const text = wordData.text || wordData.word || 'Unknown';
+                
+                // 动态characters体大小
+                let fontSize = 16;
+                if (index === 0) fontSize = 48;
+                else if (index < 3) fontSize = 36;
+                else if (index < 6) fontSize = 28;
+                else if (index < 10) fontSize = 22;
+                
+                fontSize = Math.max(fontSize * (0.7 + frequency * 0.1), 14);
+                fontSize = Math.min(fontSize, 50);
+                
+                // 颜色Select
+                const color = colors[index % colors.length];
+                
+                // characters体设置
+                ctx.font = fontSize + 'px Microsoft YaHei, Arial, sans-serif';
+                ctx.fillStyle = color;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                // 计算文本尺寸
+                const metrics = ctx.measureText(text);
+                const textWidth = metrics.width;
+                const textHeight = fontSize;
+                
+                // 寻找合适位置
+                let x, y, attempts = 0;
+                let positioned = false;
+                
+                while (!positioned && attempts < 100) {
+                    if (attempts === 0 && index === 0) {
+                        x = centerX;
+                        y = centerY;
+                    } else {
+                        const angle = attempts * 137.5 * Math.PI / 180;
+                        const radius = Math.sqrt(attempts) * 15;
+                        x = centerX + Math.cos(angle) * radius;
+                        y = centerY + Math.sin(angle) * radius;
+                        
+                        const padding = textWidth / 2 + 10;
+                        x = Math.max(padding, Math.min(canvas.width - padding, x));
+                        y = Math.max(textHeight / 2 + 10, Math.min(canvas.height - textHeight / 2 - 10, y));
+                    }
+                    
+                    // 简化碰撞检测
+                    let collision = false;
+                    for (let placed of placedWords) {
+                        const dx = x - placed.x;
+                        const dy = y - placed.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        const minDistance = (textWidth + placed.width) / 2 + 10;
+                        
+                        if (distance < minDistance) {
+                            collision = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!collision) {
+                        positioned = true;
+                        placedWords.push({ x, y, width: textWidth, height: textHeight });
+                    }
+                    attempts++;
+                }
+                
+                // 绘制文characters
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 2;
+                ctx.shadowOffsetX = 1;
+                ctx.shadowOffsetY = 1;
+                
+                ctx.fillText(text, x || centerX, y || centerY);
+                
+                // Reset阴影
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+            });
+            
+            // 清空容器并添加canvas
+            container.innerHTML = '';
+            container.appendChild(canvas);
+            
+            console.log('Professional word cloud rendered successfully!');
+        }
+        
+        // Refresh词云数据
+        async function refreshWordCloudData(wordcloudId) {
+            try {
+                // Close当前模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('wordcloudDetailsModal'));
+                modal.hide();
+                
+                // 重新打开词云详情
+                setTimeout(() => {
+                    viewWordCloud(wordcloudId);
+                }, 300);
+                
+            } catch (error) {
+                console.error('Refresh词云数据失败:', error);
+                alert('Refresh失败，Please try again');
+            }
+        }
+        
+        // Export词云数据
+        async function exportWordCloudData(wordcloudId) {
+            try {
+                // 获取词云数据
+                const wordcloud = await window.api.get(`/learning/wordclouds/${wordcloudId}`);
+                
+                // CreateExportOptions模态框
+                const exportModalHtml = `
+                    <div class="modal fade" id="exportModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Export词云数据</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>SelectExport格式：</p>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="exportAsCSV('${wordcloudId}')">
+                                            <i class="bi bi-file-earmark-spreadsheet"></i> Exportas CSV
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="exportAsJSON('${wordcloudId}')">
+                                            <i class="bi bi-file-earmark-code"></i> Exportas JSON
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="exportAsTXT('${wordcloudId}')">
+                                            <i class="bi bi-file-earmark-text"></i> Exportas TXT
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // 移除已存inExport模态框
+                const existingExportModal = document.getElementById('exportModal');
+                if (existingExportModal) {
+                    existingExportModal.remove();
+                }
+                
+                // 添加Export模态框
+                document.body.insertAdjacentHTML('beforeend', exportModalHtml);
+                
+                // 显示Export模态框
+                const exportModal = new bootstrap.Modal(document.getElementById('exportModal'));
+                exportModal.show();
+                
+                // 模态框Close后清理
+                document.getElementById('exportModal').addEventListener('hidden.bs.modal', function() {
+                    this.remove();
+                });
+                
+            } catch (error) {
+                console.error('准备Export数据失败:', error);
+                alert('准备Export数据失败，Please try again');
+            }
+        }
+        
+        // ExportasCSV格式
+        async function exportAsCSV(wordcloudId) {
+            try {
+                const wordcloud = await window.api.get(`/learning/wordclouds/${wordcloudId}`);
+                
+                // CreateCSVContent
+                let csvContent = "words,出现次数,SubmitTime\\n";
+                
+                if (wordcloud.words && wordcloud.words.length > 0) {
+                    wordcloud.words.forEach(wordObj => {
+                        csvContent += `"${wordObj.word}",${wordObj.count},"${new Date().toLocaleString()}"\\n`;
+                    });
+                } else {
+                    csvContent += "No data available,0,\"\"\\n";
+                }
+                
+                // Create并下载文件
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `词云数据_${wordcloud.title}_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                
+                alert('CSV文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportCSV失败:', error);
+                alert('ExportCSV失败，Please try again');
+            }
+        }
+        
+        // ExportasJSON格式
+        async function exportAsJSON(wordcloudId) {
+            try {
+                const wordcloud = await window.api.get(`/learning/wordclouds/${wordcloudId}`);
+                
+                // CreateExport数据对象
+                const exportData = {
+                    wordcloud_info: {
+                        id: wordcloud.id || wordcloud._id,
+                        title: wordcloud.title,
+                        description: wordcloud.description,
+                        prompt: wordcloud.prompt,
+                        max_words: wordcloud.max_words,
+                        created_at: wordcloud.created_at,
+                        created_by: wordcloud.created_by
+                    },
+                    words_data: wordcloud.words || [],
+                    statistics: {
+                        total_words: wordcloud.words ? wordcloud.words.length : 0,
+                        total_submissions: wordcloud.words ? wordcloud.words.reduce((sum, w) => sum + w.count, 0) : 0,
+                        export_time: new Date().toISOString()
+                    }
+                };
+                
+                // Create并下载文件
+                const jsonContent = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `词云数据_${wordcloud.title}_${new Date().toISOString().split('T')[0]}.json`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                
+                alert('JSON文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportJSON失败:', error);
+                alert('ExportJSON失败，Please try again');
+            }
+        }
+        
+        // ExportasTXT格式
+        async function exportAsTXT(wordcloudId) {
+            try {
+                const wordcloud = await window.api.get(`/learning/wordclouds/${wordcloudId}`);
+                
+                // CreateTXTContent
+                let txtContent = `词云数据报告\\n`;
+                txtContent += `==========================================\\n\\n`;
+                txtContent += `Title: ${wordcloud.title}\\n`;
+                txtContent += `Description: ${wordcloud.description || '无'}\\n`;
+                txtContent += `PromptQuestion: ${wordcloud.prompt}\\n`;
+                txtContent += `最大词数: ${wordcloud.max_words}\\n`;
+                txtContent += `Created Time: ${new Date(wordcloud.created_at).toLocaleString()}\\n`;
+                txtContent += `Create者: ${wordcloud.created_by}\\n\\n`;
+                
+                txtContent += `Submitwords:\\n`;
+                txtContent += `------------------------------------------\\n`;
+                
+                if (wordcloud.words && wordcloud.words.length > 0) {
+                    wordcloud.words.forEach((wordObj, index) => {
+                        txtContent += `${index + 1}. ${wordObj.word} (出现 ${wordObj.count} 次)\\n`;
+                    });
+                    
+                    txtContent += `\\nStatistics:\\n`;
+                    txtContent += `------------------------------------------\\n`;
+                    txtContent += `总words数: ${wordcloud.words.length}\\n`;
+                    txtContent += `总Submit次数: ${wordcloud.words.reduce((sum, w) => sum + w.count, 0)}\\n`;
+                } else {
+                    txtContent += `暂无Submitwords\\n`;
+                }
+                
+                txtContent += `\\nExportTime: ${new Date().toLocaleString()}\\n`;
+                
+                // Create并下载文件
+                const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `词云数据_${wordcloud.title}_${new Date().toISOString().split('T')[0]}.txt`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // CloseExport模态框
+                bootstrap.Modal.getInstance(document.getElementById('exportModal')).hide();
+                
+                alert('TXT文件已成功下载！');
+                
+            } catch (error) {
+                console.error('ExportTXT失败:', error);
+                alert('ExportTXT失败，Please try again');
+            }
+        }
+    </script>
+</body>
+</html>

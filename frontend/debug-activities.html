@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Activities Debug</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Learning Activities Debug</h4>
+                        <div class="btn-group">
+                            <button class="btn btn-success btn-sm" onclick="setRole('teacher')">设置教师</button>
+                            <button class="btn btn-info btn-sm" onclick="setRole('student')">设置学生</button>
+                            <button class="btn btn-warning btn-sm" onclick="checkStatus()">检查状态</button>
+                            <button class="btn btn-primary btn-sm" onclick="loadInterface()">加载界面</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="debug-info" class="alert alert-info mb-3">
+                            <!-- Debug info will be shown here -->
+                        </div>
+                        
+                        <div id="role-based-activities-content">
+                            <div class="text-center py-5">
+                                <p class="text-muted">点击"加载界面"按钮来测试角色界面</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="static/js/api.js"></script>
+    <script>
+        function setRole(role) {
+            localStorage.setItem('user_role', role);
+            localStorage.setItem('username', role === 'teacher' ? 'teacher1' : 'student1');
+            localStorage.setItem('access_token', 'mock-token-' + role);
+            
+            const userInfo = {
+                id: role + '1',
+                username: role + '1',
+                role: role,
+                name: role === 'teacher' ? '张教授' : '王小明'
+            };
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            
+            checkStatus();
+            alert(`已设置为${role === 'teacher' ? '教师' : '学生'}角色`);
+        }
+        
+        function checkStatus() {
+            const userRole = getUserRole();
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('access_token');
+            
+            document.getElementById('debug-info').innerHTML = `
+                <strong>当前角色:</strong> ${userRole}<br>
+                <strong>用户名:</strong> ${username || '未设置'}<br>
+                <strong>Token:</strong> ${token ? '已设置' : '未设置'}
+            `;
+        }
+        
+        function loadInterface() {
+            const userRole = getUserRole();
+            console.log('Loading interface for role:', userRole);
+            generateRoleBasedContent(userRole);
+        }
+        
+        function getUserRole() {
+            let role = localStorage.getItem('user_role');
+            
+            if (!role) {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    try {
+                        const parsed = JSON.parse(userInfo);
+                        role = parsed.role;
+                    } catch (e) {
+                        console.warn('Failed to parse userInfo:', e);
+                    }
+                }
+            }
+            
+            return role || 'student';
+        }
+        
+        function generateRoleBasedContent(userRole) {
+            console.log('Generating role-based content for role:', userRole);
+            const contentContainer = document.getElementById('role-based-activities-content');
+            if (!contentContainer) {
+                console.error('Content container not found!');
+                return;
+            }
+            
+            console.log('Content container found, generating interface...');
+            if (userRole === 'teacher') {
+                console.log('Generating teacher interface...');
+                generateTeacherInterface(contentContainer);
+            } else {
+                console.log('Generating student interface...');
+                generateStudentInterface(contentContainer);
+            }
+        }
+        
+        function generateTeacherInterface(container) {
+            container.innerHTML = \`
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-0 fw-bold">教师管理界面</h2>
+                        <p class="text-muted mb-0">管理学习活动和查看学生表现</p>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" onclick="setRole('student'); loadInterface();">
+                            <i class="bi bi-person-check"></i> 切换到学生视图
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Teacher Management Tabs -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">管理功能</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a href="#" class="list-group-item list-group-item-action active" data-teacher-tab="polls">
+                                    <i class="bi bi-bar-chart"></i> 民意调查
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-teacher-tab="quizzes">
+                                    <i class="bi bi-question-circle"></i> 测验管理
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-teacher-tab="wordclouds">
+                                    <i class="bi bi-cloud"></i> 词云管理
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-teacher-tab="shortanswers">
+                                    <i class="bi bi-file-text"></i> 简短的回答
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div id="teacher-content-area">
+                            <div class="alert alert-success">
+                                <h5><i class="bi bi-check-circle"></i> 教师界面加载成功！</h5>
+                                <p>这里将显示教师管理功能，包括创建活动、查看学生提交、评分等。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            
+            setupTeacherTabHandlers();
+        }
+        
+        function generateStudentInterface(container) {
+            container.innerHTML = \`
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-0 fw-bold">学生学习界面</h2>
+                        <p class="text-muted mb-0">参与学习活动和提交作业</p>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" onclick="setRole('teacher'); loadInterface();">
+                            <i class="bi bi-person-gear"></i> 切换到教师视图
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Student Activity Tabs -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">学习活动</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a href="#" class="list-group-item list-group-item-action active" data-student-tab="polls">
+                                    <i class="bi bi-bar-chart"></i> 民意调查
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-student-tab="quizzes">
+                                    <i class="bi bi-question-circle"></i> 测验答题
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-student-tab="wordclouds">
+                                    <i class="bi bi-cloud"></i> 词云提交
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action" data-student-tab="shortanswers">
+                                    <i class="bi bi-file-text"></i> 简短回答
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div id="student-content-area">
+                            <div class="alert alert-info">
+                                <h5><i class="bi bi-check-circle"></i> 学生界面加载成功！</h5>
+                                <p>这里将显示学习活动，包括参与测验、提交词汇、回答问题等。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            \`;
+            
+            setupStudentTabHandlers();
+        }
+        
+        function setupTeacherTabHandlers() {
+            document.querySelectorAll('[data-teacher-tab]').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabName = this.getAttribute('data-teacher-tab');
+                    
+                    document.querySelectorAll('[data-teacher-tab]').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.getElementById('teacher-content-area').innerHTML = \`
+                        <div class="alert alert-primary">
+                            <h5>教师 - \${tabName} 管理</h5>
+                            <p>这里将显示 \${tabName} 的管理功能</p>
+                        </div>
+                    \`;
+                });
+            });
+        }
+        
+        function setupStudentTabHandlers() {
+            document.querySelectorAll('[data-student-tab]').forEach(tab => {
+                tab.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabName = this.getAttribute('data-student-tab');
+                    
+                    document.querySelectorAll('[data-student-tab]').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    document.getElementById('student-content-area').innerHTML = \`
+                        <div class="alert alert-info">
+                            <h5>学生 - \${tabName} 活动</h5>
+                            <p>这里将显示 \${tabName} 的参与功能</p>
+                        </div>
+                    \`;
+                });
+            });
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkStatus();
+        });
+    </script>
+</body>
+</html>

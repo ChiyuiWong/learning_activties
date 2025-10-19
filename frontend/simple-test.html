@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>简单测试页面</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4>Learning Activities 简单测试</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h5>测试按钮</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-success" onclick="testTeacherInterface()">测试教师界面</button>
+                                <button class="btn btn-info" onclick="testStudentInterface()">测试学生界面</button>
+                                <button class="btn btn-warning" onclick="checkStatus()">检查状态</button>
+                            </div>
+                        </div>
+                        
+                        <div id="test-container" class="border p-3" style="min-height: 400px;">
+                            <p class="text-muted">点击上面的按钮来测试界面生成</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set up test environment
+        localStorage.setItem('user_role', 'teacher');
+        localStorage.setItem('username', 'teacher1');
+        localStorage.setItem('access_token', 'test-token');
+        
+        function testTeacherInterface() {
+            console.log('Testing teacher interface...');
+            const container = document.getElementById('test-container');
+            
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-0 fw-bold">教师管理界面</h2>
+                        <p class="text-muted mb-0">管理学习活动和查看学生表现</p>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" onclick="testStudentInterface()">
+                            <i class="bi bi-person-check"></i> 切换到学生视图
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Teacher Management Tabs -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">管理功能</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a href="#" class="list-group-item list-group-item-action active">
+                                    <i class="bi bi-bar-chart"></i> 民意调查
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-question-circle"></i> 测验管理
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-cloud"></i> 词云管理
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-file-text"></i> 简短的回答
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="alert alert-success">
+                            <h5><i class="bi bi-check-circle"></i> 教师界面测试成功！</h5>
+                            <p class="mb-0">这里显示教师管理功能，包括创建活动、查看学生提交、评分等。</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between">
+                                <h6>民意调查管理</h6>
+                                <button class="btn btn-primary btn-sm">
+                                    <i class="bi bi-plus"></i> 创建民意调查
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">示例民意调查 1</h6>
+                                                <p class="card-text text-muted small">这是一个示例民意调查</p>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-outline-primary">查看结果</button>
+                                                    <button class="btn btn-outline-danger">删除</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            console.log('Teacher interface generated successfully!');
+        }
+        
+        function testStudentInterface() {
+            console.log('Testing student interface...');
+            const container = document.getElementById('test-container');
+            
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-0 fw-bold">学生学习界面</h2>
+                        <p class="text-muted mb-0">参与学习活动和提交作业</p>
+                    </div>
+                    <div class="btn-group">
+                        <button class="btn btn-outline-secondary" onclick="testTeacherInterface()">
+                            <i class="bi bi-person-gear"></i> 切换到教师视图
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Student Activity Tabs -->
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="card">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0">学习活动</h6>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                <a href="#" class="list-group-item list-group-item-action active">
+                                    <i class="bi bi-bar-chart"></i> 民意调查
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-question-circle"></i> 测验答题
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-cloud"></i> 词云提交
+                                </a>
+                                <a href="#" class="list-group-item list-group-item-action">
+                                    <i class="bi bi-file-text"></i> 简短回答
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-9">
+                        <div class="alert alert-info">
+                            <h5><i class="bi bi-check-circle"></i> 学生界面测试成功！</h5>
+                            <p class="mb-0">这里显示学习活动，包括参与测验、提交词汇、回答问题等。</p>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>民意调查活动</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">示例民意调查活动 1</h6>
+                                                <p class="card-text text-muted small">参与这个民意调查活动</p>
+                                                <button class="btn btn-primary btn-sm">参与活动</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            console.log('Student interface generated successfully!');
+        }
+        
+        function checkStatus() {
+            const userRole = localStorage.getItem('user_role');
+            const username = localStorage.getItem('username');
+            const token = localStorage.getItem('access_token');
+            
+            const info = `当前状态：
+角色: ${userRole}
+用户名: ${username}
+Token: ${token ? '已设置' : '未设置'}
+页面: 简单测试页面`;
+            
+            alert(info);
+            console.log('Status check:', { userRole, username, token });
+        }
+        
+        // Auto-test on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Simple test page loaded');
+            setTimeout(() => {
+                testTeacherInterface();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

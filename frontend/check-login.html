@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>检查登录状态</title>
+    <style>
+        body { font-family: Arial; margin: 40px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; }
+        .status-box { padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; }
+        .warning { background: #fff3cd; border: 1px solid #ffeeba; }
+        button { padding: 15px 30px; margin: 10px 5px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        pre { background: #f8f9fa; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 登录状态检查工具</h1>
+        
+        <div class="status-box" id="statusBox">
+            <h2>正在检查...</h2>
+        </div>
+        
+        <div>
+            <h3>快速操作</h3>
+            <button class="btn-success" onclick="quickLogin()">🔑 快速登录（teacher1）</button>
+            <button class="btn-danger" onclick="clearStorage()">🗑️ 清空存储</button>
+            <button class="btn-primary" onclick="checkAgain()">🔄 重新检查</button>
+        </div>
+        
+        <div>
+            <h3>localStorage 内容</h3>
+            <pre id="localStorageContent"></pre>
+        </div>
+        
+        <div>
+            <h3>访问链接</h3>
+            <button class="btn-primary" onclick="window.open('teacher-activities.html', '_blank')">
+                📚 打开教师管理
+            </button>
+            <button class="btn-primary" onclick="window.open('student-activities.html', '_blank')">
+                📖 打开学生答题
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 内嵌API客户端
+        class SimpleAPI {
+            constructor() {
+                this.baseUrl = window.location.protocol + '//' + window.location.host;
+            }
+            
+            async post(endpoint, body) {
+                const url = `${this.baseUrl}/api${endpoint}`;
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`${response.status}: ${await response.text()}`);
+                }
+                
+                return await response.json();
+            }
+        }
+        
+        const api = new SimpleAPI();
+        
+        // 页面加载时检查
+        window.addEventListener('load', checkStatus);
+        
+        function checkStatus() {
+            const token = localStorage.getItem('access_token');
+            const username = localStorage.getItem('username');
+            const role = localStorage.getItem('user_role');
+            const name = localStorage.getItem('user_name');
+            
+            const statusBox = document.getElementById('statusBox');
+            
+            if (token && username && role) {
+                statusBox.className = 'status-box success';
+                statusBox.innerHTML = `
+                    <h2>✅ 已登录</h2>
+                    <p><strong>用户名：</strong>${username}</p>
+                    <p><strong>姓名：</strong>${name || '未设置'}</p>
+                    <p><strong>角色：</strong>${role}</p>
+                    <p><strong>Token前缀：</strong>${token.substring(0, 50)}...</p>
+                `;
+            } else {
+                statusBox.className = 'status-box error';
+                statusBox.innerHTML = `
+                    <h2>❌ 未登录或登录信息不完整</h2>
+                    <p>Token: ${token ? '存在但可能无效' : '❌ 缺失'}</p>
+                    <p>Username: ${username || '❌ 缺失'}</p>
+                    <p>Role: ${role || '❌ 缺失'}</p>
+                    <br>
+                    <p><strong>请点击下方"快速登录"按钮</strong></p>
+                `;
+            }
+            
+            // 显示所有localStorage内容
+            const allStorage = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                const value = localStorage.getItem(key);
+                allStorage[key] = value.length > 100 ? value.substring(0, 100) + '...' : value;
+            }
+            document.getElementById('localStorageContent').textContent = JSON.stringify(allStorage, null, 2);
+        }
+        
+        async function quickLogin() {
+            try {
+                const statusBox = document.getElementById('statusBox');
+                statusBox.className = 'status-box warning';
+                statusBox.innerHTML = '<h2>🔄 正在登录...</h2>';
+                
+                const response = await api.post('/security/login', {
+                    username: 'teacher1',
+                    password: 'password123'
+                });
+                
+                console.log('Login response:', response);
+                
+                // 保存登录信息
+                localStorage.setItem('access_token', response.access_token);
+                localStorage.setItem('username', response.username);
+                localStorage.setItem('user_role', response.role);
+                localStorage.setItem('user_name', response.name);
+                
+                statusBox.className = 'status-box success';
+                statusBox.innerHTML = '<h2>✅ 登录成功！</h2><p>正在刷新状态...</p>';
+                
+                setTimeout(checkStatus, 500);
+                
+            } catch (error) {
+                const statusBox = document.getElementById('statusBox');
+                statusBox.className = 'status-box error';
+                statusBox.innerHTML = `<h2>❌ 登录失败</h2><p>${error.message}</p>`;
+                console.error('Login error:', error);
+            }
+        }
+        
+        function clearStorage() {
+            if (confirm('确定要清空所有登录信息吗？')) {
+                localStorage.clear();
+                alert('已清空所有存储');
+                checkStatus();
+            }
+        }
+        
+        function checkAgain() {
+            checkStatus();
+            alert('状态已刷新');
+        }
+    </script>
+</body>
+</html>
